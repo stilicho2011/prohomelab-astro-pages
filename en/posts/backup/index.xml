@@ -1,0 +1,1543 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Backup | ProHomeLab</title>
+    <link>https://prohomelab.com/en/posts/backup/</link>
+    <description>Сайт про homelab, self-hosting и IT: инструкции по установке серверов, виртуализация, Docker, Proxmox, безопасность и автоматизация.</description>
+    <language>en</language>
+    <lastBuildDate>Mon, 05 Oct 2026 00:00:00 GMT</lastBuildDate>
+    <generator>ProHomeLab theme for Astro</generator>
+    <atom:link href="https://prohomelab.com/en/posts/backup/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Vinchin Backup &amp; Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE</title>
+      <link>https://prohomelab.com/en/posts/vinchin-backup-proxmox/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/vinchin-backup-proxmox/</guid>
+      <pubDate>Mon, 05 Oct 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Backup</category>
+      <category>Backup</category>
+      <category>Proxmox</category>
+      <category>Vinchin</category>
+      <category>Import Substitution</category>
+      <description>Breaking down Vinchin Backup &amp; Recovery V9.0 SP3 - platform-agnostic backup and migration for mixed and import-independent infrastructure: architecture, bare-metal install, Proxmox VE support and Russian virtualization platforms (zVirt, RED, ROSA, HOSTVM), plus a detailed comparison with Proxmox Backup Server.</description>
+      <content:encoded><![CDATA[<h2 id="introduction">Introduction</h2>
+<p></p>
+<p>All of us use some backup solution or another for our data and systems. But the subject of today's review stands out a bit from the crowd.</p>
+<p>Vinchin Backup &#x26; Recovery V9.0 SP3 isn't just another backup tool - it's a full platform: backup, recovery, migration, and data protection all in one product, for virtual, physical, cloud, and hybrid infrastructure.</p>
+<p>The product's key selling point is that it isn't tied to a single hypervisor the way <a href="https://prohomelab.com/en/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server</a> is tied to Proxmox - one tool supports 15+ virtualization platforms, including zVirt, RED Virtualization, ROSA Virtualization, and HOSTVM, all relevant to the Russian market. In this article we'll take a detailed look at the application's architecture, its installation, Proxmox VE support, and a comparison with PBS.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>I don't have VMware, so the migration source in the hands-on part is Proxmox VE. The migration target ended up being neither oVirt nor RHV, but <strong>XCP-ng</strong>. RHV was out immediately - its official lifecycle ended on August 31, 2026 (the product has been replaced by OpenShift Virtualization). oVirt didn't work out either: the ready-made oVirt Node NG appliance image, which is what the simpler install scenarios rely on, was flagged by the developers themselves in January 2026 as not recommended for use - deploying it for a test now doesn't make much sense, and the alternative path (installing plain EL9 plus packages by hand) isn't as simple as I'd like for a home lab. And honestly, who's running EL9 in 2026 anyway?! XCP-ng, unlike either of those two stories, installs from a single ISO image - just like Proxmox VE - and is actively developed by Vates, without any of that mess. Plus, there's going to be a review of XCP-ng on the channel regardless, so why put it off, I figured.</p>
+</div>
+</div>
+<p>An important nuance worth mentioning right away: Vinchin backs up VMs, not the Proxmox host itself as a whole (more on this in section 11). And a quick comparison with PBS: PBS is free and more deeply integrated if all you have is Proxmox, while Vinchin wins out when the infrastructure is mixed, or when a move to another platform is on the horizon. More on the pros and cons for a home lab is in section 13.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Download link for demo version - <a href="https://www.vinchin.com/ru/support/vm-backup-free-trial.html?s=ukcjvsi6u0">https://www.vinchin.com/ru/support/vm-backup-free-trial.html?s=ukcjvsi6u0</a></p>
+</div>
+</div>
+<h2 id="1-general-product-positioning">1. General Product Positioning</h2>
+<p>Vinchin Backup &#x26; Recovery V9.0 SP3 is an <strong>enterprise-grade solution</strong> for backup, recovery, migration, and data protection across virtual, physical, cloud, and hybrid IT infrastructure.</p>
+<p>Key capabilities: full VM backup with individual file recovery, cross-platform VM migration (V2V and other types), continuous data protection (CDP), disaster recovery, and failover.</p>
+<p>For ProHomelab's homelab context, what matters most about this positioning is the practical layer - Vinchin does everything a familiar Proxmox Backup Server does, but adds support for a whole range of other platforms under one license and console on top of that.</p>
+<h2 id="2-broad-virtualization-platform-support">2. Broad Virtualization Platform Support</h2>
+<p>One of Vinchin's key strengths is its broad support for a wide range of virtualization platforms.
+Vinchin Backup &#x26; Recovery supports backup and recovery for a whole list of hypervisors, including (among others) Hyper-V, Proxmox, XCP-ng, oVirt, H3C CAS/UIS, ZStack, Sangfor HCI, OpenStack, Huawei FusionCompute, Red Hat Virtualization, Oracle OLVM, and XenServer/Citrix Hypervisor.</p>
+<p>Worth calling out separately, the platforms relevant to the Russian market and local infrastructure:</p>
+<ul>
+<li><strong>Proxmox VE</strong> - the main platform for this review, supported since Vinchin 7.2. And if there's support for Proxmox, the Alt Linux-based solution should work too;</li>
+<li><strong>zVirt</strong> - a Russian virtualization platform built on oVirt/KVM from "Orion soft";</li>
+<li><strong>RED Virtualization</strong> - a platform from "RED SOFT";</li>
+<li><strong>ROSA Virtualization</strong> - a platform from NTC IT ROSA, also built on oVirt/KVM;</li>
+<li><strong>HOSTVM</strong> - another Russian virtualization solution.</li>
+</ul>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Fun fact for the record: while this review was being put together, ZStack (the very same vendor from the list above) released <strong>ZSvirt Community Edition</strong> - an open version of its ZSphere engine, positioned as a VMware alternative, with live migration, encryption, and <a href="https://prohomelab.com/en/posts/terraform-proxmox-vm-automation/">Terraform</a> support. The v1.0.0 release is very fresh, and this review doesn't test the platform - it's too early to draw conclusions about stability and real-world compatibility specifically with Vinchin (the vendor's support list mentions the enterprise ZStack Cloud, not this new open-source fork). But it's an interesting thing, and I think it's worth a review of its own down the line.</p>
+</div>
+</div>
+<p>Support for RED Virtualization and ROSA Virtualization arrived in Vinchin starting with version 8.0, along with support for the companion OSes RED OS and Astra Linux in virtualized environments.</p>
+<h2 id="3-relevance-for-the-russian-market">3. Relevance for the Russian Market</h2>
+<p>For the Russian market, scenarios involving a move away from VMware, Hyper-V, and other foreign platforms toward alternative virtualization solutions are especially relevant. Vinchin's own developers emphasize this fact themselves.</p>
+<p>Vinchin can be of interest to companies that:</p>
+<ul>
+<li>are considering alternatives to VMware;</li>
+<li>run a mixed infrastructure with several virtualization platforms at once (say, Proxmox is already deployed, but part of the workload still sits on other, older systems);</li>
+<li>are moving to domestic or open-source platforms (zVirt, RED, ROSA, HOSTVM);</li>
+<li>want to manage backup and recovery centrally across different environments instead of a pile of disconnected tools per platform.</li>
+</ul>
+<h2 id="4-migration-and-recovery-across-different-environments">4. Migration and Recovery Across Different Environments</h2>
+<p>Beyond standard backup and recovery, Vinchin has a rich set of scenarios for migrating and moving workloads between different environments:</p>
+<ul>
+<li><strong>V2V</strong> - migrating virtual machines between different virtualization platforms;</li>
+<li><strong>P2V</strong> - migrating a physical server into a virtual environment;</li>
+<li><strong>P2P</strong> - migrating between physical servers;</li>
+<li><strong>C2C</strong> - migrating between cloud environments;</li>
+<li><strong>C2V</strong> - migrating from a cloud environment into a virtual one;</li>
+<li><strong>P2C</strong> - migrating a physical server into a cloud environment.</li>
+</ul>
+<p>For the Russian market, migration scenarios specifically from VMware to alternative platforms are especially relevant.
+According to the vendor, V2V migration is supported between 19 leading virtualization platforms, including both global brands and the domestic solutions listed above.</p>
+<p>A telling example of this kind of move is a VMware → zVirt migration. The vendor has a dedicated video walkthrough for this scenario.
+I don't have VMware in my home lab (only Proxmox VE is used), so what follows is a description of the general principle, not a step-by-step personal account. Broadly, the scenario works like this: Vinchin connects simultaneously to the source VMware infrastructure and the target zVirt, takes an image of the VM from VMware, and restores it directly onto zVirt, bypassing intermediate manual disk conversion and configuration from scratch. Vinchin's capabilities here go beyond plain V2V: the product can be useful in complex infrastructure migration and modernization projects as a whole, not just as a one-off image converter.</p>
+<p>The key architectural difference from PBS here isn't that Vinchin is "better at moving between different platforms" - it's that PBS simply can't restore a VM anywhere except Proxmox VE, it has no mechanism for that at all. With Vinchin, the recovery process is decoupled from the source: the backup is stored as a platform-agnostic image and can be deployed to any target platform on the supported list.</p>
+<p>Initially I planned to keep the hands-on part of this review to Proxmox VE alone, but in the end I decided to demonstrate this mechanism not on a pair of identical Proxmox hosts, but truly cross-platform and in both directions: first a test VM is deployed on XCP-ng (the second Chuwi UBox), backed up via Vinchin, and restored onto the home Proxmox VE; then the process repeats in reverse - a VM from Proxmox is backed up and restored onto XCP-ng. This demonstrates the general principle of Vinchin's platform-agnostic recovery. The actual steps of this migration are in section 8, item 10, "The Migration Itself."</p>
+<h2 id="5-automation-and-management">5. Automation and Management</h2>
+<p>Worth a quick separate mention: Vinchin simplifies the day-to-day work of IT teams through centralized management of backup jobs, logs, notifications, job status monitoring, and other management functions - all available from a single web console, with no need to switch between separate tools for different platforms.</p>
+<h2 id="6-whats-new-in-v90-sp3">6. What's New in V9.0 SP3</h2>
+<p>Version V9.0 SP3 adds and improves the following capabilities:</p>
+<ul>
+<li>support for H3C UIS 6.5 backup and recovery;</li>
+<li>support for ZStack Cloud on ARM architecture;</li>
+<li>improvements to recovery processes and backup integrity checks;</li>
+<li>optimizations for NAS, file copies, Hadoop, object storage, and tape archiving;</li>
+<li>improvements to Server CDP, including failover and recovery;</li>
+<li>interface, log, notification, and job-information display optimizations.</li>
+</ul>
+<h2 id="7-architecture---server-node-proxy">7. Architecture - Server, Node, Proxy</h2>
+<p>Vinchin actually consists of three components (for a home lab, the first one is usually all you need):</p>
+<ul>
+<li><strong>Backup Server</strong> - the central node with the web console, where jobs, retention policies, repositories, and recovery are configured. In the vast majority of home and small-scale scenarios, this is the only component you need, and it's enough on its own.</li>
+<li><strong>Backup Node</strong> - an optional component for scaling to large infrastructures, or for ROBO (Remote Office/Branch Office) scenarios, where the backup server sits at the head office and the nodes are at remote sites, all under unified management.</li>
+<li><strong>Backup Proxy</strong> - a "shim" component, only needed for specific backup-acceleration scenarios on certain platforms; not required for Proxmox VE.</li>
+</ul>
+<p>For Proxmox VE, Vinchin works on the same principle as with every other platform - agentless: nothing gets installed inside the guest OS of any VM. That doesn't extend to the host itself - there, Vinchin works through its own backup plugin (details and install steps in section 8, item 4).</p>
+<pre class="phl-mermaid">flowchart LR
+    A["Vinchin Backup Server&#x3C;br/>web console, policies, repository"] -->|"via backup plugin, no guest agent"| B["Proxmox VE host 1"]
+    A -->|"via backup plugin"| C["Proxmox VE host 2"]
+    A --> D[("Backup Repository&#x3C;br/>Local/NFS/CIFS/iSCSI/FC")]
+    A -.->|"optional, for scaling"| E["Backup Node"]</pre>
+<h2 id="8-installation---its-an-iso-appliance-not-a-docker-container">8. Installation - It's an ISO Appliance, Not a Docker Container</h2>
+<p>An important point for my self-hosting audience: Vinchin doesn't deploy as a Docker container. It's a full appliance distribution - an ISO image with an integrated OS (recent versions are built on Rocky Linux) that you install either on physical hardware or as a separate virtual machine. There's no docker-compose here at all, so there's no casually spinning it up just to poke around.</p>
+<p>For this review, Vinchin is installed on bare metal - a dedicated Chuwi UBox mini-PC (based on an AMD Ryzen 6600H) was set aside for it, outside the main Proxmox cluster. The final test bench for the hands-on part looks like this:</p>
+<ul>
+<li><strong>UBox #1</strong> - Vinchin Backup Server (bare metal);</li>
+<li><strong>UBox #2</strong> - XCP-ng, the second platform for demonstrating cross-platform V2V migration in both directions (Proxmox → XCP-ng and XCP-ng → Proxmox) (bare metal);</li>
+<li><strong>Home PVE</strong> (the third UBox, already used for real services) - the source of VMs to back up: backup jobs are taken from it (read-only, no changes to production) (bare metal).</li>
+</ul>
+<p>The home PVE serves both as a backup source and as a recovery target in the reverse direction (XCP-ng → Proxmox) - but recovery always creates a new VM with a separate ID, without touching existing working machines, so this poses no threat to real production services.</p>
+<p>I walk through the whole installation process, connecting both Proxmox VE and XCP-ng, and the actual migration between them, in the video on the channel (link at the top of the article) - the steps below are a written version of that same process, step by step, with the exact menu item names. Menu item names may differ from version to version - check against the current UI when installing.</p>
+<p><strong>1. Installing Vinchin Backup Server from ISO</strong></p>
+<ol>
+<li>Register on the Vinchin website (name, email, hypervisor) - the ISO image arrives by email; the license key in this case comes separately.</li>
+<li>Write the ISO to a bootable USB drive (Rufus/UltraISO).</li>
+<li>Boot the UBox from the flash drive, and in the installer menu, choose <strong>"Install Backup &#x26; Disaster Recovery System (Server)."</strong></li>
+<li>Installation wizard steps (Anaconda/Rocky Linux-based interface):
+<ul>
+<li>pick the time zone (<strong>Time Zone</strong>) → Done;</li>
+<li>pick the install disk (<strong>Installation Destination</strong>) → Done;</li>
+<li>configure networking and hostname (<strong>Network &#x26; Host Name</strong>) - a static IP is set here.</li>
+</ul>
+</li>
+<li>After reboot - log into the web console at the specified IP.</li>
+</ol>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>In practice, step 2 ("just write the ISO") turned out not to be as simple as it sounds, and here's what I actually ran into. First, Rufus refused to offer <strong>DD Image mode</strong> for this ISO, and instead immediately warned about a <strong>revoked bootloader</strong> - the ISO is built on Rocky Linux 9.2, and its shim/GRUB ended up on Microsoft's list of revoked UEFI bootloaders (part of the ongoing Secure Boot revocation rotation following the BlackLotus vulnerability). The fix - disable <strong>Secure Boot</strong> in the BIOS/UEFI on the target UBox (not on the machine running Rufus, but the one Vinchin is being installed onto).</p>
+<p>Second, without DD mode, Rufus only offered writing in <strong>ISO mode</strong>, where the only available filesystem is <strong>(Large)FAT32</strong>. And FAT32 has a hard limit - <strong>no file can be larger than 4 GB</strong>. The Vinchin image (Full Installation ISO, ~17.7 GB) contains files larger than that limit, and in ISO mode Rufus simply couldn't fit them onto the flash drive in full - the result was a truncated set of data: the system booted (the bootloader and kernel are small files and copied fine), but the <strong>Installation Source</strong> screen only showed a bare <code>minimal</code> repository instead of the full package tree.</p>
+<p>Trying to write the same ISO with <strong>balenaEtcher</strong> (a byte-for-byte write, bypassing the FAT32 repackaging) threw a <strong>"Missing partition table"</strong> warning - a clear sign the previous Rufus write had been incomplete. After disabling Secure Boot and writing via Etcher, the flash drive was properly recognized by the installer as a full package source.</p>
+</div>
+</div>
+<p><strong>2. Activating the license</strong></p>
+<ol>
+<li>On first login - change the default admin password. It was emailed to you when you registered on the site.</li>
+<li>In the console, go to the licensing section and upload your license key (a file like <code>license-*.key</code>, sent by email).</li>
+</ol>
+<p><strong>3. Connecting Proxmox VE to Vinchin</strong></p>
+<ol>
+<li><strong>Resources → Infrastructure → Virtual Platform</strong>.</li>
+<li>Click <strong>Add</strong>.</li>
+<li>In the <strong>Platform</strong> dropdown, choose <strong>Proxmox VE</strong>.</li>
+<li>In the <strong>IP/Domain</strong> field, enter the Proxmox VE host's address and port in the format <code>server_ip:8006</code>.</li>
+<li>Enter the Proxmox VE administrator's <strong>Username</strong> and <strong>Password</strong>.</li>
+<li><strong>OK</strong> - the platform will appear in the Virtual Platform List.</li>
+</ol>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>The Vinchin server needs access to Proxmox VE on ports <strong>8006, 29203, and 29204</strong> - otherwise the platform won't be added and backups won't run. It's worth checking ahead of time that these ports aren't blocked by a firewall between the Vinchin UBox and the Proxmox host (in my case, the home PVE).</p>
+</div>
+</div>
+<p><strong>4. Installing the backup plugin on Proxmox VE hosts</strong></p>
+<p>Unlike VMware backup, where Vinchin works entirely without any plugins on the host, for Proxmox VE the vendor requires installing a lightweight backup plugin directly on the Proxmox hosts - not inside the guest VMs, only on the hypervisor itself:</p>
+<ol>
+<li>Download the plugin installer from the Vinchin console.</li>
+<li>Upload and install it on the master host of the Proxmox VE pool (and on every slave host too, if it's a cluster - this is mandatory).</li>
+<li>Confirm that after installing the plugin, the Proxmox VE host in the Vinchin console moves to the so-called licensed state (if the license is "Per CPU Sockets," a host initially shows as Unlicensed until a license is specifically allocated to it).</li>
+</ol>
+<p><strong>5. Setting up a repository</strong></p>
+<ol>
+<li>Go to the backup storage management section.</li>
+<li>Add a repository - a local disk/partition on the Vinchin UBox, or an NFS/CIFS share on a NAS.</li>
+</ol>
+<p><strong>6. First backup job</strong></p>
+<ol>
+<li><strong>VM Backup → Backup</strong>.</li>
+<li><strong>Step 1. Select Backup Source</strong> - pick the Proxmox VE host, check the VMs you need (the <strong>Sync</strong> button, if freshly added VMs aren't showing up).</li>
+<li><strong>Step 2. Select Backup Destination</strong> - pick the <strong>Target Node</strong> and <strong>Target Storage</strong> (the repository from the previous item).</li>
+<li><strong>Step 3. Select Backup Strategies</strong> - schedule (<strong>Backup as scheduled</strong> or a one-off <strong>Once-off backup</strong>), data transfer method (LAN or LAN-Free/SAN, if configured).</li>
+<li><strong>Step 4</strong> - job name, review the details, <strong>Submit</strong>.</li>
+<li>The job will show up on the <strong>Monitor Center → Jobs</strong> page - from there you can run it manually and watch its progress in real time.</li>
+</ol>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>Rocky Linux 9.2, which recent Vinchin versions are built on, requires CPU support for the x86-64-v2 instruction set. The Ryzen 6600H is a modern Zen3+ chip, so there's no issue here, but on older hardware, check against the LiveCD verification tool Vinchin provides ahead of time.</p>
+</div>
+</div>
+<p>Sources used in the checklist above - the official Vinchin help center:
+<a href="https://helpcenter.vinchin.com/docs/installation.html">Installation</a>,
+<a href="https://helpcenter.vinchin.com/docs/backup/virtualization-backup/proxmox-backup-restore.html">Proxmox VE Backup &#x26; Restore</a>, <a href="https://helpcenter.vinchin.com/docs/backup/virtualization-backup/proxmox-backup-restore/connect-proxmox-to-vinchin.html">Connect Proxmox VE to Vinchin</a>, <a href="https://helpcenter.vinchin.com/docs/backup/virtualization-backup/proxmox-backup-restore/install-proxmox-backup-plugins.html">Install Proxmox VE Backup Plugins</a>, <a href="https://helpcenter.vinchin.com/docs/backup/virtualization-backup/proxmox-backup-restore/backup-proxmox-vms.html">Backup Proxmox VE VMs</a>.</p>
+<p><strong>7. Installing XCP-ng on UBox #2</strong></p>
+<p>This is much simpler than the oVirt/RHV story - installation from a single ISO image, just like Proxmox VE:</p>
+<ol>
+<li>Download the current stable ISO (at the time of writing this review - 8.3, the LTS branch) from the <a href="https://xcp-ng.org/#easy-to-install">official download page</a> or from a <a href="https://mirrors.xcp-ng.org/isos/8.3/">mirror</a>.</li>
+<li>Write the image to a USB flash drive.</li>
+<li>Boot UBox #2 from the flash drive and choose <strong>Install XCP-ng</strong>. It's important to decide right away between <strong>BIOS</strong> and <strong>UEFI</strong> mode - you can't change this after installation, or the system may stop booting.</li>
+<li>Go through all the usual installation steps: keyboard layout → accept the <strong>EULA</strong> → pick the install disk (a separate physical disk is required, dual-boot isn't supported) → root password → network settings (interface, DHCP or static IP, hostname, DNS) → time zone and NTP setup.</li>
+<li>After the system installs and reboots, the console will display the host's IP address. Go to it in a browser (<code>https://&#x3C;UBox2-IP></code>) - the built-in <strong>XO Lite</strong>, a basic management web UI available right after install with no extra setup, will open.</li>
+</ol>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>For a basic scenario (create a test VM, connect Vinchin), the built-in XO Lite is enough. The full <strong>Xen Orchestra</strong> (a unified console for multiple hosts/pools, with its own built-in backup tool) is a separate add-on, deployed via the <strong>Deploy XOA</strong> button directly from XO Lite, or built "from sources" (free); it's not required for this review, since Vinchin connects directly to the XCP-ng host's XAPI, bypassing Xen Orchestra - but the video actually uses XOA.</p>
+</div>
+</div>
+<p><strong>8. Installing the backup plugin on the XCP-ng host</strong></p>
+<p>Just like with Proxmox VE, for XCP-ng Vinchin also requires a lightweight backup plugin on the host itself (dom0) - only here the package format is different, <code>.rpm</code> instead of <code>.deb</code> (XCP-ng is built on a CentOS-compatible base):</p>
+<ol>
+<li>On the Vinchin web console login page, click <strong>Download Backup Plugin</strong>.</li>
+<li><strong>Type</strong> → VM Backup Plugin, <strong>Platform</strong> → <strong>XCP-ng</strong>, <strong>Version</strong> → the exact version of your XCP-ng (8.3 in this review). An <code>.rpm</code> file will download.</li>
+<li>Using WinSCP (or any SCP/SFTP client), upload the <code>.rpm</code> to the XCP-ng host - login <code>root</code>, the XCP-ng password.</li>
+<li>Open the host console (via the built-in XO Lite/XOA console, or directly over SSH) and run:
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">rpm -i vxe-backup-agent-xxx.xe.x86_64.rpm</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="rpm -i vxe-backup-agent-xxx.xe.x86_64.rpm"><div></div></button></div></figure></div>
+where <code>xxx</code> is the actual file name (easiest to fill in with Tab-completion rather than typing it out).</li>
+<li>If you have a multi-host pool, the plugin needs to be installed on <strong>every</strong> host, including the master, otherwise backup will only work for VMs on the host where it's installed.</li>
+</ol>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>Don't leave the plugin uninstalled for long on either Proxmox or XCP-ng - while it's missing (or removed without an immediate reinstall), every backup job for VMs on that host will fail with an error.</p>
+</div>
+</div>
+<p>Sources: <a href="https://helpcenter.vinchin.com/docs/backup/virtualization-backup/xcp-ng-backup-restore/install-xcp-ng-backup-plugins.html">Install XCP-ng Backup Plugins - Vinchin Help Center</a>, <a href="https://www.vinchin.com/knowledge-base/how-to-install-backup-plugin-for-xcp-ng.html">How to install backup plugin for XCP-ng?</a></p>
+<p><strong>9. Connecting XCP-ng to Vinchin</strong></p>
+<p>Just like with Proxmox VE (see item 3 above):</p>
+<ol>
+<li><strong>Resources → Infrastructure → Virtual Platform → Add</strong>.</li>
+<li>In the <strong>Platform</strong> list, choose <strong>XCP-ng</strong>.</li>
+<li><strong>IP/Domain</strong> - the address of the XCP-ng host (UBox #2).</li>
+<li><strong>Username / Password</strong> - root and the password set during installation.</li>
+<li><strong>OK</strong> - the platform will appear in the list next to Proxmox VE.</li>
+</ol>
+<p><strong>10. The migration itself: moving a VM between Proxmox and XCP-ng in both directions</strong></p>
+<p>This is the hands-on part I promised earlier in the text - showing the actual transfer process, not just installing the components. In Vinchin, this isn't done with a separate "migration wizard" but through the regular recovery function - you just need to explicitly switch to <strong>Cross Platform Restore</strong> at one of the wizard steps, instead of leaving recovery pointed at the source platform by default.</p>
+<p><em>Proxmox → XCP-ng:</em></p>
+<ol>
+<li>Create a test VM on the home Proxmox VE and include it in a backup job (see item 6 above), wait for it to finish.</li>
+<li><strong>VM Backup → Restore</strong>.</li>
+<li><strong>Step 1. Select Restore Point</strong> - pick the restore point you want for this VM.</li>
+<li><strong>Step 2</strong> - here it's important to explicitly pick <strong>Cross Platform Restore</strong> as the recovery type (not Instant Restore, which only temporarily and virtually spins the VM up straight from the repository). Set the recovery target to the <strong>XCP-ng</strong> host instead of the original Proxmox.</li>
+<li><strong>Step 3. Restore strategies</strong> - for a test, you can leave the defaults and just click Next.</li>
+<li><strong>Step 4. Submit</strong> - the job starts. Once it's done, the VM will show up on XCP-ng.</li>
+</ol>
+<p><em>XCP-ng → Proxmox (the reverse direction):</em></p>
+<ol>
+<li>Create a test VM on XCP-ng, include the XCP-ng host in a separate backup job (the same way it was done for Proxmox), and wait for it to complete.</li>
+<li><strong>VM Backup → Restore</strong>, pick the restore point for the VM from XCP-ng.</li>
+<li>Again choose <strong>Cross Platform Restore</strong>, with the home <strong>Proxmox VE</strong> as the recovery target.</li>
+<li><strong>Restore strategies</strong> - defaults.</li>
+<li><strong>Submit</strong> - the VM shows up on Proxmox as a new machine with a separate ID, without touching existing working VMs.</li>
+</ol>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>The difference between Instant Restore and Cross Platform Restore is fundamental, and it's clearly visible in the job log: with Instant Restore, the log shows something like "has cached data '36 MB'" for a VM whose actual size is tens of gigabytes - meaning the data physically stays in the Vinchin repository, and the target platform only has a thin "stub" that pulls data over the network on the fly. For a real, final migration (rather than a temporary emergency spin-up), you need Cross Platform Restore specifically - it copies the data in full.</p>
+</div>
+</div>
+<p>Links to the official Vinchin step-by-step guides:</p>
+<ul>
+<li><a href="https://www.vinchin.com/vinchin-help-tutorials/vinchin-proxmox-to-xcp-ng.html">How to Migrate VM from Proxmox to XCP-ng</a>,</li>
+<li><a href="https://www.vinchin.com/vinchin-help-tutorials/vinchin-xcp-ng-to-proxmox.html">How to Migrate VM from XCP-ng to Proxmox</a>.</li>
+</ul>
+<h2 id="9-system-requirements">9. System Requirements</h2>
+<p>Vinchin's official recommendations are aimed at production workloads and look like overkill for a home lab:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Production Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU</td>
+<td>2x Intel Xeon E5 (2.5 GHz, 4 cores/8 threads or higher)</td>
+</tr>
+<tr>
+<td>RAM</td>
+<td>32 GB or more</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>2x 10 Gbps RJ45 or higher</td>
+</tr>
+<tr>
+<td>OS Disk</td>
+<td>2x 100 GB SSD</td>
+</tr>
+<tr>
+<td>Repository space</td>
+<td>~150% of the data being protected</td>
+</tr>
+</tbody>
+</table>
+<p>For a test or a typical homelab scenario (a handful of VMs, gigabit or 2.5 Gbit networking), that's obviously overkill - Backup Server runs perfectly fine on a compact mini-PC like the Chuwi UBox, and the network and repository disk should be sized to your actual data volume, not the numbers from an enterprise guide. But it's worth understanding this isn't a "200 MB RAM container" anymore - it's a full, separate system that eats up a noticeable amount of hardware resources on its own.</p>
+<h2 id="10-editions-and-licensing">10. Editions and Licensing</h2>
+<p>Vinchin has three editions, and the license is sold either as a one-time purchase (Perpetual, "buy it, own it forever," tied to the number of physical CPU sockets on the target hosts) or as a subscription from 1 to 3 years:</p>
+<ul>
+<li><strong>Free Edition</strong> - free forever, protects up to <strong>3 virtual machines</strong>. Supports the basics: agentless backup, compression, flexible scheduling, various repository storage types (local disk, NFS, CIFS, iSCSI, Fibre Channel). Updates, technical support, and some advanced features aren't available in Free, but for some people that's plenty for a home scenario.</li>
+<li><strong>Standard Edition</strong> - for SMB infrastructure, adds more advanced backup and recovery features, includes 5x12 technical support.</li>
+<li><strong>Enterprise Edition</strong> - for large and complex infrastructures, maximum functionality, also 5x12 support out of the box (7x24 available on request).</li>
+</ul>
+<p>If you have an offsite copy (say, a second Vinchin server for offsite copies), Vinchin issues a separate free Offsite Copy License of the same type and duration as the main server's license - no need to pay extra for a second instance running pure offsite-copy duty.</p>
+<h2 id="11-proxmox-ve-support">11. Proxmox VE Support</h2>
+<p>Proxmox VE appeared on the list of supported platforms starting with Vinchin 7.2 (late 2023); the current lineup (v9.x) supports Proxmox VE versions 7.2-9.0. From Vinchin's documentation and help center on Proxmox, the following functionality stands out:</p>
+<ul>
+<li><strong>Agentless backup</strong> - nothing gets installed inside each VM's guest OS (the host-level backup plugin nuance is covered in section 7 and section 8, item 4).</li>
+<li><strong>Changed Block Tracking (CBT)</strong> - speeds up incremental backups by tracking changed blocks (in Vinchin's terminology for non-VMware platforms, this is called <strong>SpeedKit</strong>).</li>
+<li><strong>Forever-incremental backup</strong> - after the first full backup, every subsequent job only captures changes; a full backup never re-runs, which saves a lot of time and money.</li>
+<li><strong>LAN-Free backup</strong> - with a SAN available (FC/iSCSI/NFS), data can be transferred bypassing the production network, reducing load on it during backup.</li>
+<li><strong>Flexible scheduling and retention policies</strong>, including GFS (grandfather-father-son) for long-term storage of restore points by week/month/year.</li>
+<li><strong>Deduplication, compression, and BitDetector</strong> - a combination of three mechanisms for shrinking stored data volume: deduplication and BitDetector look for repeated blocks, swap files, partition gaps, and unused space, leaving only genuinely unique data in the repository, while compression squeezes down what's left.</li>
+<li><strong>Full recovery and individual file recovery</strong>, plus Instant VM Recovery to minimize downtime.</li>
+<li><strong>V2V migration</strong> - restoring a backup taken from Proxmox straight onto another platform (say, zVirt or RED Virtualization) without intermediate conversions.</li>
+</ul>
+<p>Licensing for Proxmox is tied to hosts: in the web console, hosts of the relevant Proxmox VE cluster are individually "licensed," after which backup jobs become available for the VMs on those hosts.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>It's important not to confuse backing up VMs with backing up the Proxmox host itself. Vinchin (like PBS) protects virtual machines running on PVE, not the hypervisor as a whole - it doesn't take a full image of the host with the entire cluster configuration and storage layer (LVM/ZFS). To protect the PVE configuration itself, the vendor only describes a file-level backup of directories like <code>/etc/pve</code>. So "moving the host to new hardware" in practice isn't implemented as transferring a hypervisor image, but as the combination "clean Proxmox VE install on the new host + VM recovery through Vinchin."</p>
+</div>
+</div>
+<h3 id="backing-up-physical-servers-including-windows---a-separate-mechanism">Backing Up Physical Servers (Including Windows) - a Separate Mechanism</h3>
+<p>Everything described above is backup at the hypervisor level (section 7). But Vinchin also has a second, fundamentally different mechanism - <strong>physical server backup</strong> (Windows and Linux), which works by installing a lightweight agent directly on the protected system, the way classic enterprise backup solutions do.</p>
+<p>For a home lab, this is a separate, standalone case: if, besides the VMs on Proxmox, you also have a separate physical PC or laptop running Windows, Vinchin can protect it too, once the corresponding agent is installed. Showing the process here based on the vendor's documentation (I didn't record video for this part):</p>
+<p><strong>1. Installing the agent on a Windows machine</strong></p>
+<ol>
+<li>On the Vinchin web console's login page, click <strong>Download Backup Plugin</strong> (or, once inside the console: <strong>Resources → Infrastructure → Agents → Add</strong>).</li>
+<li>Pick the agent type - for a full OS backup you need the regular <strong>Backup Agent</strong> (not the Database Backup Agent, which is separate, for databases), OS - <strong>Windows</strong>. An <code>.exe</code> installer downloads.</li>
+<li>Run the installer on the machine being protected <strong>as an administrator</strong>.</li>
+<li>Choose a connection mode: <strong>Connection mode 1</strong> (the agent installs on its own, and you then manually add it in the Vinchin console) or <strong>Connection mode 2</strong> (the agent registers itself on the Vinchin server right during install - you need to specify the server's address during setup for this).</li>
+<li>Once installed, the agent shows up on the <strong>Resources → Infrastructure → Agents</strong> page in the Vinchin console.</li>
+</ol>
+<p><strong>2. Creating a physical server backup job</strong></p>
+<ol>
+<li><strong>Physical Backup → Server Backup → Backup</strong>.</li>
+<li><strong>Step 1</strong> - in the Group tree, pick the host you need (the Windows agent from the previous step); you can selectively exclude specific partitions/disks - by default, for Windows, the system disk, the EFI partition, and the Microsoft Reserved Partition are included.</li>
+<li><strong>Step 2</strong> - pick the destination repository (the same one configured for VM backups, or a separate one).</li>
+<li><strong>Step 3</strong> - schedule and backup strategy.</li>
+<li><strong>Step 4</strong> - job name, <strong>Submit</strong>.</li>
+</ol>
+<p>Restoring this kind of backup works the same way as the P2V conversion discussed in the migration section - meaning, if you want, you can not only back up a physical Windows machine, but also spin it up as a VM on Proxmox or XCP-ng.</p>
+<p>Sources: <a href="https://helpcenter.vinchin.com/docs/resources/infrastructure/agent-client/agent-deployment.html">Agents Deployment - Vinchin Help Center</a>, <a href="https://helpcenter.vinchin.com/docs/server-backup-restore/server-backup.html">Server Backup - Vinchin Help Center</a>, <a href="https://www.vinchin.com/vinchin-help-tutorials/vinchin-windows-operating-system-backup.html">How to Backup Windows Operating System with Vinchin Backup &#x26; Recovery?</a></p>
+<h2 id="12-features-that-set-vinchin-apart">12. Features That Set Vinchin Apart</h2>
+<p>Beyond basic backup/recovery, Vinchin has a set of features that PBS either implements partially or doesn't implement at all (because PBS deliberately focuses on simplicity - that's a literary way of putting it, no offense meant, PBS fans):</p>
+<ul>
+<li><strong>AES-256 encryption</strong> for backups in the repository.</li>
+<li><strong>Anti-ransomware / Malware Scan</strong> (since v9.0) - automatically scans backups for malware before recovery, integrated with the Kaspersky antivirus engine.</li>
+<li><strong>WORM protection</strong> and backup integrity checking (Backup Data Integrity Check) - for when you need copies to be immutable to meet retention requirements.</li>
+<li><strong>DR Lab</strong> - a built-in sandbox for testing disaster recovery without touching production: you can spin up a VM from a backup in an isolated environment and confirm the recovery actually worked without a hitch.</li>
+<li><strong>Server CDP (Continuous Data Protection)</strong> - continuous data protection with failover, improved in V9.0 SP3.</li>
+<li><strong>Any-to-Any Migration</strong> - migrating VMs between practically any supported platforms: V2V, P2V, C2C, and other combinations.</li>
+<li><strong>Kubernetes backup</strong> - if your lab also runs a k8s/k3s cluster besides VMs, that's covered by the same tool too.</li>
+</ul>
+<h2 id="13-pros-and-cons-of-vinchin-for-a-home-lab">13. Pros and Cons of Vinchin for a Home Lab</h2>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>Free Edition is genuinely free forever, no crippled trial - just a 3 VM limit.</li>
+<li>Proxmox VE support is official and actively developed.</li>
+<li>One tool for a mixed and transitional infrastructure - no need to run a separate backup stack per platform, including the Russian zVirt/RED/ROSA/HOSTVM.</li>
+<li>DR Lab, CDP, and malware scanning - features you'd normally have to cobble together from several tools in the open-source world.</li>
+<li>V2V migration is useful if you're at all inclined to experiment with different hypervisors (a common thing for a homelab) or move from one platform to another.</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>It's not a Docker service - a separate machine (a VM, or, as in this review, dedicated physical hardware) and one more OS to maintain (updates, security patches).</li>
+<li>No LXC container support - and LXC containers get used very often in Proxmox setups.</li>
+<li>The Free Edition's 3-VM limit gets hit pretty fast even in a home lab.</li>
+<li>Less independent, user-reported data on real-world performance and deduplication ratios compared to PBS.</li>
+<li>The product's core targets enterprise scenarios - part of the interface and terminology (SAN, HBA, Backup Node for ROBO) is clearly overkill for a single Proxmox host.</li>
+</ul>
+<h2 id="14-bottom-line">14. Bottom Line</h2>
+<p>If you have a clean Proxmox VE setup and nothing else, Proxmox Backup Server will almost always be the better choice: free with no restrictions, more deeply integrated, and able to back up LXC containers, which a typical homelab user usually has even more of than full VMs.</p>
+<p>Vinchin is worth looking at if at least one of these applies:</p>
+<ul>
+<li>you genuinely have a mixed infrastructure across several virtualization platforms at once;</li>
+<li>a move from one platform to another is planned (including to domestic solutions - zVirt, RED, ROSA, HOSTVM), and you'd rather do it with a proper V2V tool than by hand;</li>
+<li>three VMs comfortably cover your critical perimeter, and you'd rather not stand up a separate PBS just for them;</li>
+<li>you're interested in ready-made DR/CDP features (sandboxed test recovery, malware scanning, continuous protection) without building it all yourself.</li>
+</ul>
+<p>In every other case, for a pure Proxmox lab, PBS remains the primary tool.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Proxmox Backup Server 4.2.0 - Installation, Configuration, and Proxmox VE Backup</title>
+      <link>https://prohomelab.com/en/posts/proxmox-backup-server-4-2-installation-guide/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/proxmox-backup-server-4-2-installation-guide/</guid>
+      <pubDate>Sun, 31 May 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Backup</category>
+      <category>Homelab</category>
+      <category>Proxmox</category>
+      <category>PBS</category>
+      <category>Backup</category>
+      <description>A complete guide to installing and configuring Proxmox Backup Server 4.2.0 for building a reliable backup system for Proxmox VE virtual machines and containers.</description>
+      <content:encoded><![CDATA[<h2 id="foreword">Foreword</h2>
+<p>Frankly, I wasn't planning to record a new video about Proxmox Backup Server, nor to write a full article. But I made the mistake of quickly upgrading Proxmox VE to the new kernel version 7.0.0.3.</p>
+<p>As a result, the system stopped booting and consistently went into a kernel panic with an unpleasant pink screen. Rolling back to the previous kernel version didn't work in my case.</p>
+<p>A search on the official Proxmox forum showed that the problem wasn't isolated but widespread. In the end, I had to reinstall the node from scratch.</p>
+<p>For an average user, this could mean losing all the information stored in the virtual machines or LXC containers. However, I use Proxmox Backup Server, and the backups are stored on a NAS, so I got off relatively lightly.</p>
+<p>I had to redeploy the node, install PBS, connect the old datastore, and restore everything from backups.</p>
+<p>After that, I shared the situation on my Telegram channel, warned about the problems with the fresh Proxmox VE kernel build, and reminded everyone about the importance of backups. In response, I was offered <del>to go somewhere</del> to record a fresh overview video about restoring a node.</p>
+<p>Although I already have a video about PBS on my channel, it's noticeably outdated by industry standards. So I decided to update the material.</p>
+<p>In this article, I won't just cover setting up Proxmox Backup Server, but also show my real-world scenario: creating two datastores - one for "hot" and one for "cold" backups.</p>
+<hr>
+<h2 id="introduction">Introduction</h2>
+<p>Backup is one of the key tasks both in a home lab (<a href="https://prohomelab.com/en/posts/homelabbing/">homelab</a>) and in corporate infrastructure. Losing a virtual machine, disk corruption, or a failed update can have serious consequences if a backup system isn't set up in advance.</p>
+<p>To address this, the Proxmox team developed Proxmox Backup Server (PBS) - a specialized system for storing backups of virtual machines, containers, and physical servers.</p>
+<p>PBS supports:</p>
+<ul>
+<li>data deduplication</li>
+<li>incremental backups</li>
+<li>efficient compression</li>
+<li>convenient integration with Proxmox VE</li>
+</ul>
+<p>This allows you to significantly save disk space and speed up backup and restore processes.</p>
+<p>Proxmox Backup Server 4.x adds:</p>
+<ul>
+<li>support for S3-compatible storage</li>
+<li>improved sync jobs</li>
+<li>extended capabilities for working with namespaces and datastores</li>
+<li>base system update to Debian 13</li>
+</ul>
+<p>In this article, we'll install Proxmox Backup Server 4.2, set up storage, connect it to Proxmox VE, and perform our first virtual machine backup.</p>
+<hr>
+<h2 id="what-is-a-datastore-in-proxmox-backup-server">What is a Datastore in Proxmox Backup Server</h2>
+<h3 id="general-description">General description</h3>
+<p>A Datastore in Proxmox Backup Server (PBS) is the main backup storage. You can think of it as a folder or logical container in which PBS stores all backup data, indexes, metadata, and deduplication information.</p>
+<h3 id="whats-inside-a-datastore">What's inside a Datastore</h3>
+<p>When creating a Datastore, PBS uses the specified directory, for example:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">/mnt/backup/pbs-datastore</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="/mnt/backup/pbs-datastore"><div></div></button></div></figure></div>
+<p>Inside, a directory structure is created:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">pbs-datastore/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">├── .chunks/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">├── vm/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">├── ct/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">├── host/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">└── .lock</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="pbs-datastore/├── .chunks/├── vm/├── ct/├── host/└── .lock"><div></div></button></div></figure></div>
+<p>The Datastore holds:</p>
+<ul>
+<li>Virtual machine backups</li>
+<li>LXC container backups</li>
+<li>Physical server backups via PBS Client</li>
+<li>Deduplicated data chunks</li>
+<li>Indexes and metadata</li>
+</ul>
+<h3 id="how-deduplication-works">How deduplication works</h3>
+<p>PBS splits data into small blocks (chunks) and stores only new or changed data.</p>
+<p>Example:</p>
+<ol>
+<li>The first backup of a virtual machine takes up 100 GB.</li>
+<li>The next day, only 2 GB of data changed.</li>
+<li>PBS will only store the new chunks, totaling 2 GB.</li>
+</ol>
+<p>As a result, a Datastore can contain many backups while taking up significantly less space thanks to deduplication.</p>
+<h3 id="multiple-datastores-on-a-single-pbs">Multiple Datastores on a single PBS</h3>
+<p>You can create several Datastores on a single PBS server for different purposes.</p>
+<p>Examples:</p>
+<table>
+<thead>
+<tr>
+<th>Datastore</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>local-ssd</td>
+<td>Fast daily backups</td>
+</tr>
+<tr>
+<td>hdd-backup</td>
+<td>Long-term storage</td>
+</tr>
+<tr>
+<td>offsite</td>
+<td>Replication to a remote site</td>
+</tr>
+</tbody>
+</table>
+<p>Example configuration:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Datastore</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">fast-backup</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Path</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/mnt/ssd/pbs</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Datastore: fast-backupPath: /mnt/ssd/pbs"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Datastore</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">archive</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Path</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/mnt/hdd/pbs</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Datastore: archivePath: /mnt/hdd/pbs"><div></div></button></div></figure></div>
+<p>Each Datastore has its own settings:</p>
+<ul>
+<li>Retention policies (Prune)</li>
+<li>Backup verification (Verify)</li>
+<li>Synchronization (Sync)</li>
+<li>Access permissions</li>
+<li>Read/write speed limits</li>
+</ul>
+<h4 id="recommendations">Recommendations</h4>
+<ul>
+<li>Use a reliable Linux file system (for example, ZFS)</li>
+<li>Don't modify Datastore contents manually</li>
+<li>Remove old backups via Prune jobs</li>
+<li>Regularly run Verify to check data integrity</li>
+<li>Monitor disk health and free space</li>
+</ul>
+<h4 id="important">Important</h4>
+<ul>
+<li>Manually deleting Datastore files can corrupt backups and result in data loss.</li>
+<li>Losing or corrupting a Datastore makes all backups stored in it unavailable.</li>
+</ul>
+<h4 id="analogy">Analogy</h4>
+<p>If you think of PBS as a library:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Analogy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PBS Server</td>
+<td>Library</td>
+</tr>
+<tr>
+<td>Datastore</td>
+<td>Book warehouse</td>
+</tr>
+<tr>
+<td>Backup</td>
+<td>Book</td>
+</tr>
+<tr>
+<td>Chunk</td>
+<td>Page of the book</td>
+</tr>
+<tr>
+<td>Deduplication</td>
+<td>Storing identical pages only once</td>
+</tr>
+</tbody>
+</table>
+<p>In the video, I'll create only two datastores:</p>
+<ul>
+<li>fast, daily copies</li>
+<li>long-term data, which I'll store on my TrueNAS</li>
+</ul>
+<h2 id="system-requirements">System requirements</h2>
+<p>Before starting the installation of Proxmox Backup Server 4.2, you need to prepare a separate server or virtual machine. Although PBS can run even on fairly modest hardware, it's recommended to estimate the volume of backups and the number of protected systems in advance. For a home environment, the first factor is of course the important one.</p>
+<p>Right now, in the international YouTube segment, for some reason it's popular to install PBS in an LXC container. I don't like this approach, because such an installation requires either a privileged container or certain complications with mounting disks. At the same time, installing it in a virtual machine (in case you can't dedicate a separate server/mini-PC) doesn't add any noticeable overhead in a homelab scenario. PBS is a fairly lightweight solution.</p>
+<p>To perform the installation you'll need:</p>
+<h3 id="minimum-requirements">Minimum requirements</h3>
+<ul>
+<li>
+<p>64-bit processor with virtualization support</p>
+</li>
+<li>
+<p>2 CPU cores</p>
+</li>
+<li>
+<p>2 GB of RAM</p>
+</li>
+<li>
+<p>8 GB of disk space for the system</p>
+</li>
+<li>
+<p>A separate disk or partition for storing backups</p>
+</li>
+<li>
+<p>Network connection of at least 1 Gbit/s</p>
+</li>
+</ul>
+<h3 id="recommended-requirements">Recommended requirements</h3>
+<ul>
+<li>
+<p>4 or more CPU cores</p>
+</li>
+<li>
+<p>8-16 GB of RAM</p>
+</li>
+<li>
+<p>SSD for the system partition</p>
+</li>
+<li>
+<p>A separate SSD or HDD array for storing backups</p>
+</li>
+<li>
+<p>ZFS file system for the datastore</p>
+</li>
+<li>
+<p>2.5 Gbit/s network connection or higher when working with a large number of virtual machines</p>
+</li>
+</ul>
+<p>Ironically, finding a server meeting only the minimum requirements is practically impossible in 2026. At the same time, if we're talking about a home environment, the minimum requirements are sufficient for continuous operation. The reason is that the system load only occurs during those short intervals when the system is performing backups and comparing chunks. As you understand, in a home environment this happens at best once a day, and the whole process fits within an hour.</p>
+<h3 id="test-bench">Test bench</h3>
+<p>For this article and video, Proxmox Backup Server 4.2 is installed on a Lenovo ThinkCentre M720q with the following specifications:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU</td>
+<td>Intel Core i5-8400T</td>
+</tr>
+<tr>
+<td>RAM</td>
+<td>16 GB</td>
+</tr>
+<tr>
+<td>System disk</td>
+<td>256 GB NVMe</td>
+</tr>
+<tr>
+<td>Backup disk</td>
+<td>500 GB SSD</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>1 Gbit/s</td>
+</tr>
+</tbody>
+</table>
+<p>Such a configuration isn't just more than enough for a home lab and backing up several virtual machines and LXC containers, it's actually overkill.</p>
+<blockquote>
+<p>It's recommended to use a separate disk or a ZFS pool for storing backups. This allows you to make the most efficient use of built-in data deduplication and protect the system from losing backups if the system disk fails.</p>
+</blockquote>
+<h2 id="installing-proxmox-backup-server">Installing Proxmox Backup Server</h2>
+<p>Installing PBS shouldn't cause any difficulties - the installer interface is identical to PVE.</p>
+<p><img alt="Proxmox Backup Server 4.2 installer screen" loading="lazy" decoding="async" width="1691" height="946" src="https://prohomelab.com/_astro/0.BSNR-NeB_TLrTi.webp"></p>
+<p>You agree to the license agreement,</p>
+<p><img alt="License agreement during Proxmox Backup Server installation" loading="lazy" decoding="async" width="1731" height="959" src="https://prohomelab.com/_astro/1.G2mJfY6h_7a1da.webp"></p>
+<p>Choose the disk or array where the operating system will be installed, as well as the file system.</p>
+<p><img alt="Choosing the disk and file system during Proxmox Backup Server installation" loading="lazy" decoding="async" width="1706" height="950" src="https://prohomelab.com/_astro/2.D2Mw8QDX_29p7fe.webp"></p>
+<p>Set the root user's password, and specify the email address where the system will send notifications. Note that simply specifying an email address isn't enough - you'll later need to provide the values obtained from your email provider.</p>
+<p><img alt="Setting the root password and email address during PBS installation" loading="lazy" decoding="async" width="1689" height="944" src="https://prohomelab.com/_astro/4.Di72CKcr_NQd8k.webp"></p>
+<p>Next, choose the primary network interface (in case you have more than one), the hostname (I always later install a proper SSL certificate from Let's Encrypt), and the network values for the host and gateway.</p>
+<p><img alt="Configuring the network interface during Proxmox Backup Server installation" loading="lazy" decoding="async" width="1689" height="940" src="https://prohomelab.com/_astro/5.vh_TybHt_1zsBby.webp"></p>
+<h2 id="initial-configuration">Initial configuration</h2>
+<p>We're greeted with an interface fairly similar to PVE, which makes sense. Unification is an important point here.
+First, we go to the Administration > Repositories section.</p>
+<p><img alt="Administration - Repositories section in the PBS web interface" loading="lazy" decoding="async" width="2027" height="780" src="https://prohomelab.com/_astro/6.BGOjxCR7_J166J.webp"></p>
+<p>and connect the free repositories, while deactivating the paid repositories.</p>
+<p><img alt="Connecting the free repository and disabling the paid one in PBS" loading="lazy" decoding="async" width="1720" height="1025" src="https://prohomelab.com/_astro/7.B0eDZPDQ_Z1AJxtA.webp"></p>
+<p>after that, we go to the neighboring <strong>Updates</strong> menu and update the package database. If necessary, restart the <strong>PBS</strong> instance.</p>
+<h2 id="preparing-disk-space-and-configuring-the-datastore">Preparing disk space and configuring the Datastore</h2>
+<p>In our case, we already have a share (a dataset in TrueNAS) that already served as a datastore at some point. We also have a separate 512 GB SSD disk for daily backups.
+Let's start with preparing this disk. In the Storage > Disks section we see the list of connected disks. In my case, the system is installed on an NVMe disk. The SSD disk is recognized in the system as /dev/sda.</p>
+<p><img alt="List of disks in the Storage - Disks section, disk /dev/sda" loading="lazy" decoding="async" width="1324" height="524" src="https://prohomelab.com/_astro/8.DVqn6opy_ZxeQps.webp"></p>
+<p>First of all, we need to partition it. In the disks section, select the disk we need and choose <strong>Initialized Disk with GPT</strong>.</p>
+<p>After that, go to the command line menu (Shell).
+Install the <em>parted</em> utility with the command</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt install parted</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt install parted"><div></div></button></div></figure></div>
+<p>create a partition</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">parted /dev/sda -- mkpart primary ext4 0% 100%</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="parted /dev/sda -- mkpart primary ext4 0% 100%"><div></div></button></div></figure></div>
+<p>resulting in:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">/dev/sda1</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="/dev/sda1"><div></div></button></div></figure></div>
+<p>Format the partition.</p>
+<p>For PBS, the following are usually used:</p>
+<ul>
+<li><code>ext4</code> - simple and reliable</li>
+<li><code>xfs</code> - good for large backup storage</li>
+<li><code>zfs</code> - if you need RAID/compression/snapshots</li>
+</ul>
+<p>The simplest option:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">mkfs.ext4 /dev/sda1</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="mkfs.ext4 /dev/sda1"><div></div></button></div></figure></div>
+<p><img alt="Formatting the partition to ext4 with mkfs.ext4" loading="lazy" decoding="async" width="620" height="618" src="https://prohomelab.com/_astro/12.Ccuo_Ln8_Z20afLB.webp"></p>
+<p>Write down the resulting UUID somewhere, you'll need it later when mounting the new datastore for daily backups. However, if for some reason the UUID gets lost, you can always find it out with the command</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">blkid /dev/sda1</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="blkid /dev/sda1"><div></div></button></div></figure></div>
+<p>First, create two folders that will serve as directories for storing data:</p>
+<ul>
+<li>lenovo - daily backups</li>
+<li>truenas - long-term backups</li>
+</ul>
+<p><img alt="Creating the lenovo and truenas directories as mount points" loading="lazy" decoding="async" width="1411" height="713" src="https://prohomelab.com/_astro/14.cSYyuhj__ZEMF7E.webp"></p>
+<p>Now let's edit the fstab file</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">nano /etc/fstab</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="nano /etc/fstab"><div></div></button></div></figure></div>
+<p><img alt="Editing the /etc/fstab file in the nano editor" loading="lazy" decoding="async" width="1044" height="422" src="https://prohomelab.com/_astro/15.8XzZNYQ0_ZPU4jN.webp"></p>
+<p>this way we've mounted the corresponding partition and remote share to specific directories. Save the changes with Ctrl+S, exit with Ctrl+X.</p>
+<p>Enter the command</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">mount -a</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="mount -a"><div></div></button></div></figure></div>
+<p>If everything is fine and we haven't made any mistakes, the system will suggest reloading the daemon with the command</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">systemctl daemon-reload</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="systemctl daemon-reload"><div></div></button></div></figure></div>
+<p><img alt="Restarting the daemon with systemctl daemon-reload" loading="lazy" decoding="async" width="715" height="182" src="https://prohomelab.com/_astro/16.C2zrgQ_c_Z23kucC.webp"></p>
+<h2 id="creating-the-datastore">Creating the datastore</h2>
+<p>After we've mounted the shares and partitions we need into the corresponding directories, we proceed to creating the datastore. As I mentioned above, we'll have two:</p>
+<ul>
+<li>a local one for daily backups. Let's call it lenovo.</li>
+<li>a remote one for long-term storage, located on an NFS share on my TrueNAS.</li>
+</ul>
+<p>Go to the Datastore > Add Datastore section.</p>
+<p>Set the datastore name, choose its type. For the path, we need to enter an absolute path. We won't touch the GC Schedule and Prune Schedule menus for now. We'll configure that part later.</p>
+<p>Since I also need to connect an already existing datastore, I go into the advanced menu and check the <code>reuse existing datastore</code> option.
+In Proxmox Backup Server 4.2, the <strong>"Reuse existing datastore"</strong> option means:</p>
+<blockquote>
+<p>use an already existing folder with backups as a datastore, without creating it from scratch.</p>
+</blockquote>
+<p><img alt="The Add Datastore window with the Reuse existing datastore option" loading="lazy" decoding="async" width="1030" height="663" src="https://prohomelab.com/_astro/17.CfX97ifX_Z2gsFqY.webp"></p>
+<p>Repeat the same steps, but for the new datastore.</p>
+<p><img alt="The Add Datastore window for the new truenas datastore" loading="lazy" decoding="async" width="885" height="574" src="https://prohomelab.com/_astro/18.B83f0JE6_1qCl2E.webp"></p>
+<p>Since this is a new datastore, it's enough to give it a name and specify the storage path.</p>
+<p>As a result, we'll see the created datastores in the control panel, along with data on used storage volume, a list of jobs, and a summary.</p>
+<p><img alt="List of created datastores in the PBS panel" loading="lazy" decoding="async" width="2381" height="1030" src="https://prohomelab.com/_astro/19.BxPowsyE_Z2udnjB.webp"></p>
+<h2 id="connecting-the-created-datastores-to-proxmox-virtual-environment">Connecting the created datastores to Proxmox Virtual Environment</h2>
+<p>In Proxmox VE, you can't connect a datastore directly as a disk.</p>
+<p>You connect the <strong>PBS server</strong>, and the datastore is selected inside it.</p>
+<h3 id="make-sure-the-datastore-is-created-in-pbs">Make sure the datastore is created in PBS</h3>
+<p>On the PBS side, the datastores we need are already created.</p>
+<h3 id="adding-pbs-to-proxmox-ve">Adding PBS to Proxmox VE</h3>
+<p>In the PVE web interface:</p>
+<p>Datastore > Storage > Add > Proxmox Backup Server</p>
+<p><img alt="Adding Proxmox Backup Server storage in the PVE web interface" loading="lazy" decoding="async" width="1007" height="508" src="https://prohomelab.com/_astro/20.Ch7I7K4G_V6CUI.webp"></p>
+<h3 id="filling-in-the-parameters">Filling in the parameters</h3>
+<h4 id="server">Server</h4>
+<p>IP or DNS name of PBS:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#005CC5;--1:#79B8FF">192.168.1.10</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="192.168.1.10"><div></div></button></div></figure></div>
+<hr>
+<h4 id="datastore">Datastore</h4>
+<p>This is NOT a path in the file system.</p>
+<p>Specify the datastore name from PBS:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">truenas</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="truenas"><div></div></button></div></figure></div>
+<hr>
+<h3 id="username">Username</h3>
+<p>It's recommended to use a separate user, but you can use:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">root@pam</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="root@pam"><div></div></button></div></figure></div>
+<p>or:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">backup@pbs</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="backup@pbs"><div></div></button></div></figure></div>
+<p>backup is the name of the user created in PBS.</p>
+<hr>
+<h4 id="password">Password</h4>
+<p>The password of the PBS user.</p>
+<hr>
+<h4 id="fingerprint">Fingerprint</h4>
+<p>We get this from PBS:</p>
+<p>Dashboard > Show Fingerprint</p>
+<hr>
+<p><img alt="Getting the server Fingerprint in PBS" loading="lazy" decoding="async" width="1010" height="530" src="https://prohomelab.com/_astro/24.BM9VDJcg_Z1qnU52.webp"></p>
+<h3 id="connection-result">Connection result</h3>
+<p>After adding it in PVE, the storage will appear:</p>
+<p><img alt="Connected PBS storage in the PVE storage list" loading="lazy" decoding="async" width="301" height="613" src="https://prohomelab.com/_astro/25.DQT7dP7i_KHhag.webp"></p>
+<p>Now you can use it to back up VMs and CTs.</p>
+<hr>
+<h2 id="how-pve-works-together-with-pbs">How PVE works together with PBS</h2>
+<ul>
+<li>PBS stores data and deduplicates it</li>
+<li>PVE sends backups over the network</li>
+<li>The Datastore inside PBS manages the data</li>
+</ul>
+<p>For this, we first need to configure the backup schedule and where backups are stored (by default, PVE stores backups on its own LVM partition).</p>
+<p>In PVE, go to the Datacenter section.</p>
+<p>Datacenter > Backup</p>
+<p>and configure the backup schedule, the list of items to back up, and where we'll save the backups.</p>
+<p><img alt="Configuring a Backup Job in PVE" loading="lazy" decoding="async" width="1111" height="717" src="https://prohomelab.com/_astro/26.CKFy0MKw_6xca8.webp"></p>
+<p>Now every 24 hours PVE will create copies of the selected resources and save them to our <code>lenovo</code> storage, which is the datastore for daily backups in PBS.</p>
+<h2 id="configuring-backup-handling-in-pbs">Configuring backup handling in PBS</h2>
+<p>Go to the corresponding section in the datastore menu in PBS.</p>
+<p><img alt="Datastore section in the PBS control panel" loading="lazy" decoding="async" width="2132" height="610" src="https://prohomelab.com/_astro/27.Ck6RodmI_23Pq0b.webp"></p>
+<h3 id="configuring-the-prune-job-garbage-collection-and-verification-job-in-proxmox-backup-server">Configuring the Prune Job, Garbage Collection, and Verification Job in Proxmox Backup Server</h3>
+<h4 id="prune-job-retention-policy">Prune Job (retention policy)</h4>
+<p>The Prune Job is responsible for removing old snapshots according to a defined retention policy. It's important to understand that prune only removes references to backup snapshots, not the physical data right away.</p>
+<h5 id="configuring-the-prune-job">Configuring the Prune Job</h5>
+<p>Schedule</p>
+<p>You can use a simple schedule or cron:</p>
+<p>daily
+0 2 * * *</p>
+<h5 id="retention-policy-keep-options">Retention policy (keep options)</h5>
+<p>As an example of a reasonably balanced policy:</p>
+<p>keep-daily: 7
+keep-weekly: 4
+keep-monthly: 6</p>
+<p>This means:</p>
+<ul>
+<li>keep the last 7 days</li>
+<li>the last 4 weeks</li>
+<li>the last 6 months</li>
+</ul>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>Prune doesn't free up disk space immediately, since the data may remain in chunks until Garbage Collection runs.</p>
+</div>
+</div>
+<p><img alt="Configuring the Prune Job: retention policy (keep-daily, keep-weekly, keep-monthly)" loading="lazy" decoding="async" width="1054" height="580" src="https://prohomelab.com/_astro/28.DTuAhwRv_2nqwB4.webp"></p>
+<hr>
+<h4 id="garbage-collection-data-cleanup">Garbage Collection (data cleanup)</h4>
+<p>Garbage Collection removes physically unused chunks left over after pruning.</p>
+<p>How it works</p>
+<p>PBS uses deduplication, so a single chunk can be used across multiple backups. After pruning, references are removed, but the data itself remains until GC runs.</p>
+<p>GC goes through and removes:</p>
+<ul>
+<li>unused chunks</li>
+<li>stale data with no references</li>
+</ul>
+<h5 id="configuring-garbage-collection">Configuring Garbage Collection</h5>
+<p>Datastore → Garbage Collection → Add</p>
+<p>Example of a recommended schedule</p>
+<p>weekly
+0 3 * * 0 (every Sunday night)</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<ul>
+<li>requires high disk load</li>
+<li>better to run at night</li>
+<li>can take a long time on large datastores</li>
+</ul>
+</div>
+</div>
+<p><img alt="Configuring the Prune Job schedule for 04" loading="lazy" decoding="async" width="1246" height="718" src="https://prohomelab.com/_astro/29.eubf_ZQs_9N3Si.webp"></p>
+<hr>
+<h4 id="verification-job-integrity-check">Verification Job (integrity check)</h4>
+<p>The Verification Job checks data integrity and detects corrupted chunks.</p>
+<p>What it checks:</p>
+<ul>
+<li>corrupted blocks</li>
+<li>silent corruption</li>
+<li>correctness of the chunk structure</li>
+</ul>
+<p>Why this matters:</p>
+<p>Even SSDs and HDDs can:</p>
+<ul>
+<li>corrupt data without any OS errors</li>
+<li>suffer hidden degradation</li>
+</ul>
+<p>Verification helps detect this in advance.</p>
+<h5 id="configuring-the-verification-job">Configuring the Verification Job</h5>
+<p>Datastore → Verification Jobs → Add</p>
+<p>Schedule option</p>
+<p>Home lab: monthly
+Production: weekly or bi-weekly</p>
+<p><img alt="Adding a Verification Job to check datastore integrity" loading="lazy" decoding="async" width="1087" height="631" src="https://prohomelab.com/_astro/30.CcV8nr6q_Z2bYsVz.webp"></p>
+<hr>
+<h3 id="the-correct-order-of-tasks">The correct order of tasks</h3>
+<p>It's very important to follow the correct order of tasks:</p>
+<ol>
+<li>Prune Job</li>
+<li>Garbage Collection</li>
+<li>Verification Job</li>
+</ol>
+<hr>
+<h3 id="common-mistakes">Common mistakes</h3>
+<ul>
+<li>Only Prune without GC → space isn't freed</li>
+<li>Too frequent GC → unnecessary load on the SSD</li>
+<li>No Verification → risk of silent data corruption</li>
+</ul>
+<hr>
+<h3 id="summary">Summary</h3>
+<p>In the end, the three tasks work together:</p>
+<p>Prune manages the retention period
+GC frees up disk space
+Verification protects against data corruption</p>
+<p>Properly configuring these processes ensures stability, space savings, and reliability of the backup system.</p>
+<h2 id="configuring-synchronization-between-datastores">Configuring synchronization between datastores</h2>
+<p>Sync jobs are configured to fetch the contents of a datastore from a remote server (Remote) and copy it into a local datastore.</p>
+<p>You can manage sync jobs through the web interface - in the <strong>Sync Jobs</strong> tab of the Datastore panel, or inside the Datastore itself. You can also manage them via the <code>proxmox-backup-manager sync-job</code> command.</p>
+<p>The sync job configuration is stored in the file:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">/etc/proxmox-backup/sync.cfg</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="/etc/proxmox-backup/sync.cfg"><div></div></button></div></figure></div>
+<p>To create a new sync job, click the <strong>Add</strong> button in the GUI or use the <code>create</code> command in the CLI.</p>
+<p>After creating a sync job, you can:</p>
+<ul>
+<li>run it manually through the GUI</li>
+<li>run it via the CLI with the <code>run</code> command</li>
+<li>or set a schedule (see Calendar Events) so it runs regularly</li>
+</ul>
+<p>In my case, I want the copies from the lenovo datastore, where we store daily copies, to sync with the truenas datastore, where the long-term storage copies will be kept.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>as you understand, the backup schedules for different datastores will differ</p>
+</div>
+</div>
+<p><img alt="Sync Jobs tab in the PBS Datastores section" loading="lazy" decoding="async" width="1084" height="449" src="https://prohomelab.com/_astro/31.7Bg-hZbW_2Nk5z.webp"></p>
+<p><img alt="Configuring a Sync Job: synchronizing the lenovo datastore with truenas" loading="lazy" decoding="async" width="1141" height="748" src="https://prohomelab.com/_astro/32.D8CwzRSz_ZN84hN.webp"></p>
+<hr>
+<h2 id="conclusions">Conclusions</h2>
+<p>Setting up Proxmox Backup Server isn't just about connecting a disk and creating storage - it's a full-fledged system for managing the lifecycle of backups.</p>
+<p>If you're not on Proxmox, or you just want something more general-purpose, take a look at <a href="https://prohomelab.com/en/posts/duplicati/">Duplicati</a> or <a href="https://prohomelab.com/en/posts/zerobyte/">Zerobyte</a> - both work fine without being tied to a specific hypervisor.</p>
+<p>A properly configured combination of <strong>datastore + prune + garbage collection + verification + sync job</strong> provides a complete set of mechanisms for reliable, scalable backups.</p>
+<hr>
+<h3 id="key-advantages-of-the-system">Key advantages of the system</h3>
+<ul>
+<li><strong>Controlled data retention (Prune Jobs)</strong>
+Let you set a retention policy and prevent the disk from filling up.</li>
+<li><strong>Freeing disk space (Garbage Collection)</strong>
+Removes unused chunk data left after snapshots are deleted.</li>
+<li><strong>Integrity checking (Verification Jobs)</strong>
+Detects data corruption and silent corruption before it becomes a problem.</li>
+<li><strong>Synchronization between servers (Sync Jobs)</strong>
+Allows copying a datastore from a remote PBS to a local or backup server.
+This is used for:
+<ul>
+<li>backup replication</li>
+<li>offsite storage</li>
+<li>protection against loss of the primary server</li>
+</ul>
+</li>
+<li><strong>Process automation</strong>
+All tasks can run on a schedule without manual intervention.</li>
+</ul>
+<p>When properly configured, Proxmox Backup Server becomes a full-fledged, production-level backup system that:</p>
+<ul>
+<li>makes efficient use of disk space</li>
+<li>ensures high storage reliability</li>
+<li>allows you to build distributed and fault-tolerant setups</li>
+<li>minimizes manual maintenance</li>
+</ul>
+<p>It's precisely the combination of prune, GC, verification, and sync that turns PBS into more than just storage - it becomes a complete data lifecycle management system.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Zerobyte - Backup Automation for Self-Hosted Infrastructure</title>
+      <link>https://prohomelab.com/en/posts/zerobyte/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/zerobyte/</guid>
+      <pubDate>Fri, 24 Apr 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Backup</category>
+      <category>Backup</category>
+      <category>Docker</category>
+      <category>Zerobyte</category>
+      <category>Self-Hosting</category>
+      <description>A step-by-step guide to installing and configuring Zerobyte for backup automation in self-hosted infrastructure and homelabs.</description>
+      <content:encoded><![CDATA[<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>If you enjoyed this article, you can become a sponsor on <a href="https://boosty.to/stilicho2011">Boosty</a>.</p>
+</div>
+</div>
+<h2 id="zerobyte---backup-automation-for-homelab">Zerobyte - backup automation for Homelab</h2>
+<p>Backups are one of the key responsibilities of any infrastructure.<br>
+In a <strong><a href="https://prohomelab.com/en/posts/homelabbing/">homelab</a></strong> or self-hosted environment, it's important to have a system that:</p>
+<ul>
+<li>runs backups automatically</li>
+<li>supports encryption</li>
+<li>can work with cloud storage</li>
+<li>has a convenient management interface</li>
+</ul>
+<p>That's exactly the job <strong><a href="https://github.com/nicotsx/zerobyte">Zerobyte</a></strong> does.</p>
+<p>In this article, we'll cover:</p>
+<ul>
+<li>what Zerobyte is</li>
+<li>how to install it via Docker</li>
+<li>how to configure your first backup</li>
+<li>how to restore data</li>
+</ul>
+<hr>
+<h2 id="what-is-zerobyte">What is Zerobyte</h2>
+<p><strong>Zerobyte</strong> is a backup automation tool that helps store data across various storage backends. Built on top of <strong><a href="https://restic.net/">Restic</a></strong>, it provides a modern web interface for scheduling, managing, and monitoring encrypted backups of your remote storage.</p>
+<p>Project site and docs: <a href="https://zerobyte.app">zerobyte.app</a><br>
+Source code: <a href="https://github.com/nicotsx/zerobyte">github.com/nicotsx/zerobyte</a></p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>Zerobyte is still at version <strong>0.x.x</strong> and can change significantly from version to version. The project is under active development.</p>
+</div>
+</div>
+<p>After I released a video about the <a href="https://prohomelab.com/en/posts/best-apps-2025/">best new apps of 2025</a>, where I talked about Zerobyte among others, I got a lot of messages asking why I didn't cover one solution or another. According to whoever's asking, the app they personally use is always the best one out there :)
+Below, I've tried to put together a table comparing the features of the most popular solutions.</p>
+<p><strong>Zerobyte's features:</strong></p>
+<ul>
+<li>Automatic backup with encryption, compression, and retention policies, implemented via <strong>Restic</strong></li>
+<li>Flexible scheduling for automatic backup jobs, with fine-grained retention policy tuning</li>
+<li>End-to-end encryption, protecting data at every stage</li>
+<li>Support for multiple protocols: backups from NFS, SMB, WebDAV, SFTP, or local directories</li>
+</ul>
+<p>This makes Zerobyte a convenient alternative to solutions like:</p>
+<ul>
+<li><a href="https://prohomelab.com/en/posts/duplicati/">Duplicati</a></li>
+<li><a href="https://kopia.io/">Kopia</a></li>
+<li><a href="https://borgbackup.readthedocs.io/">BorgBackup</a></li>
+</ul>
+<p>If you're running a Proxmox setup, <a href="https://prohomelab.com/en/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server</a> is also worth a look, since it's built specifically for that ecosystem.</p>
+<hr>
+<h3 id="comparison-of-popular-backup-solutions">Comparison of popular backup solutions</h3>
+<table>
+<thead>
+<tr>
+<th>Backup tool</th>
+<th>Web UI</th>
+<th>Encryption</th>
+<th>Deduplication</th>
+<th>Docker</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Duplicati</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+</tr>
+<tr>
+<td>Kopia</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+</tr>
+<tr>
+<td>BorgBackup</td>
+<td>✖</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+</tr>
+<tr>
+<td>Zerobyte</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="duplicati-vs-zerobyte---comparing-backup-systems">Duplicati vs Zerobyte - comparing backup systems</h2>
+<p>Since in the previous article I talked about <a href="https://prohomelab.com/en/posts/duplicati/">Duplicati</a>, let's take a closer look and compare Duplicati with today's subject.</p>
+<p>Duplicati and Zerobyte are backup solutions aimed at self-hosted infrastructure and home labs. Both tools offer a web interface, automation, and support for remote storage, but they take different architectural approaches.</p>
+<p><strong>Duplicati</strong> is a self-contained backup system with its own engine.</p>
+<p><strong>Zerobyte</strong> is a web interface and backup job manager built on top of the <strong>restic</strong> backup engine.</p>
+<hr>
+<h2 id="quick-comparison-table">Quick comparison table</h2>
+<table>
+<thead>
+<tr>
+<th>Criteria</th>
+<th>Duplicati</th>
+<th>Zerobyte</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Solution type</td>
+<td>Self-contained backup system</td>
+<td>Backup manager</td>
+</tr>
+<tr>
+<td>Backup engine</td>
+<td>Own</td>
+<td>Restic</td>
+</tr>
+<tr>
+<td>Architecture</td>
+<td>Monolithic application</td>
+<td>Web UI + restic backend</td>
+</tr>
+<tr>
+<td>Interface</td>
+<td>Web UI + CLI</td>
+<td>Web UI (repos can be opened with restic CLI)</td>
+</tr>
+<tr>
+<td>Encryption</td>
+<td>AES-256</td>
+<td>Restic's built-in encryption</td>
+</tr>
+<tr>
+<td>Deduplication</td>
+<td>Block-level deduplication</td>
+<td>Restic's deduplication</td>
+</tr>
+<tr>
+<td>Incremental backups</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Compression</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>File versioning</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>File restore</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Task scheduler</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Cloud storage support</td>
+<td>Yes</td>
+<td>Via restic or rclone</td>
+</tr>
+<tr>
+<td>Local storage</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>S3 support</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>WebDAV support</td>
+<td>Yes</td>
+<td>As a source; as storage via rclone</td>
+</tr>
+<tr>
+<td>SFTP support</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>rclone support</td>
+<td>Yes (rclone binary required)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Multiple job management</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Snapshot control</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Logging and monitoring</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Open source</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Project maturity</td>
+<td>High</td>
+<td>New project</td>
+</tr>
+<tr>
+<td>Ease of installation</td>
+<td>Very simple</td>
+<td>Simple</td>
+</tr>
+<tr>
+<td>Configuration flexibility</td>
+<td>Medium</td>
+<td>High</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="solution-architecture">Solution architecture</h2>
+<h3 id="duplicati">Duplicati</h3>
+<p>Duplicati is a fully self-contained backup system.<br>
+The app includes:</p>
+<ul>
+<li>a backup engine</li>
+<li>a web interface</li>
+<li>a scheduling system</li>
+<li>cloud storage support</li>
+<li>a deduplication mechanism</li>
+<li>encryption</li>
+</ul>
+<p>Thanks to this, Duplicati can be installed as a single app and used right away to create backups.</p>
+<hr>
+<h3 id="zerobyte">Zerobyte</h3>
+<p>Zerobyte works differently. It's a management interface for <strong>restic</strong>, a popular backup engine.</p>
+<p>Zerobyte adds:</p>
+<ul>
+<li>a web management panel</li>
+<li>backup job creation</li>
+<li>schedule management</li>
+<li>snapshot browsing</li>
+<li>file restore</li>
+<li>centralized management of multiple repositories</li>
+</ul>
+<p>Essentially, Zerobyte acts as a <strong>management panel for restic-based infrastructure</strong>. And that comes with a nice bonus: the repositories it creates are plain restic repositories. If something happens to Zerobyte itself, you can still get your data out with regular <code>restic</code> from the command line (more on that in the restore section below).</p>
+<hr>
+<h2 id="supported-storage">Supported storage</h2>
+<h3 id="duplicati-1">Duplicati</h3>
+<p>Duplicati supports a large number of cloud services:</p>
+<ul>
+<li>Amazon S3</li>
+<li>Backblaze B2</li>
+<li>Google Drive</li>
+<li>OneDrive</li>
+<li>Dropbox</li>
+<li>WebDAV</li>
+<li>SFTP</li>
+<li>rclone (requires the rclone binary)</li>
+<li>local disks</li>
+<li>NAS</li>
+</ul>
+<hr>
+<h3 id="zerobyte-1">Zerobyte</h3>
+<p>Zerobyte has two separate concepts, each with its own list.</p>
+<p><strong>Sources (Volumes)</strong> - where the data comes from:</p>
+<ul>
+<li>local directories (mounted into the container)</li>
+<li>NFS</li>
+<li>SMB</li>
+<li>WebDAV</li>
+<li>SFTP</li>
+<li>rclone</li>
+</ul>
+<p><strong>Repositories</strong> - where the backups go:</p>
+<ul>
+<li>local directories</li>
+<li>S3-compatible storage (Amazon S3, MinIO, Wasabi, etc.) and Cloudflare R2</li>
+<li>Google Cloud Storage</li>
+<li>Azure Blob Storage</li>
+<li>REST Server (restic)</li>
+<li>SFTP</li>
+<li>rclone - and through it, 40+ more cloud providers, including Google Drive, Dropbox, and OneDrive</li>
+</ul>
+<p>So when it comes to storage, the two tools end up roughly even: both can work through rclone, it's just that in Zerobyte it's a built-in repository type right in the UI.</p>
+<hr>
+<h2 id="main-advantages">Main advantages</h2>
+<h3 id="advantages-of-duplicati">Advantages of Duplicati</h3>
+<ul>
+<li>very simple installation</li>
+<li>a ready-made backup system</li>
+<li>supports the most common cloud storage providers</li>
+<li>a mature, well-known project</li>
+<li>a convenient web interface</li>
+</ul>
+<p>Duplicati is a great fit for:</p>
+<ul>
+<li>home servers</li>
+<li>NAS</li>
+<li>personal backups</li>
+<li>small homelab infrastructures</li>
+</ul>
+<hr>
+<h3 id="advantages-of-zerobyte">Advantages of Zerobyte</h3>
+<ul>
+<li>modern architecture</li>
+<li>built on the reliable restic backup engine</li>
+<li>rclone storage support</li>
+<li>flexible repository handling</li>
+<li>convenient snapshot management</li>
+<li>backups are stored in the standard restic format and aren't tied to Zerobyte itself</li>
+</ul>
+<p>Zerobyte is better suited for:</p>
+<ul>
+<li>advanced homelabs</li>
+<li>infrastructures with multiple backup jobs</li>
+<li>restic users</li>
+</ul>
+<hr>
+<h2 id="when-to-choose-duplicati">When to choose Duplicati</h2>
+<p>Choose Duplicati if:</p>
+<ul>
+<li>you need a simple backup system</li>
+<li>fast setup matters</li>
+<li>you need support for popular cloud services</li>
+<li>your infrastructure is small</li>
+</ul>
+<p>Duplicati is a good choice for most home servers.</p>
+<hr>
+<h2 id="when-to-choose-zerobyte">When to choose Zerobyte</h2>
+<p>Choose Zerobyte if:</p>
+<ul>
+<li>you already use restic</li>
+<li>you need a more flexible backup system architecture</li>
+<li>you want backups you can open without the app itself - with plain restic</li>
+<li>you have multiple backup repositories</li>
+</ul>
+<hr>
+<h2 id="duplicati-vs-zerobyte-comparison-summary">Duplicati vs Zerobyte comparison summary</h2>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Best suited for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Duplicati</td>
+<td>Simple, fast backups for a home server</td>
+</tr>
+<tr>
+<td>Zerobyte</td>
+<td>Managing restic-based backups and more flexible infrastructures</td>
+</tr>
+</tbody>
+</table>
+<p>Both tools are open source and can be used in a self-hosted environment. The choice comes down to whether you want a <strong>ready-made backup client (Duplicati)</strong> or a <strong>restic-based backup infrastructure manager (Zerobyte)</strong>.</p>
+<h2 id="main-features-of-the-zerobyte-web-interface">Main features of the Zerobyte web interface</h2>
+<h3 id="web-interface">Web interface</h3>
+<p>Zerobyte offers a modern web management panel, through which you can:</p>
+<ul>
+<li>create backup jobs</li>
+<li>run backups manually</li>
+<li>track status</li>
+<li>restore files</li>
+</ul>
+<hr>
+<h3 id="using-restic">Using Restic</h3>
+<p>Under the hood, Zerobyte uses <strong>Restic</strong>, which gives you:</p>
+<ul>
+<li>deduplication</li>
+<li>encryption</li>
+<li>incremental backups</li>
+<li>support for many storage backends</li>
+</ul>
+<hr>
+<h2 id="docker-compose-file-from-the-video">Docker Compose file from the video</h2>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Declaration of all services (containers) managed by Docker Compose</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">zerobyte</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Service name (logical container name)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">ghcr.io/nicotsx/zerobyte:latest</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Container image. For a 0.x project it's safer to pin a version (e.g. :v0.43) instead of latest</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">zerobyte</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Explicit container name for convenience (docker ps, logs, etc.)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Automatically restart the container on crash (except manual stop)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">cap_add</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SYS_ADMIN</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Adds extended privileges (needed for FUSE and working with remote shares). If backing up local data, comment out this line</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SYS_PTRACE</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Allows tracing processes. Not present in the current official example</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#ports:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "4096:4096" # Publish the port externally (not needed if using Traefik)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">devices</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/dev/fuse:/dev/fuse</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Pass through the FUSE device for rclone/mounting. If backing up local data, comment out this line</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Environment variables for configuring the app</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">TZ=Europe/Moscow</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Container timezone (important for schedules and logs)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">BASE_URL=https://zerobyte.stilicho.ru</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># The URL you use to open Zerobyte (https:// enables secure cookies)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">APP_SECRET=&#x3C;generate_with_openssl_rand_-hex_32></span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Secret used to encrypt sensitive data in the database (32+ chars, must be your own)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">security_opt</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Relaxing container security mechanisms</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">seccomp:unconfined</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Disables the seccomp profile (allows more system calls). Not present in the current official example</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">apparmor:unconfined</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Disables the AppArmor profile (removes access restrictions). Not present in the current official example</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Mounting directories (data and file access)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/etc/localtime:/etc/localtime:ro</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Sync time with the host (read-only)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/stilicho/docker/zerobyte:/var/lib/zerobyte</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Zerobyte data (config, database, state)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/stilicho/docker:/mydata</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Directory with data to back up (source for volumes)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Connect to the proxy network (for use with Traefik)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Labels for automatic Traefik configuration</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Enable Traefik handling for this container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte.entrypoints=web"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># HTTP entrypoint (port 80)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte.rule=Host(`zerobyte.stilicho.ru`)"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Routing by domain</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.zerobyte-https-redirect.redirectscheme.scheme=https"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Redirect HTTP → HTTPS</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte.middlewares=zerobyte-https-redirect"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Apply the redirect</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte-secure.entrypoints=websecure"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># HTTPS entrypoint (port 443)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte-secure.rule=Host(`zerobyte.stilicho.ru`)"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># HTTPS routing rule</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte-secure.tls=true"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Enable TLS (HTTPS)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte-secure.tls.certresolver=cloudflare"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Issue the certificate via Cloudflare</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte-secure.service=zerobyte"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Bind to the service</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.zerobyte.loadbalancer.server.port=4096"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Internal app port inside the container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Specify the network for Traefik</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Declaration of networks</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Network name</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Network already exists (Docker Compose won't create it)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services: # Declaration of all services (containers) managed by Docker Compose  zerobyte: # Service name (logical container name)    image: ghcr.io/nicotsx/zerobyte:latest # Container image. For a 0.x project it&#x27;s safer to pin a version (e.g. :v0.43) instead of latest    container_name: zerobyte # Explicit container name for convenience (docker ps, logs, etc.)    restart: unless-stopped # Automatically restart the container on crash (except manual stop)    cap_add:      - SYS_ADMIN # Adds extended privileges (needed for FUSE and working with remote shares). If backing up local data, comment out this line      - SYS_PTRACE # Allows tracing processes. Not present in the current official example    #ports:    #  - &#x22;4096:4096&#x22; # Publish the port externally (not needed if using Traefik)    devices:      - /dev/fuse:/dev/fuse # Pass through the FUSE device for rclone/mounting. If backing up local data, comment out this line    environment: # Environment variables for configuring the app      - TZ=Europe/Moscow # Container timezone (important for schedules and logs)      - BASE_URL=https://zerobyte.stilicho.ru # The URL you use to open Zerobyte (https:// enables secure cookies)      - APP_SECRET=<generate_with_openssl_rand_-hex_32> # Secret used to encrypt sensitive data in the database (32+ chars, must be your own)    security_opt: # Relaxing container security mechanisms      - seccomp:unconfined # Disables the seccomp profile (allows more system calls). Not present in the current official example      - apparmor:unconfined # Disables the AppArmor profile (removes access restrictions). Not present in the current official example    volumes: # Mounting directories (data and file access)      - /etc/localtime:/etc/localtime:ro # Sync time with the host (read-only)      - /home/stilicho/docker/zerobyte:/var/lib/zerobyte # Zerobyte data (config, database, state)      - /home/stilicho/docker:/mydata # Directory with data to back up (source for volumes)    networks:      proxy: # Connect to the proxy network (for use with Traefik)    labels: # Labels for automatic Traefik configuration      - &#x22;traefik.enable=true&#x22; # Enable Traefik handling for this container      - &#x22;traefik.http.routers.zerobyte.entrypoints=web&#x22; # HTTP entrypoint (port 80)      - &#x22;traefik.http.routers.zerobyte.rule=Host(&#x60;zerobyte.stilicho.ru&#x60;)&#x22; # Routing by domain      - &#x22;traefik.http.middlewares.zerobyte-https-redirect.redirectscheme.scheme=https&#x22; # Redirect HTTP → HTTPS      - &#x22;traefik.http.routers.zerobyte.middlewares=zerobyte-https-redirect&#x22; # Apply the redirect      - &#x22;traefik.http.routers.zerobyte-secure.entrypoints=websecure&#x22; # HTTPS entrypoint (port 443)      - &#x22;traefik.http.routers.zerobyte-secure.rule=Host(&#x60;zerobyte.stilicho.ru&#x60;)&#x22; # HTTPS routing rule      - &#x22;traefik.http.routers.zerobyte-secure.tls=true&#x22; # Enable TLS (HTTPS)      - &#x22;traefik.http.routers.zerobyte-secure.tls.certresolver=cloudflare&#x22; # Issue the certificate via Cloudflare      - &#x22;traefik.http.routers.zerobyte-secure.service=zerobyte&#x22; # Bind to the service      - &#x22;traefik.http.services.zerobyte.loadbalancer.server.port=4096&#x22; # Internal app port inside the container      - &#x22;traefik.docker.network=proxy&#x22; # Specify the network for Traefiknetworks: # Declaration of networks  proxy: # Network name    external: true # Network already exists (Docker Compose won&#x27;t create it)"><div></div></button></div></figure></div>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>The cap_add and devices sections grant excessive privileges. Only use them if you understand the possible consequences. For example, in my case, without these parameters I wasn't able to connect to an SMB share on TrueNAS.</p>
+</div>
+</div>
+<p>A few important points about this file (checked against the official docs):</p>
+<ul>
+<li><strong>APP_SECRET</strong> encrypts the secrets Zerobyte stores in its database - storage credentials, passwords, and so on. It needs to be a random string of 32+ characters; <code>openssl rand -hex 32</code> will do. Don't copy the value from someone else's example, and keep it in <code>.env</code> rather than directly in the compose file.</li>
+<li><strong>Container privileges.</strong> In the current official example, working with remote shares only needs <code>cap_add: SYS_ADMIN</code> and <code>/dev/fuse</code>. <code>SYS_PTRACE</code> and disabling seccomp/AppArmor aren't used there - if everything mounts fine without them, drop them. And if you only back up local folders, you can drop <code>SYS_ADMIN</code> and <code>/dev/fuse</code> as well: the docs describe that simplified setup separately.</li>
+<li><strong>Don't back Zerobyte up with itself.</strong> In this example, the whole <code>/home/stilicho/docker</code> folder is mounted as <code>/mydata</code>, and it also contains <code>/home/stilicho/docker/zerobyte</code> - Zerobyte's own database and local repositories (<code>/var/lib/zerobyte/repositories</code>). If you select all of <code>/mydata</code>, the backup will start copying itself. Exclude the <code>zerobyte</code> folder or pick specific subfolders in the job.</li>
+<li><strong><code>/var/lib/zerobyte</code> must live on a local disk.</strong> The docs explicitly warn against pointing it at a network share - you'll run into permission issues and a serious performance hit.</li>
+<li><strong>Don't expose Zerobyte to the internet.</strong> The project's authors strongly advise against making it reachable from outside. Traefik is here for HTTPS and subdomain access inside your own network, not for publishing it to the world.</li>
+</ul>
+<hr>
+<h2 id="working-with-the-app">Working with the app</h2>
+<p>The app is fairly lightweight - the image downloads quickly and spins up just as fast.
+After that, we go to the subdomain we assigned to our app, in my case <code>zerobyte.stilicho.ru</code>.</p>
+<p>We're greeted by an initial registration screen, where we need to set an admin login and password, provide an email address, and download a recovery key for restoring from a backup (in case that's ever needed).</p>
+<p>Initial registration screen</p>
+<p><img alt="Zerobyte admin registration screen" loading="lazy" decoding="async" width="2549" height="1275" src="https://prohomelab.com/_astro/0.S1rF9h12_2rMuMc.webp"></p>
+<p>Screen for entering registration details and the option to download the recovery key</p>
+<p><img alt="Recovery key download screen with password confirmation" loading="lazy" decoding="async" width="2553" height="1292" src="https://prohomelab.com/_astro/1.DR3_YEsw_fc7Fp.webp"></p>
+<div class="phl-callout" data-callout="important">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Important</span></div>
+<div class="phl-callout-content">
+<p>The recovery key is a <code>restic.pass</code> file - the restic password that encrypts every repository created in Zerobyte. Without it, your encrypted backups can't be opened. Keep it off the server you're backing up, for example in a password manager like <a href="https://prohomelab.com/en/posts/vaultwarden/">Vaultwarden</a>. Otherwise the key to the safe ends up locked inside the safe.</p>
+</div>
+</div>
+<p>We're greeted by a pleasant retro interface (angular, like my Mercedes W124) in red and black tones. If you're a Sith and also a fan of retro design, you'll love this interface.</p>
+<p><img alt="Zerobyte main screen: the Volumes section, still empty" loading="lazy" decoding="async" width="2467" height="1244" src="https://prohomelab.com/_astro/2.C8BIfIy4_1nfqRv.webp"></p>
+<p>Since there's a link to my video review at the beginning of the article, if you don't mind I'll keep the rest of this description brief.</p>
+<p>As I explained in the video, the user needs to configure the source location for backups and the destination resource where the backups will be sent.</p>
+<p>So the <code>Volumes</code> section is "what we're going to back up and where the files are located."</p>
+<p><img alt="Creating a volume with a backend choice: Directory, NFS, SMB, WebDAV, SFTP, rclone" loading="lazy" decoding="async" width="2554" height="1251" src="https://prohomelab.com/_astro/3.DlcKBMS4_Z170DSn.webp"></p>
+<p>The <code>Repositories</code> section handles configuring the destination resource where we back everything up to.</p>
+<p><img alt="Creating a repository with a backend choice: Local, S3, Cloudflare R2, Google Cloud Storage, Azure Blob Storage, REST Server, SFTP, rclone" loading="lazy" decoding="async" width="2544" height="1270" src="https://prohomelab.com/_astro/4.B90OaUpo_1WTYu0.webp"></p>
+<p>The <code>Backups</code> section lets us fine-tune the backup jobs, including, but not limited to: when and at what time to start the backup process, how many copies to keep, and so on.</p>
+<p><img alt="Creating a backup job: name, repository, frequency, execution time, backup paths" loading="lazy" decoding="async" width="2526" height="1291" src="https://prohomelab.com/_astro/5.DNhbhOWN_Zt9P30.webp"></p>
+<p>In the <code>Notifications</code> section, we configure how and through what channel we want to receive notifications.</p>
+<p><img alt="Creating a notification destination with a type choice: Email, Slack, Discord, Gotify, Ntfy, Pushover, Telegram, Webhook, Shoutrrr" loading="lazy" decoding="async" width="2541" height="1262" src="https://prohomelab.com/_astro/6.u4jVetMF_t4Axi.webp"></p>
+<p>And down at the bottom, the administration settings.</p>
+<p><img alt="Settings → Account section: user profile, password change, recovery key" loading="lazy" decoding="async" width="2471" height="1250" src="https://prohomelab.com/_astro/7.BwTfgvla_1MLCHw.webp"></p>
+<hr>
+<h2 id="restoring-data">Restoring data</h2>
+<p>A backup you've never tried restoring from isn't a backup - it's a hope. So here's a quick look at how to get your data back.</p>
+<h3 id="restoring-through-the-ui">Restoring through the UI</h3>
+<p>Restores start from the <code>Backups</code> section:</p>
+<ol>
+<li>Open the job that holds the data you need.</li>
+<li>Pick the snapshot from the date you want.</li>
+<li>In the file browser, select the files or folders you need. If you don't select anything, the whole snapshot you're viewing gets restored.</li>
+<li>Choose where to restore: <strong>Original location</strong> or <strong>Custom location</strong> (a different folder).</li>
+<li>Decide what to do with files that already exist, and click <code>Restore</code>.</li>
+</ol>
+<p>Besides restoring to the server, there's a <strong>Download</strong> button that pulls the selected file or folder straight into your browser. Handy when you just need to grab a file or two onto your own machine.</p>
+<p>For Docker services, it's safer to restore not on top of the live files but into a separate folder (Custom location), check what's there, and only then move what you need. Zerobyte's own docs recommend the same. And if you do restore to the original location, stop the container whose files you're bringing back first, and make sure the folder is mounted into Zerobyte <strong>without</strong> <code>:ro</code>: you can back up from a read-only folder, but you can't restore into one.</p>
+<h3 id="if-zerobyte-itself-is-gone">If Zerobyte itself is gone</h3>
+<p>This is where being a layer on top of restic really pays off. Zerobyte's repositories are plain restic repositories, so if the Zerobyte server dies, you can get your data out with the standard <code>restic</code> tool from any machine. All you need is access to the storage and the recovery key (<code>restic.pass</code>):</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># list the snapshots in the repository</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">restic</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-r</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/path/to/repository</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--password-file</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">restic.pass</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">snapshots</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># restore the latest snapshot into a separate folder</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">restic</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-r</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/path/to/repository</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--password-file</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">restic.pass</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">restore</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">latest</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--target</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/tmp/restore</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="restic -r /path/to/repository --password-file restic.pass snapshotsrestic -r /path/to/repository --password-file restic.pass restore latest --target /tmp/restore"><div></div></button></div></figure></div>
+<p>For S3, SFTP, and other storage, use the repository address in restic's format (e.g. <code>s3:...</code> or <code>sftp:...</code>) instead of a local path, along with the matching credentials.</p>
+<h3 id="testing-your-backups">Testing your backups</h3>
+<p>Every now and then, do a <strong>test restore</strong>: grab a couple of folders, restore them to a separate location, and make sure what's inside is what you expect. It takes a couple of minutes and will one day save you a whole lot of nerves.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Duplicati - Encrypted Backups for Your Home Server</title>
+      <link>https://prohomelab.com/en/posts/duplicati/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/duplicati/</guid>
+      <pubDate>Fri, 17 Apr 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Backup</category>
+      <category>Backup</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <category>Duplicati</category>
+      <description>A step-by-step guide to installing and configuring Duplicati for automatic encrypted backups on a home server or in the cloud</description>
+      <content:encoded><![CDATA[<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>If you enjoyed this article, you can become a sponsor on <a href="https://boosty.to/stilicho2011">Boosty</a>.</p>
+</div>
+</div>
+<h2 id="duplicati--docker---automatic-backups-in-10-minutes">Duplicati + Docker - automatic backups in 10 minutes</h2>
+<p>Backups are one of the most important parts of any infrastructure.<br>
+Even in a <a href="https://prohomelab.com/en/posts/homelabbing/">homelab</a> - and really, everywhere else too - losing data can be very costly. And it's not just about the data itself, but also the time it takes to restore it. It's quite possible the latter ends up being even more expensive.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>I have a video on my YouTube channel about installing and configuring <a href="https://prohomelab.com/en/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server</a>. But that's a fairly specific solution, and not everyone runs Proxmox in their homelab. If you'd rather have a more flexible, restic-based setup, <a href="https://prohomelab.com/en/posts/zerobyte/">Zerobyte</a> is worth a look too.</p>
+</div>
+</div>
+<p>In this article, we'll cover:</p>
+<ul>
+<li>what Duplicati is</li>
+<li>how to install it on a server</li>
+<li>how to set up automatic backups</li>
+<li>how to store backups locally and in the cloud</li>
+<li>how to restore your data and make sure the backup actually works</li>
+</ul>
+<h2 id="what-is-duplicati">What is Duplicati</h2>
+<p><strong><a href="https://duplicati.com/">Duplicati</a></strong> is an open-source backup system that supports:</p>
+<ul>
+<li>AES-256 encryption</li>
+<li>deduplication</li>
+<li>incremental backups</li>
+<li>cloud storage</li>
+<li>a web management interface</li>
+</ul>
+<p>Supported storage:</p>
+<ul>
+<li>S3</li>
+<li>Backblaze B2</li>
+<li>Google Drive</li>
+<li>WebDAV</li>
+<li>FTP / SFTP</li>
+<li>local disks</li>
+<li>NAS</li>
+</ul>
+<p>This makes it a great solution for <strong>Homelab and self-hosted infrastructure</strong>, since it covers everything a typical homelabber needs.</p>
+<hr>
+<h2 id="key-features">Key features</h2>
+<p>Among the main features, it's probably worth highlighting:</p>
+<h3 id="encryption">Encryption</h3>
+<p>All data can be encrypted client-side before being sent.</p>
+<p>Supported:</p>
+<ul>
+<li>AES-256</li>
+<li>passphrase protection</li>
+</ul>
+<p>This means even the cloud provider can't read your data. In other words, you can be relatively at ease about backups in the cloud and about nobody training their AI models on your data.</p>
+<hr>
+<h3 id="incremental-backups">Incremental backups</h3>
+<p>Duplicati stores data in blocks.</p>
+<p>This lets it:</p>
+<ul>
+<li>save only the changes</li>
+<li>reduce storage size</li>
+<li>speed up backups</li>
+</ul>
+<p>Since the system only saves the information that actually changed, everything happens very quickly, and it's easier for us to plan disk space usage.</p>
+<hr>
+<h3 id="web-interface">Web interface</h3>
+<p>After installation, you get a convenient web panel.</p>
+<p>Through it you can:</p>
+<ul>
+<li>create jobs</li>
+<li>manage the schedule</li>
+<li>restore files</li>
+<li>check backup status</li>
+</ul>
+<p>There's not much to explain here, honestly. Of course, seasoned admins might turn up their noses - "a graphical interface, how tacky." But don't fall for the provocation. A GUI is fine. As long as it wasn't drawn by a middle-schooler.</p>
+<hr>
+<h2 id="installation---the-docker-compose-file-from-the-video">Installation - the docker-compose file from the video</h2>
+<p>I used the build (image) from <a href="https://hub.docker.com/r/linuxserver/duplicati">linuxserver.io</a> as the most user-friendly option for a homelab.</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:   </span><span style="--0:#616972;--1:#99A0A6"># Section describing all Docker services</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">duplicati</span><span style="--0:#24292E;--1:#E1E4E8">:   </span><span style="--0:#616972;--1:#99A0A6"># Service name</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">lscr.io/linuxserver/duplicati:latest</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Docker image, latest Duplicati version from LinuxServer</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">duplicati</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Container name in Docker</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">hostname</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">duplicati</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Hostname inside the container</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">entrypoint</span><span style="--0:#24292E;--1:#E1E4E8">:   </span><span style="--0:#616972;--1:#99A0A6"># Override the container's entrypoint</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/init</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Uses the /init script provided by the LinuxServer image</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#ports:   # Publish container ports on the host</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - 8200:8200 # MGMT UI - Duplicati's management interface will be available on port 8200</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#expose:   # Port that will be visible to other containers on the Docker network</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - 8200</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:   </span><span style="--0:#616972;--1:#99A0A6"># Environment variables for the container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUID=0</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># User UID inside the container (0 = root, typically for testing/administration)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PGID=1000</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Group GID inside the container (should match your group on the host)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">TZ=Europe/Moscow</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Container timezone</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SETTINGS_ENCRYPTION_KEY=&#x3C;long_random_string></span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Key that encrypts Duplicati's settings (required)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DUPLICATI__WEBSERVICE_PASSWORD=&#x3C;web_ui_password></span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Web interface password (must be changed!)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># The container will automatically restart if it crashes, except on manual stop</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:   </span><span style="--0:#616972;--1:#99A0A6"># Mounting host directories into the container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/stilicho/docker/duplicati/backups:/backups</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Directory for storing backups</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/stilicho/docker/duplicati/config:/config</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Duplicati configuration and settings</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/stilicho/docker:/source</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Directory with source files to back up (can be changed)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:   </span><span style="--0:#616972;--1:#99A0A6"># Docker network the container will run in</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">proxy</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:   </span><span style="--0:#616972;--1:#99A0A6"># Labels for Traefik (reverse proxy)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Enable Traefik handling for this container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Use the proxy network for Traefik</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.duplicati.entrypoints=web"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Traefik entrypoint (port 80)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.duplicati.rule=Host(`duplicati.stilicho.ru`)"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Domain the service is available on</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.duplicati-https-redirect.redirectscheme.scheme=https"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Redirect HTTP -> HTTPS</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.duplicati.middlewares=duplicati-https-redirect"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Attach the redirect middleware</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.duplicati-secure.entrypoints=websecure"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Traefik HTTPS route (port 443)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.duplicati-secure.rule=Host(`duplicati.stilicho.ru`)"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># HTTPS domain</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.duplicati-secure.tls=true"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Enable TLS</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.duplicati-secure.tls.certresolver=cloudflare"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Use Cloudflare for certificate generation</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.duplicati-secure.service=duplicati"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Assign the service for the route</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.duplicati.loadbalancer.server.port=8200"</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Service port inside the container for Traefik</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6">#- traefik.http.routers.duplicati.middlewares=ipwhitelist@file   # (commented out) example of IP restriction</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:   </span><span style="--0:#616972;--1:#99A0A6"># Section describing networks</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:   </span><span style="--0:#616972;--1:#99A0A6"># Network named proxy</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Use an external Docker network created beforehand (e.g. for Traefik)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:   # Section describing all Docker services  duplicati:   # Service name    image: lscr.io/linuxserver/duplicati:latest   # Docker image, latest Duplicati version from LinuxServer    container_name: duplicati   # Container name in Docker    hostname: duplicati   # Hostname inside the container    entrypoint:   # Override the container&#x27;s entrypoint      - /init   # Uses the /init script provided by the LinuxServer image    #ports:   # Publish container ports on the host    #  - 8200:8200 # MGMT UI - Duplicati&#x27;s management interface will be available on port 8200    #expose:   # Port that will be visible to other containers on the Docker network    #  - 8200    environment:   # Environment variables for the container      - PUID=0   # User UID inside the container (0 = root, typically for testing/administration)      - PGID=1000   # Group GID inside the container (should match your group on the host)      - TZ=Europe/Moscow   # Container timezone      - SETTINGS_ENCRYPTION_KEY=<long_random_string> # Key that encrypts Duplicati&#x27;s settings (required)      - DUPLICATI__WEBSERVICE_PASSWORD=<web_ui_password> # Web interface password (must be changed!)    restart: unless-stopped   # The container will automatically restart if it crashes, except on manual stop    volumes:   # Mounting host directories into the container      - /home/stilicho/docker/duplicati/backups:/backups   # Directory for storing backups      - /home/stilicho/docker/duplicati/config:/config   # Duplicati configuration and settings      - /home/stilicho/docker:/source # Directory with source files to back up (can be changed)    networks:   # Docker network the container will run in      - proxy    labels:   # Labels for Traefik (reverse proxy)      - &#x22;traefik.enable=true&#x22;   # Enable Traefik handling for this container      - &#x22;traefik.docker.network=proxy&#x22;   # Use the proxy network for Traefik      - &#x22;traefik.http.routers.duplicati.entrypoints=web&#x22;   # Traefik entrypoint (port 80)      - &#x22;traefik.http.routers.duplicati.rule=Host(&#x60;duplicati.stilicho.ru&#x60;)&#x22;   # Domain the service is available on      - &#x22;traefik.http.middlewares.duplicati-https-redirect.redirectscheme.scheme=https&#x22;   # Redirect HTTP -> HTTPS      - &#x22;traefik.http.routers.duplicati.middlewares=duplicati-https-redirect&#x22;   # Attach the redirect middleware      - &#x22;traefik.http.routers.duplicati-secure.entrypoints=websecure&#x22;   # Traefik HTTPS route (port 443)      - &#x22;traefik.http.routers.duplicati-secure.rule=Host(&#x60;duplicati.stilicho.ru&#x60;)&#x22;   # HTTPS domain      - &#x22;traefik.http.routers.duplicati-secure.tls=true&#x22;   # Enable TLS      - &#x22;traefik.http.routers.duplicati-secure.tls.certresolver=cloudflare&#x22;   # Use Cloudflare for certificate generation      - &#x22;traefik.http.routers.duplicati-secure.service=duplicati&#x22;   # Assign the service for the route      - &#x22;traefik.http.services.duplicati.loadbalancer.server.port=8200&#x22;   # Service port inside the container for Traefik      #- traefik.http.routers.duplicati.middlewares=ipwhitelist@file   # (commented out) example of IP restrictionnetworks:   # Section describing networks    proxy:   # Network named proxy        external: true   # Use an external Docker network created beforehand (e.g. for Traefik)"><div></div></button></div></figure></div>
+<div class="phl-callout" data-callout="important">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Important</span></div>
+<div class="phl-callout-content">
+<ul>
+<li><strong>PUID=0</strong> means root inside the container. For production, it's better to use an unprivileged user.</li>
+<li><strong>SETTINGS_ENCRYPTION_KEY</strong> and <strong>DUPLICATI__WEBSERVICE_PASSWORD</strong> must be changed to your own values, otherwise the data and web interface are insecure. <code>SETTINGS_ENCRYPTION_KEY</code> encrypts Duplicati's settings database (which also holds your storage credentials and backup passphrases); the image requires at least 8 characters, letters and digits only. <code>openssl rand -hex 32</code> gives you a suitable one.</li>
+<li>The <code>entrypoint: /init</code> section is optional: <code>/init</code> is already the default entrypoint in linuxserver.io images.</li>
+<li>Backing up database folders (PostgreSQL, MariaDB, etc.) while they're running can leave you with an inconsistent copy. For those services, it's safer to dump the database before the backup or stop the container - Duplicati has the <code>--run-script-before</code> and <code>--run-script-after</code> options for exactly that.</li>
+<li><strong>/source</strong> mounts the entire <code>/home/stilicho/docker</code>; if you don't need to back up everything, it's better to narrow the path down to specific folders.</li>
+<li>The Traefik labels handle HTTPS and redirects. If Traefik isn't set up yet, they can be removed until the proxy is configured.</li>
+<li>Passwords and other sensitive values are best kept in a separate <code>.env</code> file.</li>
+</ul>
+</div>
+</div>
+<h2 id="working-with-the-app">Working with the app</h2>
+<p>Since I already have a video review, in this article I'll only cover the key details.</p>
+<p>After installing the app, go to the subdomain. A welcome screen will open, where you need to enter the admin password specified in the <code>docker-compose</code> file.</p>
+<p><img alt="Duplicati web UI login screen - entering the admin password" loading="lazy" decoding="async" width="2556" height="1288" src="https://prohomelab.com/_astro/0.cIYUohwA_BtNJ4.webp"></p>
+<p>We're met with a fairly minimalist menu with a "retina-burning" light mode. Dark mode can be enabled in the <code>Settings</code> section.</p>
+<p><img alt="Duplicati home screen with a list of backups (empty for now)" loading="lazy" decoding="async" width="2550" height="1267" src="https://prohomelab.com/_astro/1.ehqzJDvU_Z2dAzaX.webp"></p>
+<p>In the <code>Add backup</code> section, you can choose the action you want: create a new backup or restore one from a config file (if you have one).</p>
+<p><img alt="Add backup screen: choose to create a new backup or import from a file" loading="lazy" decoding="async" width="2558" height="1229" src="https://prohomelab.com/_astro/2.GqMFTk9p_ZDG7qk.webp"></p>
+<p>Since we need to create a backup, we choose the <code>Add new backup</code> option.</p>
+<p>In the menu that appears, we set the necessary parameters. If you want, you can enable encryption for the backup.</p>
+<p><img alt="General backup settings: name, description, and AES-256 encryption" loading="lazy" decoding="async" width="1086" height="826" src="https://prohomelab.com/_astro/3.CIvrach0_Z2uGgeS.webp"></p>
+<p>In the next two windows, we choose:</p>
+<ul>
+<li>where to store the backup</li>
+<li>which service to use</li>
+</ul>
+<p>In the video I chose <code>File system</code>, since I was backing up demo files to storage mounted via <code>fstab</code>.</p>
+<p><img alt="Choosing the destination storage type: File system, S3, SSH, and others" loading="lazy" decoding="async" width="1539" height="966" src="https://prohomelab.com/_astro/4.CyAWc-8u_1H9cPi.webp"></p>
+<p><img alt="Choosing the file system path for storing the backup" loading="lazy" decoding="async" width="982" height="906" src="https://prohomelab.com/_astro/5.BBL92pZk_Z20YfdO.webp"></p>
+<p>The app will offer to test the connection.</p>
+<p><img alt="Connection test dialog for the destination storage" loading="lazy" decoding="async" width="1135" height="878" src="https://prohomelab.com/_astro/6.DmmWRmb-_1Wi4ja.webp"></p>
+<p>If everything's fine, the next window lets you choose the files to back up.</p>
+<p>In our case, we choose the <code>source</code> directory, since that's what's specified in the <code>docker-compose</code> file:</p>
+<p><img alt="Choosing the source directory for backup" loading="lazy" decoding="async" width="2278" height="1227" src="https://prohomelab.com/_astro/7.BRzxDPzx_9SFSq.webp"></p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">/home/stilicho/docker:/source</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Directory with source files to back up (can be changed)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code=" /home/stilicho/docker:/source # Directory with source files to back up (can be changed)"><div></div></button></div></figure></div>
+<p>Next, we set the backup schedule.</p>
+<p><img alt="Backup schedule configuration - daily run at 13" loading="lazy" decoding="async" width="1235" height="756" src="https://prohomelab.com/_astro/8.CvNLVTiC_Z1L2xSp.webp"></p>
+<p>The next window lets you configure additional parameters: volume size, number of retained copies, and so on.</p>
+<p><img alt="Additional backup parameters: volume size and retention policy" loading="lazy" decoding="async" width="1139" height="880" src="https://prohomelab.com/_astro/9.COzr6tAB_Z1msWzL.webp"></p>
+<p>Once the setup is done, your backup jobs will appear in the <code>Home</code> section.</p>
+<p><img alt="The created backup job in the My backups list" loading="lazy" decoding="async" width="2251" height="1007" src="https://prohomelab.com/_astro/10.B7QouBt5_Z1U1EXw.webp"></p>
+<h2 id="restoring-and-testing-backups">Restoring and testing backups</h2>
+<p>A backup you've never tried restoring from isn't a backup - it's a hope. So let's at least walk through the restore process briefly; the video shows the whole thing step by step.</p>
+<h3 id="where-to-restore-from">Where to restore from</h3>
+<p>Restores start from the <code>Restore</code> section. You have three options:</p>
+<ul>
+<li><strong>From an existing job.</strong> If the job is in the list, just pick it. This is the fastest option: Duplicati gets the file information from its local database instead of pulling it from storage.</li>
+<li><strong>Restore from configuration</strong> - if you have an exported job configuration file (more on that below).</li>
+<li><strong>Direct restore from backup files</strong> - for when the server died and took Duplicati with it, and you're setting everything up from scratch. Enter the same storage you used when creating the backup, check it with <code>Test connection</code>, and type in the encryption passphrase. This one is slower: Duplicati has to download and process part of the data from storage to figure out which versions are there.</li>
+</ul>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>Without the encryption passphrase, an encrypted backup cannot be restored - period. Don't keep it on the same server you're backing up; put it somewhere like a password manager such as <a href="https://prohomelab.com/en/posts/vaultwarden/">Vaultwarden</a>. Otherwise you end up with the classic: the key to the safe is locked inside the safe.</p>
+</div>
+</div>
+<h3 id="choosing-the-version-files-and-options">Choosing the version, files, and options</h3>
+<p>Next, Duplicati shows the list of backup versions (the most recent one by default). Pick the version you need, select the files or folders, and move on to the restore options:</p>
+<ul>
+<li>restore files to their original location or to a different folder;</li>
+<li>if the target folder isn't empty, you can keep the existing files and save the restored copies next to them with a timestamp in the name;</li>
+<li>file permissions are <strong>not</strong> restored by default: the users and groups from the original machine may not exist on the new one.</li>
+</ul>
+<p>For Docker services, it's safer to restore not on top of the live files but into a separate folder, say <code>/backups/restore</code> (on the host that's <code>/home/stilicho/docker/duplicati/backups/restore</code>), and copy over what you need from there. And if you do restore to the original location, stop the container whose files you're bringing back first - otherwise the service may overwrite them mid-restore.</p>
+<h3 id="exporting-the-job-configuration">Exporting the job configuration</h3>
+<p>It's worth saving each job's configuration somewhere off the server. Expand the job in the list, click <code>Export...</code>, and choose <code>To File</code>. The file includes both the storage credentials and the backup passphrase, so when exporting either untick <code>Export passwords</code> (and keep the passwords elsewhere) or encrypt the file itself with a strong passphrase. To bring a job back from that file, go to <code>Add backup</code> → <code>Import from file</code>.</p>
+<h3 id="testing-your-backups">Testing your backups</h3>
+<p>After every backup, Duplicati downloads a few random files from storage and checks their integrity. By default that's one file of each type; you can change the amount with <code>--backup-test-samples</code> and <code>--backup-test-percentage</code>.</p>
+<p>But that check only tells you the files in storage aren't corrupted - not that your data can actually be rebuilt from them. So every now and then, do a <strong>test restore</strong>: grab a couple of folders, restore them to a separate location, and make sure what's inside is what you expect. It takes a couple of minutes and will one day save you a whole lot of nerves.</p>
+<p>For the truly bad day when Duplicati itself won't run, the project has <a href="https://docs.duplicati.com/technical-details/understanding-restore/disaster-recovery">separate disaster recovery tools</a> - a Python script and the RecoveryTool console utility, which can pull files straight out of the backup files.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

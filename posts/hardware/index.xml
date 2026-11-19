@@ -1,0 +1,652 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Hardware | ProHomeLab</title>
+    <link>https://prohomelab.com/posts/hardware/</link>
+    <description>Сайт про homelab, self-hosting и IT: инструкции по установке серверов, виртуализация, Docker, Proxmox, безопасность и автоматизация.</description>
+    <language>ru-RU</language>
+    <lastBuildDate>Sun, 19 Jul 2026 00:00:00 GMT</lastBuildDate>
+    <generator>ProHomeLab theme for Astro</generator>
+    <atom:link href="https://prohomelab.com/posts/hardware/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Автоматические снапшоты ZFS на Fedora Server 44 с помощью Sanoid</title>
+      <link>https://prohomelab.com/posts/fedora-server-sanoid-zfs-snapshots/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/fedora-server-sanoid-zfs-snapshots/</guid>
+      <pubDate>Sun, 19 Jul 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Self-Hosting</category>
+      <category>Fedora</category>
+      <category>NAS</category>
+      <category>Self-Hosting</category>
+      <category>Homelab</category>
+      <description>Продолжение цикла статей про домашний NAS на Fedora Server 44. На этот раз настраиваем автоматическое создание и очистку снапшотов ZFS с помощью Sanoid, разбираем политику хранения снимков и systemd-таймеры, а также знакомимся с Syncoid для будущей репликации данных на резервный сервер.</description>
+      <content:encoded><![CDATA[<h3 id="автоматические-снапшоты-zfs-с-помощью-sanoid-на-fedora-server-44">Автоматические снапшоты ZFS с помощью Sanoid на Fedora Server 44</h3>
+<p>Это продолжение <a href="https://prohomelab.com/posts/fedora-server-nas/">предыдущей статьи про создание собственного NAS на базе Fedora Server 44</a>. В прошлый раз мы установили <a href="https://prohomelab.com/posts/fedora-server-42-in-proxmox/">Fedora Server</a>, подключили ZFS, создали первый датасет и расшарили его по сети с помощью Samba.</p>
+<p>Сегодня продолжаем допиливать наш NAS. На этот раз займемся одной из самых крутых фишек ZFS - снапшотами. А чтобы не делать все вручную, сразу автоматизируем этот процесс с помощью утилиты <strong>Sanoid</strong>.</p>
+<h3 id="зачем-вообще-нужны-снапшоты">Зачем вообще нужны снапшоты?</h3>
+<p>ZFS - очень мощная и невероятно надежная файловая система. Конечно, без недостатков тоже не обошлось, но преимуществ у нее гораздо больше.</p>
+<p>Одна из главных фишек ZFS - это снапшоты. По сути, это снимок состояния файловой системы в определенный момент времени. Если что-то пошло не так - случайно удалили файлы, неудачно обновили систему или словили программу-вымогатель - можно просто откатиться к предыдущему состоянию, как будто ничего и не произошло.</p>
+<p>Конечно, совсем бесплатно это не работает. Снапшоты занимают место на диске, но только под измененные данные. Пока файлы не меняются, снапшот практически ничего не весит. Поэтому платить приходится только за изменения, а не за полную копию данных.</p>
+<p>В TrueNAS работа со снапшотами вынесена в удобный WebUI. В Fedora Server такого удобства нет - Cockpit пока не умеет полноценно работать с ZFS.</p>
+<p>Но ничего страшного, мы и тут не пропадем.</p>
+<h3 id="работа-со-снапшотами-вручную">Работа со снапшотами вручную</h3>
+<p>Для начала давайте посмотрим, как вообще работают снапшоты вручную.</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8"># Создать снапшот</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo zfs snapshot data/media@before-upgrade</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8"># Откатиться к снапшоту</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo zfs rollback data/media@before-upgrade</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8"># Проверить целостность пула (желательно выполнять примерно раз в месяц)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo zpool scrub data</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# Создать снапшотsudo zfs snapshot data/media@before-upgrade# Откатиться к снапшотуsudo zfs rollback data/media@before-upgrade# Проверить целостность пула (желательно выполнять примерно раз в месяц)sudo zpool scrub data"><div></div></button></div></figure></div>
+<p>Для локальной работы можно включить отображение каталога <code>.zfs</code>:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo zfs set snapdir=visible data/media</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo zfs set snapdir=visible data/media"><div></div></button></div></figure></div>
+<blockquote>
+<p>Однако Samba не отображает этот служебный каталог SMB-клиентам. Если вы хотите пользоваться снапшотами прямо из Проводника Windows через меню <strong>«Предыдущие версии»</strong>, потребуется настроить модуль <code>shadow_copy2</code>. Именно так эта возможность реализована в TrueNAS
+После этого в каталоге появится скрытая папка <code>.zfs</code>, внутри которой можно просматривать содержимое всех снапшотов. Иногда это оказывается очень удобно, если нужно быстро достать случайно удаленный файл без полного отката файловой системы.</p>
+</blockquote>
+<p>Однако, несмотря на то что ручной труд облагораживает человека, как и любой другой труд, память у нас штука ненадежная. ИИ-агентами лично я пользоваться не хочу, да и давать им доступ к своим данным - идея довольно смелая. Смелая, но глупая</p>
+<p>Поэтому давайте автоматизируем весь этот процесс с помощью широко известного в узких кругах набора утилит <strong>Sanoid</strong>.</p>
+<p>Sanoid умеет автоматически создавать снапшоты по расписанию, удалять устаревшие и поддерживать заданную политику хранения без какого-либо участия пользователя.</p>
+<h3 id="установка-sanoid">Установка Sanoid</h3>
+<h4 id="шаг-1-устанавливаем-необходимые-зависимости">Шаг 1. Устанавливаем необходимые зависимости</h4>
+<p>Для начала установим Git и все библиотеки, которые необходимы для работы Sanoid.</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo dnf install -y \</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">git \</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">perl-Config-IniFiles \</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">perl-Data-Dumper \</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">perl-Capture-Tiny \</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">perl-Getopt-Long \</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">lzop \</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">mbuffer \</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">mhash \</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">pv</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo dnf install -y \git \perl-Config-IniFiles \perl-Data-Dumper \perl-Capture-Tiny \perl-Getopt-Long \lzop \mbuffer \mhash \pv"><div></div></button></div></figure></div>
+<p>На Fedora все необходимые Perl-модули уже находятся в официальных репозиториях, поэтому дополнительно подключать EPEL или устанавливать пакеты через CPAN не потребуется.</p>
+<hr>
+<h4 id="шаг-2-загружаем-sanoid">Шаг 2. Загружаем Sanoid</h4>
+<p>Переходим во временную директорию и клонируем официальный репозиторий проекта.</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">cd /tmp</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo git clone https://github.com/jimsalterjrs/sanoid.git</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">cd sanoid</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cd /tmpsudo git clone https://github.com/jimsalterjrs/sanoid.gitcd sanoid"><div></div></button></div></figure></div>
+<p>Переключимся на последнюю стабильную версию.</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo bash -c 'cd /tmp/sanoid &#x26;&#x26; git checkout "$(git tag | grep "^v" | tail -n 1)"'</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo bash -c &#x27;cd /tmp/sanoid &#x26;&#x26; git checkout &#x22;$(git tag | grep &#x22;^v&#x22; | tail -n 1)&#x22;&#x27;"><div></div></button></div></figure></div>
+<p>Конечно, можно оставить и ветку <code>master</code>, но лично я предпочитаю использовать стабильные релизы. Домашний NAS - это не то место, где хочется неожиданно словить баг после очередного обновления.</p>
+<hr>
+<h4 id="шаг-3-устанавливаем-программу">Шаг 3. Устанавливаем программу</h4>
+<p>Теперь установим сам Sanoid.</p>
+<p>Копируем исполняемые файлы:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo cp sanoid syncoid findoid sleepymutex /usr/local/sbin</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo cp sanoid syncoid findoid sleepymutex /usr/local/sbin"><div></div></button></div></figure></div>
+<p>Создаем каталог для конфигурационных файлов:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo mkdir -p /etc/sanoid</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo mkdir -p /etc/sanoid"><div></div></button></div></figure></div>
+<p>Копируем настройки по умолчанию:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo cp sanoid.defaults.conf /etc/sanoid/</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo cp sanoid.defaults.conf /etc/sanoid/"><div></div></button></div></figure></div>
+<p>Создаем основной файл конфигурации:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo touch /etc/sanoid/sanoid.conf</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo touch /etc/sanoid/sanoid.conf"><div></div></button></div></figure></div>
+<p>И на всякий случай сохраним пример конфигурации. Он пригодится, если захотите настроить более сложные сценарии.</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo cp sanoid.conf /etc/sanoid/sanoid.example.conf</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo cp sanoid.conf /etc/sanoid/sanoid.example.conf"><div></div></button></div></figure></div>
+<p>На этом установка Sanoid завершена. Осталось научить систему запускать его автоматически.</p>
+<h2 id="настраиваем-автоматический-запуск">Настраиваем автоматический запуск</h2>
+<p>Поскольку Fedora использует <strong>systemd</strong>, логично доверить запуск Sanoid именно ему.</p>
+<p>Создадим два небольших сервиса: один будет отвечать за создание снапшотов, а второй - за удаление устаревших.</p>
+<h3 id="создаем-сервис-создания-снапшотов">Создаем сервис создания снапшотов</h3>
+<p>Создаем файл:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo nano /etc/systemd/system/sanoid.service</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo nano /etc/systemd/system/sanoid.service"><div></div></button></div></figure></div>
+<p>Вставляем следующее содержимое:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[Unit]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Description=Create ZFS Snapshots</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Requires=zfs.target</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">After=zfs.target</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Wants=sanoid-prune.service</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Before=sanoid-prune.service</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">ConditionFileNotEmpty=/etc/sanoid/sanoid.conf</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[Service]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Type=oneshot</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Environment=TZ=UTC</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">ExecStart=/usr/local/sbin/sanoid --take-snapshots --verbose</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[Unit]Description=Create ZFS SnapshotsRequires=zfs.targetAfter=zfs.targetWants=sanoid-prune.serviceBefore=sanoid-prune.serviceConditionFileNotEmpty=/etc/sanoid/sanoid.conf[Service]Type=oneshotEnvironment=TZ=UTCExecStart=/usr/local/sbin/sanoid --take-snapshots --verbose"><div></div></button></div></figure></div>
+<p>Здесь нет ничего сложного. Этот сервис просто запускает Sanoid, который создает снапшоты в соответствии с нашей будущей конфигурацией.</p>
+<p>Обратите внимание на строку:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">ConditionFileNotEmpty=/etc/sanoid/sanoid.conf</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="ConditionFileNotEmpty=/etc/sanoid/sanoid.conf"><div></div></button></div></figure></div>
+<p>Она запрещает запуск сервиса до тех пор, пока мы не создадим файл конфигурации. Очень полезная мелочь, которая избавляет от лишних ошибок при первой настройке.</p>
+<hr>
+<h3 id="создаем-сервис-очистки-снапшотов">Создаем сервис очистки снапшотов</h3>
+<p>Теперь создадим второй сервис.</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo nano /etc/systemd/system/sanoid-prune.service</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo nano /etc/systemd/system/sanoid-prune.service"><div></div></button></div></figure></div>
+<p>И вставляем:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[Unit]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Description=Prune ZFS Snapshots</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Requires=zfs.target</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">After=zfs.target sanoid.service</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">ConditionFileNotEmpty=/etc/sanoid/sanoid.conf</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[Service]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Type=oneshot</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Environment=TZ=UTC</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">ExecStart=/usr/local/sbin/sanoid --prune-snapshots --verbose</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[Install]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">WantedBy=sanoid.service</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[Unit]Description=Prune ZFS SnapshotsRequires=zfs.targetAfter=zfs.target sanoid.serviceConditionFileNotEmpty=/etc/sanoid/sanoid.conf[Service]Type=oneshotEnvironment=TZ=UTCExecStart=/usr/local/sbin/sanoid --prune-snapshots --verbose[Install]WantedBy=sanoid.service"><div></div></button></div></figure></div>
+<p>Этот сервис занимается уборкой: удаляет снапшоты, срок хранения которых уже закончился согласно нашей политике.</p>
+<p>Таким образом нам вообще не придется думать о том, когда чистить старые снимки - Sanoid сделает все сам.</p>
+<hr>
+<h3 id="создаем-таймер">Создаем таймер</h3>
+<p>Осталось научить systemd запускать Sanoid по расписанию.</p>
+<p>Создаем таймер:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo nano /etc/systemd/system/sanoid.timer</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo nano /etc/systemd/system/sanoid.timer"><div></div></button></div></figure></div>
+<p>И вставляем:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[Unit]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Description=Run Sanoid every 15 minutes</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Requires=sanoid.service</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[Timer]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">OnCalendar=*:0/15</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Persistent=true</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[Install]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">WantedBy=timers.target</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[Unit]Description=Run Sanoid every 15 minutesRequires=sanoid.service[Timer]OnCalendar=*:0/15Persistent=true[Install]WantedBy=timers.target"><div></div></button></div></figure></div>
+<p>В моем случае Sanoid запускается каждые <strong>15 минут</strong>.</p>
+<p>Для домашнего NAS этого более чем достаточно. Если ваши данные меняются редко, интервал можно спокойно увеличить, например до одного часа.</p>
+<h2 id="активируем-сервисы">Активируем сервисы</h2>
+<p>После того как все сервисы созданы, осталось сообщить о них systemd и включить автоматический запуск.</p>
+<p>Для начала перечитаем конфигурацию:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo systemctl daemon-reload</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo systemctl daemon-reload"><div></div></button></div></figure></div>
+<p>Разрешим запуск сервиса очистки снапшотов:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo systemctl enable sanoid-prune.service</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo systemctl enable sanoid-prune.service"><div></div></button></div></figure></div>
+<p>И включим таймер:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo systemctl enable --now sanoid.timer</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo systemctl enable --now sanoid.timer"><div></div></button></div></figure></div>
+<p>Проверить, что таймер успешно запустился, можно командой:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">systemctl list-timers sanoid.timer</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="systemctl list-timers sanoid.timer"><div></div></button></div></figure></div>
+<p>Ожидаемый результат будет примерно таким:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">NEXT                         LEFT     LAST</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Fri 2026-07-17 10:15:00      12 min   Fri 2026-07-17 10:00:00</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="NEXT                         LEFT     LASTFri 2026-07-17 10:15:00      12 min   Fri 2026-07-17 10:00:00"><div></div></button></div></figure></div>
+<p>На этом установка полностью завершена.</p>
+<h3 id="проверяем-установку">Проверяем установку</h3>
+<p>Для собственного спокойствия можно убедиться, что Sanoid действительно установлен.</p>
+<p>Например, посмотреть его версию:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sanoid --version</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sanoid --version"><div></div></button></div></figure></div>
+<p>Или открыть встроенную справку:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sanoid --help</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sanoid --help"><div></div></button></div></figure></div>
+<p>Если команды выполняются без ошибок - все прошло успешно.</p>
+<h3 id="настраиваем-расписание-снапшотов">Настраиваем расписание снапшотов</h3>
+<p>На данный момент есть один небольшой нюанс.</p>
+<p>Sanoid уже установлен.</p>
+<p>Таймер уже работает.</p>
+<p>Systemd уже каждые 15 минут пытается запускать Sanoid.</p>
+<p>Но… делать он пока ничего не будет.</p>
+<p>Все потому, что мы еще не рассказали ему, какие датасеты нужно обслуживать и сколько снапшотов необходимо хранить.</p>
+<p>Поэтому открываем основной файл конфигурации:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo nano /etc/sanoid/sanoid.conf</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo nano /etc/sanoid/sanoid.conf"><div></div></button></div></figure></div>
+<p>По умолчанию Sanoid поставляется с большим количеством готовых шаблонов. Если интересно посмотреть все возможности утилиты, рекомендую заглянуть в официальный пример конфигурации:</p>
+<p><a href="https://github.com/jimsalterjrs/sanoid/blob/master/sanoid.conf">https://github.com/jimsalterjrs/sanoid/blob/master/sanoid.conf</a></p>
+<p>Но для домашнего NAS настолько сложная конфигурация обычно не нужна.</p>
+<p>Предположим, что наш пул называется <strong>data</strong>, а все пользовательские данные находятся в датасете <strong>data/media</strong>.</p>
+<p>Тогда файл <code>sanoid.conf</code> будет выглядеть следующим образом:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[data/media]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">use_template = production</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[template_production]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">frequently = 0</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">hourly = 36</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">daily = 30</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">weekly = 4</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">monthly = 3</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">yearly = 0</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">autosnap = yes</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">autoprune = yes</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[data/media]use_template = production[template_production]frequently = 0hourly = 36daily = 30weekly = 4monthly = 3yearly = 0autosnap = yesautoprune = yes"><div></div></button></div></figure></div>
+<p>Разберемся, что означают эти параметры.</p>
+<p>В данной конфигурации Sanoid будет автоматически:</p>
+<ul>
+<li>хранить <strong>36 почасовых</strong> снапшотов;</li>
+<li>хранить <strong>30 ежедневных</strong>;</li>
+<li>хранить <strong>4 еженедельных</strong>;</li>
+<li>хранить <strong>3 ежемесячных</strong>;</li>
+<li>не создавать "частые" (<code>frequently</code>) и годовые (<code>yearly</code>) снапшоты.</li>
+</ul>
+<p>Параметр</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">autosnap = yes</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="autosnap = yes"><div></div></button></div></figure></div>
+<p>включает автоматическое создание снапшотов.</p>
+<p>А параметр</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">autoprune = yes</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="autoprune = yes"><div></div></button></div></figure></div>
+<p>автоматически удаляет старые снапшоты, срок хранения которых уже закончился.</p>
+<blockquote>
+<p><strong>Важно.</strong> Вместо <code>data/media</code> укажите имя своего ZFS-датасета. Узнать его можно командой:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">zfs list</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="zfs list"><div></div></button></div></figure></div>
+</blockquote>
+<h3 id="если-нужно-защищать-сразу-весь-пул">Если нужно защищать сразу весь пул</h3>
+<p>Если в вашем пуле несколько датасетов (<code>media</code>, <code>documents</code>, <code>backups</code>, <code>nextcloud</code> и так далее), гораздо удобнее использовать рекурсивную обработку.</p>
+<p>В этом случае достаточно написать:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[data]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">use_template = production</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">recursive = yes</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[template_production]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">frequently = 0</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">hourly = 36</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">daily = 30</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">weekly = 4</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">monthly = 3</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">yearly = 0</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">autosnap = yes</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">autoprune = yes</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[data]use_template = productionrecursive = yes[template_production]frequently = 0hourly = 36daily = 30weekly = 4monthly = 3yearly = 0autosnap = yesautoprune = yes"><div></div></button></div></figure></div>
+<p>Теперь Sanoid будет автоматически обслуживать все дочерние датасеты внутри пула <code>data</code>.</p>
+<p>На мой взгляд, именно такой вариант является наиболее удобным для домашнего NAS. Не придется каждый раз добавлять новые датасеты в конфигурацию вручную - они сразу попадут под действие политики хранения. Это особенно удобно, если вы часто экспериментируете и создаете новые датасеты.</p>
+<h3 id="проверяем-что-все-работает">Проверяем, что все работает</h3>
+<p>Давайте еще раз посмотрим, что мы уже сделали.</p>
+<ul>
+<li>✅ Установили Sanoid.</li>
+<li>✅ Создали сервис создания снапшотов.</li>
+<li>✅ Создали сервис очистки старых снапшотов.</li>
+<li>✅ Настроили таймер systemd.</li>
+<li>✅ Описали политику хранения снапшотов.</li>
+</ul>
+<p>Теперь каждые 15 минут systemd будет пытаться запускать Sanoid.</p>
+<p>Посмотреть список всех активных таймеров можно командой:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo systemctl list-timers</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo systemctl list-timers"><div></div></button></div></figure></div>
+<p>И здесь есть один важный момент.</p>
+<p>Пока файл <code>/etc/sanoid/sanoid.conf</code> пустой, <strong>ничего происходить не будет</strong>. Именно для этого мы ранее добавили строку:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">ConditionFileNotEmpty=/etc/sanoid/sanoid.conf</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="ConditionFileNotEmpty=/etc/sanoid/sanoid.conf"><div></div></button></div></figure></div>
+<p>Как только вы сохраните конфигурацию хотя бы с одним датасетом, следующий запуск таймера автоматически начнет создавать снапшоты.</p>
+<p>Никаких дополнительных действий выполнять не нужно. Не нужно перезапускать таймер, перезагружать сервер или заново включать сервисы - systemd сам подхватит новую конфигурацию.</p>
+<p>Если не хочется ждать ближайшие 15 минут, можно проверить работу вручную.</p>
+<p>Создать снапшоты:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo sanoid --take-snapshots --verbose</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo sanoid --take-snapshots --verbose"><div></div></button></div></figure></div>
+<p>Или запустить сервис, который обычно вызывается таймером:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo systemctl start sanoid.service</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo systemctl start sanoid.service"><div></div></button></div></figure></div>
+<p>После этого можно убедиться, что снапшот действительно появился:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">zfs list -t snapshot</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="zfs list -t snapshot"><div></div></button></div></figure></div>
+<p>Если вы увидели новый снапшот - поздравляю, все работает именно так, как и должно.</p>
+<hr>
+<h2 id="а-как-же-резервное-копирование">А как же резервное копирование?</h2>
+<p>Здесь очень важно понимать один момент.</p>
+<p><strong>Снапшоты - это не резервные копии.</strong></p>
+<p>Да, они отлично защищают от случайного удаления файлов, неудачных обновлений или действий программ-вымогателей. Но если выйдет из строя сам диск, контроллер или сгорит весь сервер, вместе с ним пропадут и все снапшоты.</p>
+<p>Поэтому снапшоты - это первая линия защиты данных, а не полноценный бэкап.</p>
+<hr>
+<h2 id="syncoid---следующий-шаг">Syncoid - следующий шаг</h2>
+<p>К счастью, разработчики Sanoid подумали и об этом.</p>
+<p>Вместе с Sanoid устанавливается еще одна замечательная утилита - <strong>Syncoid</strong>. Она умеет реплицировать ZFS-датасеты на другой пул, другой сервер или даже в другую географическую точку через SSH.</p>
+<p>Самый простой пример выглядит так:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">sudo syncoid -r data backup</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo syncoid -r data backup"><div></div></button></div></figure></div>
+<p>где:</p>
+<ul>
+<li><code>data</code> - пул или датасет, который мы реплицируем;</li>
+<li><code>backup</code> - пул или датасет, куда будут отправляться данные.</li>
+</ul>
+<p>На первый взгляд команда выглядит очень простой, но под капотом Syncoid делает довольно серьезную работу. Утилита сама определяет, какие данные изменились после предыдущей синхронизации, передает только разницу между снапшотами и автоматически возобновляет передачу, если соединение неожиданно оборвалось.</p>
+<p>Именно поэтому связка <strong>Sanoid + Syncoid</strong> считается одним из лучших решений для организации резервного копирования на базе ZFS.</p>
+<hr>
+<h3 id="заключение">Заключение</h3>
+<p>На этом настройку автоматических снапшотов можно считать завершенной.</p>
+<p>Теперь ваш NAS умеет самостоятельно:</p>
+<ul>
+<li>создавать снапшоты по расписанию;</li>
+<li>автоматически удалять устаревшие снимки;</li>
+<li>поддерживать заданную политику хранения без какого-либо участия пользователя.</li>
+</ul>
+<p>В следующей статье мы подробно разберем <strong>Syncoid</strong> и настроим полноценную репликацию данных между двумя ZFS-пулами. После этого наш NAS сможет пережить уже не только случайное удаление файлов, но и выход из строя целого сервера.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Настройка домашнего NAS на Fedora Server 44 с OpenZFS, Cockpit и Samba</title>
+      <link>https://prohomelab.com/posts/fedora-server-nas/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/fedora-server-nas/</guid>
+      <pubDate>Wed, 15 Jul 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Self-Hosting</category>
+      <category>Fedora</category>
+      <category>NAS</category>
+      <category>Self-Hosting</category>
+      <category>Homelab</category>
+      <description>Собираем современный домашний NAS на Fedora Server 44 с файловой системой OpenZFS, веб-интерфейсом Cockpit и файловым сервером Samba. Полная пошаговая инструкция по установке, настройке ZFS, SELinux и публикации SMB-шары.</description>
+      <content:encoded><![CDATA[<h2 id="введение">Введение</h2>
+<p>В этой статье мы соберем современный домашний NAS на базе <strong>Fedora Server 44</strong>, файловой системы <strong>OpenZFS</strong> и файлового сервера <strong>Samba</strong>. Если вы только начинаете свой путь в homelab и не до конца понимаете, зачем все это нужно - взгляните на статью <a href="https://prohomelab.com/posts/homelabbing/">что такое homelabbing</a>, там я разбираю базовые понятия.</p>
+<p>Долгое время я использовал TrueNAS в качестве операционной системы для хранения данных. Это отличная система, однако со временем пришел к выводу, что в моем случае она избыточна. NAS у меня выполняет одну задачу - хранение файлов, поэтому многие возможности TrueNAS остались невостребованными. При этом все остальное оказалось интереснее и удобнее настроить самостоятельно..</p>
+<p>В качестве основы я выбрал Fedora Server. Мы получим полноценную Linux-систему, веб-интерфейс Cockpit, файловую систему ZFS и привычный общий доступ по SMB.</p>
+<h2 id="почему-fedora-server-а-не-truenas">Почему Fedora Server, а не TrueNAS?</h2>
+<p>Перед тем как перейти к настройке, хочу ответить на вполне логичный вопрос: почему вообще Fedora Server, если уже используешь TrueNAS, или почему не попробовать любые другие готовые операционные системы для nas?</p>
+<p>На протяжении долгого времени я использовал TrueNAS в качестве основной операционной системы для домашнего NAS. Это отличное решение с удобным веб-интерфейсом и большим количеством встроенных возможностей. Однако со временем я понял, что использую лишь небольшую часть его функциональности, а некоторые особенности Truenas начали раздражать.</p>
+<p>Для меня NAS - это прежде всего надежное хранилище данных. Все остальные сервисы - Nextcloud, Immich, Jellyfin, Grafana, Docker и другие - работают на отдельных серверах и виртуальных машинах. В результате большинство возможностей TrueNAS оказалось просто невостребованным.</p>
+<p>Fedora Server, наоборот, предоставляет чистую и современную Linux-систему без лишних компонентов. Это дает несколько преимуществ:</p>
+<ul>
+<li>полный контроль над операционной системой;</li>
+<li>всегда актуальные версии программного обеспечения, но без нюансов arch-подобных систем;</li>
+<li>возможность самостоятельно выбрать необходимые сервисы;</li>
+<li>удобное администрирование через Cockpit;</li>
+<li>полноценную поддержку OpenZFS;</li>
+<li>отсутствие ограничений, характерных для специализированных NAS-дистрибутивов.</li>
+</ul>
+<p>Согласен, что такой подход требует немного больше времени на первоначальную настройку и наличие знаний чуть выше базовых умений кликать мышкой. Зато в дальнейшем вы получаете максимально гибкую систему, которую легко адаптировать под свои задачи, не завися от особенностей конкретной NAS-платформы.</p>
+<p>Именно поэтому в качестве основы для домашнего файлового сервера я выбрал Fedora Server 44.</p>
+<hr>
+<h2 id="подготовка-fedora-server">Подготовка Fedora Server</h2>
+<h3 id="обновление-системы">Обновление системы</h3>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">dnf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">update</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-y</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo dnf update -y"><div></div></button></div></figure></div>
+<p>В современных RPM-дистрибутивах команда <code>dnf update</code> уже включает функциональность прежнего <code>dnf upgrade</code>.</p>
+<h3 id="установка-необходимых-пакетов">Установка необходимых пакетов</h3>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">dnf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">install</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-y</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">\</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">tar </span><span style="--0:#032F62;--1:#9ECBFF">gzip</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">curl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">unzip</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">git</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">procps-ng</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">findutils</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nano</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">\</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">cockpit-bridge </span><span style="--0:#032F62;--1:#9ECBFF">coreutils</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">attr</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">hostname</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">iproute</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">glibc-common</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">\</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">systemd </span><span style="--0:#032F62;--1:#9ECBFF">nfs-utils</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">samba</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">samba-client</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">samba-common-tools</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo dnf install -y \tar gzip curl unzip git procps-ng findutils nano \cockpit-bridge coreutils attr hostname iproute glibc-common \systemd nfs-utils samba samba-client samba-common-tools"><div></div></button></div></figure></div>
+<h3 id="дополнительные-инструменты">Дополнительные инструменты</h3>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">dnf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">install</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-y</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">lm_sensors</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">cockpit-sosreport</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">sensors-detect</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo dnf install -y lm_sensors cockpit-sosreportsudo sensors-detect"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">restart</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">cockpit.socket</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo systemctl restart cockpit.socket"><div></div></button></div></figure></div>
+<h3 id="установка-cockpit-sensors">Установка <a href="https://github.com/ocristopfer/cockpit-sensors">Cockpit Sensors</a></h3>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">wget</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">https://github.com/ocristopfer/cockpit-sensors/releases/latest/download/cockpit-sensors.tar.xz</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">mkdir</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-p</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/usr/share/cockpit/sensors</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">tar</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-xf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">cockpit-sensors.tar.xz</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">cockpit-sensors/dist</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">cp</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-r</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">cockpit-sensors/dist/</span><span style="--0:#005CC5;--1:#79B8FF">*</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/usr/share/cockpit/sensors/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">rm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-rf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">cockpit-sensors</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">cockpit-sensors.tar.xz</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo wget https://github.com/ocristopfer/cockpit-sensors/releases/latest/download/cockpit-sensors.tar.xzsudo mkdir -p /usr/share/cockpit/sensorstar -xf cockpit-sensors.tar.xz cockpit-sensors/distsudo cp -r cockpit-sensors/dist/* /usr/share/cockpit/sensors/rm -rf cockpit-sensors cockpit-sensors.tar.xz"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">restart</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">cockpit.socket</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo systemctl restart cockpit.socket"><div></div></button></div></figure></div>
+<hr>
+<h2 id="установка-openzfs">Установка <a href="https://openzfs.github.io/openzfs-docs/Getting%20Started/Fedora/index.html">OpenZFS</a></h2>
+<p>Добавляем репозиторий:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">dnf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">install</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-y</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">https://zfsonlinux.org/fedora/zfs-release-3-1</span><span style="--0:#24292E;--1:#E1E4E8">$(</span><span style="--0:#6F42C1;--1:#B392F0">rpm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--eval</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"%{dist}"</span><span style="--0:#24292E;--1:#E1E4E8">)</span><span style="--0:#032F62;--1:#9ECBFF">.noarch.rpm</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo dnf install -y https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval &#x22;%{dist}&#x22;).noarch.rpm"><div></div></button></div></figure></div>
+<p>Устанавливаем заголовки текущего ядра:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">dnf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">install</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-y</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">kernel-devel-</span><span style="--0:#24292E;--1:#E1E4E8">$(</span><span style="--0:#6F42C1;--1:#B392F0">uname</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-r</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">|</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">awk</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-F</span><span style="--0:#032F62;--1:#9ECBFF">'-'</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">'{print $1}'</span><span style="--0:#24292E;--1:#E1E4E8">)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo dnf install -y kernel-devel-$(uname -r | awk -F&#x27;-&#x27; &#x27;{print $1}&#x27;)"><div></div></button></div></figure></div>
+<p>Устанавливаем OpenZFS:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">dnf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">install</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-y</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zfs</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo dnf install -y zfs"><div></div></button></div></figure></div>
+<p>Загружаем модуль:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">modprobe</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zfs</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Указываем системе, чтобы модуль загружался при перезагрузке</span></div></div><div class="ec-line"><div class="code"><span style="--0:#005CC5;--1:#79B8FF">echo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zfs</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">|</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">tee</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/etc/modules-load.d/zfs.conf</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo modprobe zfsecho zfs | sudo tee /etc/modules-load.d/zfs.conf"><div></div></button></div></figure></div>
+<p>На всякий случай проверяем, что zfs у нас будет работать после перезагрузки системы:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">reboot</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo reboot"><div></div></button></div></figure></div>
+<p>Проверяем установку:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">zfs</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">version</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="zfs version"><div></div></button></div></figure></div>
+<hr>
+<h2 id="создание-пула-zfs">Создание пула ZFS</h2>
+<p>Создадим зеркальный пул из двух дисков:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">lsblk</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># вывод списка дисков</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="lsblk # вывод списка дисков"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zpool</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">create</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-m</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/srv</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">data</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">mirror</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/dev/sda</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/dev/sdb</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo zpool create -m /srv data mirror /dev/sda /dev/sdb"><div></div></button></div></figure></div>
+<blockquote>
+<p><strong>Важно:</strong> не используйте в качестве точки монтирования ZFS каталог  <code>/mnt</code> для публикации через Samba. На Fedora Server 44 с OpenZFS 2.4.x Samba может выдавать ошибку > <code>canonicalize_connect_path failed</code>. У меня с директорией <code>/mnt</code> расшаривание по самбе не работало. При использовании <code>/srv</code> все заработало с полпинка.</p>
+</blockquote>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p>В идеале крайне желательно монтировать по id диска, чтобы избежать проблем, когда при перезагрузке буквы дисков съезжают</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zpool</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">create</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-m</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/srv</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">data</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">mirror</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/dev/disk/by-id/ata-XXXX</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/dev/disk/by-id/ata-YYYY</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo zpool create -m /srv data mirror /dev/disk/by-id/ata-XXXX /dev/disk/by-id/ata-YYYY"><div></div></button></div></figure></div>
+</div>
+</div>
+<p>Создадим датасет:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zfs</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">create</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">data/media</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo zfs create data/media"><div></div></button></div></figure></div>
+<p>Проверяем, что пул и датасет созданы:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">zpool</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">status</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">zfs</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">list</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="zpool statuszfs list"><div></div></button></div></figure></div>
+<p>Включим сжатие:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zfs</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">set</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compression=lz4</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">data</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo zfs set compression=lz4 data"><div></div></button></div></figure></div>
+<p>Назначим владельца:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">chown</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-R</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">stilicho:stilicho</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/srv/media</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo chown -R stilicho:stilicho /srv/media"><div></div></button></div></figure></div>
+<p>Здесь я вставлю небольшую ремарку (прости меня Эрих Мария).
+На твоем месте я бы перезагрузил систему и проверил бы еще раз, что пул и датасет смонтируются после перезагрузки:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">reboot</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">zpool</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">status</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">zfs</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">list</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo rebootzpool statuszfs list"><div></div></button></div></figure></div>
+<p>В случае, если после перезагрузки пул не смонтировался, то введи следующие команды:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">enable</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zfs-import-cache.service</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">enable</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zfs-import-scan.service</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">enable</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zfs-mount.service</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">enable</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zfs.target</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo systemctl enable zfs-import-cache.servicesudo systemctl enable zfs-import-scan.servicesudo systemctl enable zfs-mount.servicesudo systemctl enable zfs.target"><div></div></button></div></figure></div>
+<p>Теперь:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">reboot</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo reboot"><div></div></button></div></figure></div>
+<p>и проверяй результат</p>
+<hr>
+<h2 id="настройка-selinux">Настройка SELinux</h2>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">semanage</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">fcontext</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-a</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-t</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">samba_share_t</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"/srv/media(/.*)?"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">restorecon</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-Rv</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/srv/media</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo semanage fcontext -a -t samba_share_t &#x22;/srv/media(/.*)?&#x22;sudo restorecon -Rv /srv/media"><div></div></button></div></figure></div>
+<p>Эта команда добавляет правило SELinux, которое назначает тип контекста <code>samba_share_t</code> каталогу <code>/srv/media</code> и всему его содержимому. Благодаря этому Samba получает право предоставлять доступ к этому каталогу по сети.</p>
+<p>Разберем команду по частям:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">semanage</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">fcontext</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-a</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-t</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">samba_share_t</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"/srv/media(/.*)?"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo semanage fcontext -a -t samba_share_t &#x22;/srv/media(/.*)?&#x22;"><div></div></button></div></figure></div>
+<ul>
+<li><code>sudo</code> - выполнить команду с правами администратора.</li>
+<li><code>semanage</code> - утилита для управления политиками SELinux.</li>
+<li><code>fcontext</code> - управление контекстами файлов.</li>
+<li><code>-a</code> - добавить новое правило.</li>
+<li><code>-t samba_share_t</code> - назначить тип SELinux <code>samba_share_t</code>, предназначенный для общих папок Samba.</li>
+<li><code>"/srv/media(/.*)?"</code> - регулярное выражение:
+  - <code>/srv/media</code> - сам каталог;
+  - <code>(/.*)?</code> - все файлы и подкаталоги внутри него.</li>
+</ul>
+<p>После добавления правила необходимо применить новый контекст к существующим файлам:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">restorecon</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-Rv</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/srv/media</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo restorecon -Rv /srv/media"><div></div></button></div></figure></div>
+<ul>
+<li><code>restorecon</code> - применяет контексты SELinux в соответствии с правилами.</li>
+<li><code>-R</code> - рекурсивно обрабатывает все вложенные каталоги и файлы.</li>
+<li><code>-v</code> - выводит информацию обо всех изменениях.</li>
+</ul>
+<p>Проверка:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">ls</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-Zd</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/srv/media</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="ls -Zd /srv/media"><div></div></button></div></figure></div>
+<p>Ожидаемый результат:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">system_u:object_r:samba_share_t:s0 /srv/media</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="system_u:object_r:samba_share_t:s0 /srv/media"><div></div></button></div></figure></div>
+<hr>
+<h2 id="настройка-samba">Настройка Samba</h2>
+<p>Создаем отдельного локального пользователя Linux, который будет использоваться для доступа к SMB-шаре.:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">useradd</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">samba</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">smbpasswd</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-a</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">samba</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo useradd sambasudo smbpasswd -a samba"><div></div></button></div></figure></div>
+<p>Зададим права пользователю samba на датасет, который мы будем расшаривать</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">groupadd</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">media</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># создаем отдельную группу для шаринга</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># добавляем туда наших пользователей</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">usermod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-aG</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">media</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">stilicho</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">usermod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-aG</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">media</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">samba</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># задаем права на датасет для пользователей группы media</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">chown</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-R</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">stilicho:media</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/srv/media</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">chmod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-R</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">775</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/srv/media</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">find</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/srv/media</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-type</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">d</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-exec</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">chmod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">g+s</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">{}</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">\;</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo groupadd media # создаем отдельную группу для шарингаsudo usermod -aG media stilichosudo usermod -aG media sambasudo chown -R stilicho:media /srv/mediasudo chmod -R 775 /srv/mediasudo find /srv/media -type d -exec chmod g+s {} \;"><div></div></button></div></figure></div>
+<p>Создаем samba шару
+Добавьте в <code>/etc/samba/smb.conf</code>:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[share]</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">    </span></span><span style="--0:#24292e;--1:#e1e4e8">comment = Shared Network Folder</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">    </span></span><span style="--0:#24292e;--1:#e1e4e8">path = /srv/media</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">    </span></span><span style="--0:#24292e;--1:#e1e4e8">browseable = yes</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">    </span></span><span style="--0:#24292e;--1:#e1e4e8">read only = no</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">    </span></span><span style="--0:#24292e;--1:#e1e4e8">valid users = samba</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">    </span></span><span style="--0:#24292e;--1:#e1e4e8">force group = media</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">    </span></span><span style="--0:#24292e;--1:#e1e4e8">create mask = 0644</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">    </span></span><span style="--0:#24292e;--1:#e1e4e8">directory mask = 2755</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[share]    comment = Shared Network Folder    path = /srv/media    browseable = yes    read only = no    valid users = samba    force group = media    create mask = 0644    directory mask = 2755"><div></div></button></div></figure></div>
+<p>Запускаем службы:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">enable</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--now</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">smb</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nmb</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">status</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">smb</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo systemctl enable --now smb nmbsudo systemctl status smb"><div></div></button></div></figure></div>
+<p>Проверяем:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">smbclient</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">//localhost/share</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-U</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">samba</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="smbclient //localhost/share -U samba"><div></div></button></div></figure></div>
+<p>Если все настроено правильно, откроется консоль Samba.</p>
+<hr>
+<h2 id="подключение-из-windows">Подключение из Windows</h2>
+<p>Откройте проводник и введите:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">\\IP-АДРЕС-СЕРВЕРА\share</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="\\IP-АДРЕС-СЕРВЕРА\share"><div></div></button></div></figure></div>
+<p>Введите логин и пароль пользователя Samba.</p>
+<p>Создайте тестовую папку и файл, затем убедитесь, что они успешно создаются и после перезапуска сервера остаются доступными.</p>
+<hr>
+<h2 id="заключение">Заключение</h2>
+<p>В результате мы получили полноценный домашний NAS на Fedora Server 44 с файловой системой OpenZFS, веб-интерфейсом Cockpit и файловым сервером Samba.
+Такой подход обеспечивает полный контроль над системой, хранение данных без привязки к специализированным NAS-дистрибутивам.
+При этом Fedora остается обычной Linux-системой, которую легко расширить любыми сервисами по мере необходимости, что мы с вами и сделаем в следующих статьях - начнем с автоматических снапшотов ZFS в <a href="https://prohomelab.com/posts/fedora-server-sanoid-zfs-snapshots/">статье про Sanoid</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Openclaw на Terramaster OS7</title>
+      <link>https://prohomelab.com/posts/openclaw-on-tos7/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/openclaw-on-tos7/</guid>
+      <pubDate>Sun, 12 Jul 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>NAS</category>
+      <category>Homelab</category>
+      <category>Terramaster</category>
+      <category>OpenClaw</category>
+      <category>Ollama</category>
+      <description>Описание работы ИИ-агента OpenClaw на базе Terramaster F4-425PRO c новой операционной системой TOS7</description>
+      <content:encoded><![CDATA[<h2 id="вступление">Вступление</h2>
+<p>Тем, кто смотрел мои старые ролики, могло показаться, что они слышат в моем голосе сарказм и иронию, когда я упоминаю ИИ.</p>
+<p>На самом деле вам не показалось. Но моя ирония связана только с тем сумасшествием, которое сопровождает бум ИИ. Полгода назад все сходили с ума по ChatGPT и кричали, что вот оно - будущее.</p>
+<p>Прошло полгода. Теперь все кричат, что будущее - это ИИ-агенты, что всех заменят ИИ-агенты, а сотрудники какой-нибудь NVIDIA должны работать сразу с 50 такими агентами. Что делать с предыдущим будущим - непонятно. Но тут главное, чтобы народ был вечно в изумлении, а то люди начнут задавать вопросы, и самопровозглашенным трендсеттерам они точно не понравятся.</p>
+<p>Короче, сегодня поговорим о такой хайповой теме, как ИИ-агент OpenClaw. Хотя вру. Не прошло и пару месяцев, как теперь все эякулируют на Hermes, но давайте все-таки поговорим об OpenClaw.</p>
+<p>Щупать этого агента за вымя, вернее, за клешни будем на примере работы в TerraMaster F4-425 Pro, так как, по заявлениям производителя, их новейшая ОС под названием TOS 7 заточена именно под работу с OpenClaw и вообще вся такая передовая и нарядная.</p>
+<p>TerraMaster утверждает, что это первый AI Native NAS.
+Предполагается следующая схема работы</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Пользователь</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">↓</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">OpenClaw</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">↓</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">LLM</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">↓</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Инструменты NAS</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">↓</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">TOS</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Пользователь↓OpenClaw↓LLM↓Инструменты NAS↓TOS"><div></div></button></div></figure></div>
+<p>Производитель обещает:</p>
+<ul>
+<li>управление NAS голосом</li>
+<li>автоматизация</li>
+<li>Docker</li>
+<li>виртуальные машины</li>
+<li>Jenkins</li>
+<li>GitLab</li>
+<li>REST API</li>
+<li>более 500 встроенных API</li>
+<li>создание workflow по текстовому описанию</li>
+</ul>
+<p>Более подробно можно почитать на официальном сайте - <a href="https://www.terra-master.com/pages/tos7">https://www.terra-master.com/pages/tos7</a></p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Заметка</span></div>
+<div class="phl-callout-content">
+<p>Обзор на TerraMaster F4-425 Pro я делал в прошлом ролике. Это NAS, и он делает нам всем .... NAS. А главное, что, несмотря на тот факт, что там уже была установлена новая и свежая версия TOS 7, официально вышедшая 23 июня 2026 года, последнее минорное обновление принесло новый дизайн иконок.  UI очень заметно преобразился, но я, правда, не понял такого шага от разработчика. А что мешало сразу так сделать? И это, как я уже сказал, маленькое минорное обновление. Странно, но ок.</p>
+</div>
+</div>
+<h2 id="что-такое-ии-агент-openclaw">Что такое ИИ-агент OpenClaw</h2>
+<p>Теперь разберемся, что такое ИИ-агент на примере OpenClaw. Если простыми словами, то именно так, наверное, человек и должен взаимодействовать с ИИ, а не по модели «вопрос - ответ».</p>
+<p>OpenClaw - это открытый AI-агент, который работает локально на вашем компьютере и способен не просто отвечать на вопросы, а выполнять реальные действия: управлять файлами, отправлять сообщения и письма, работать с календарем, запускать программы, искать информацию в интернете и взаимодействовать с десятками сервисов через привычные мессенджеры, такие как Telegram, WhatsApp, Discord и Slack (что характерно, ни один из них не работает в России).</p>
+<p>В отличие от обычных чат-ботов, OpenClaw получает доступ к инструментам операционной системы и может автоматизировать сложные многошаговые задачи.</p>
+<p>Главная особенность OpenClaw - полная открытость и возможность запускать его на собственной инфраструктуре. Пользователь сам выбирает модель искусственного интеллекта, настраивает навыки (Skills), подключает внешние сервисы и контролирует, какие действия агенту разрешено выполнять.</p>
+<p>Благодаря этому OpenClaw подходит как для автоматизации повседневных задач, так и для построения персонального AI-ассистента, не зависящего от облачных сервисов и закрытых экосистем.</p>
+<p>Но вы должны понимать, что по факту, это как тело без мозгов. То есть ИИ-агент - это тело, поэтому обязательно необходимо подключить к LLM, которая будет выступать в качестве мозга</p>
+<h2 id="вопросы-безопасности-работы-с-openclaw">Вопросы безопасности работы с OpenClaw</h2>
+<p>Несмотря на широкие возможности, OpenClaw имеет и серьезный недостаток - для полноценной работы агенту часто требуются расширенные права доступа к системе и подключаемым сервисам. Он может, а в идеале и должен, получать доступ к файлам, выполнять команды, управлять приложениями и взаимодействовать с различными API, поэтому компрометация агента или его неправильная настройка потенциально способны привести к утечке данных или выполнению нежелательных действий.</p>
+<p>Именно поэтому при использовании OpenClaw рекомендуется придерживаться принципа минимально необходимых привилегий: запускать его в изолированной среде (докер), как минимум запускать в соответствующем VLAN, выдавать доступ только к тем ресурсам, которые действительно нужны, и внимательно контролировать подключаемые инструменты и разрешения. Такой подход позволяет значительно снизить риски без существенной потери функциональности.</p>
+<p>Ну и нельзя забывать, что в идеальном сценарии он сам думает за вас: что вам надо, что вам не надо, чего вы хотите. И не исключено, что рано или поздно он поймет, что самое слабое звено - это вы.</p>
+<h3 id="моя-конфигурация">Моя конфигурация</h3>
+<p>Для работы OpenClaw я использую <strong>Ollama</strong>, установленную на <strong>Windows 11 Pro</strong>. Все модели хранятся на отдельном несистемном SSD.</p>
+<p><strong>Конфигурация компьютера:</strong></p>
+<ul>
+<li><strong>Операционная система:</strong> Windows 11 Pro</li>
+<li><strong>Процессор:</strong> AMD Ryzen 5 5600X</li>
+<li><strong>Оперативная память:</strong> 64 ГБ DDR4 UDIMM ECC Kingston</li>
+<li><strong>Видеоускоритель:</strong> Intel Arc B580 с 12 ГБ видеопамяти</li>
+<li><strong>LLM-модель:</strong> Qwen3.5:9B</li>
+</ul>
+<p>При использовании данной конфигурации модель показывает следующую производительность:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">PS C:\WINDOWS\system32> ollama run qwen3.5:9b --verbose</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">>>> gfhgfghfghghf</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">---</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">total duration: 17.4145857s</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">load duration: 251.4912ms</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">prompt eval count: 18 token(s)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">prompt eval duration: 214.962ms</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">prompt eval rate: 83.74 tokens/s</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">eval count: 955 token(s)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">eval duration: 16.90268s</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">eval rate: 56.50 tokens/s</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">---</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="PS C:\WINDOWS\system32> ollama run qwen3.5:9b --verbose>>> gfhgfghfghghf---total duration: 17.4145857sload duration: 251.4912msprompt eval count: 18 token(s)prompt eval duration: 214.962msprompt eval rate: 83.74 tokens/seval count: 955 token(s)eval duration: 16.90268seval rate: 56.50 tokens/s---"><div></div></button></div></figure></div>
+<p>В моем случае скорость генерации составляет <strong>56,5 токена/с</strong>, чего более чем достаточно для комфортной работы OpenClaw в режиме интерактивного общения.</p>
+<h2 id="установка-openclaw-в-terramaster">Установка OpenClaw в TerraMaster</h2>
+<p>На самом деле установка агента очень простая, но в моем случае не обошлось без приключений. На этапе установки, когда прогресс доходил до 99%, она сбрасывалась в ноль. Я долго не мог понять, в чем дело, пока мне в голову не пришла шальная мысль пропинговать серверы TerraMaster.</p>
+<p>В итоге в соответствующий address list того, чье имя нельзя называть, были внесены четыре адреса:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt.terramaster.net</span></div></div><div class="ec-line"><div class="code"><span style="--0:#005CC5;--1:#79B8FF">104.26.2.214</span></div></div><div class="ec-line"><div class="code"><span style="--0:#005CC5;--1:#79B8FF">104.26.3.214</span></div></div><div class="ec-line"><div class="code"><span style="--0:#005CC5;--1:#79B8FF">172.67.71.137</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt.terramaster.net104.26.2.214104.26.3.214172.67.71.137"><div></div></button></div></figure></div>
+<p>И в следующий раз установка прошла как по маслу.</p>
+<p>После того как вы развернули само приложение, я пропинговал свою инстанцию Ollama, потому что именно ее я буду использовать для примеров в этой статье.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">curl http://айпи_машины_с_развернутой_ollama:11434/v1/models</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="curl http://айпи_машины_с_развернутой_ollama:11434/v1/models"><div></div></button></div></figure></div>
+<p>Это нужно для того, чтобы проверить возможность OpenClaw достучаться до Ollama. Если правила firewall у вас настроены правильно, то в результате вы получите список локальных ИИ-моделей, которые уже скачаны.</p>
+<p><img alt="Правило для доступа к WebGUI (порт 8006)" loading="lazy" decoding="async" width="1991" height="1133" src="https://prohomelab.com/_astro/01.B2dbCxGV_1zPYMB.webp"></p>
+<p>Теперь, когда мы установили OpenClaw и проверили доступ к локальным ИИ-моделям, переходим к настройке агента.</p>
+<p>В дальнейшем, как показала практика, мое железо, а может быть конкретная LLM не очень хорошо взаимодействовала с Opneclaw, но более подробно об этом можно посмотреть в видео по ссылке в начале статьи.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>ZimaBoard 2 - обзор мини-сервера для homelab</title>
+      <link>https://prohomelab.com/posts/zimaboard-2-overview/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/zimaboard-2-overview/</guid>
+      <pubDate>Thu, 05 Mar 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Hardware</category>
+      <category>Hardware</category>
+      <category>Self-Hosting</category>
+      <category>Homelab</category>
+      <category>Mini Server</category>
+      <category>Proxmox</category>
+      <category>Docker</category>
+      <description>Разбираем ZimaBoard 2: характеристики, сценарии использования, производительность и применение в homelab - от Docker до виртуализации.</description>
+      <content:encoded><![CDATA[<h2 id="zimaboard-2---компактный-x86-сервер-для-домашнего-хомлаба">ZimaBoard 2 - компактный x86-сервер для домашнего хомлаба</h2>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Заметка</span></div>
+<div class="phl-callout-content">
+<p>Если вам понравилась настоящая статья, то можете поддержать автора став спонсором на <a href="https://boosty.to/stilicho2011">бусти</a>.</p>
+</div>
+</div>
+<h2 id="введение">Введение</h2>
+<p>Если вы новичок и еще не разобрались, что вообще такое <a href="https://prohomelab.com/posts/homelabbing/">homelabbing</a> - советую сначала заглянуть туда, а потом возвращаться сюда за железом.</p>
+<p>В мире homelab-энтузиастов постоянно идет поиск баланса между компактностью, энергоэффективностью и реальной серверной функциональностью. Одноплатники вроде Raspberry Pi хороши для экспериментов, но быстро упираются в ARM-архитектуру, I/O и производительность. Мини-ПК мощные, но часто избыточны, дороже и не всегда дружелюбны к серверным сценариям.</p>
+<p><strong>ZimaBoard 2</strong> - это попытка занять нишу между этими двумя мирами: компактный, холодный и экономичный <strong>x86-сервер</strong>, созданный специально для self-hosted задач и домашней хомлабы.</p>
+<h2 id="что-такое-zimaboard-2">Что такое ZimaBoard 2</h2>
+<p>ZimaBoard 2 - это одноплатный компьютер (SBC) на архитектуре <strong>x86-64</strong>, разработанный компанией IceWhale как развитие оригинального ZimaBoard. В отличие от классических SBC, он изначально ориентирован не на «подключить клавиатуру и монитор», а на <strong>серверное использование</strong>:</p>
+<ul>
+<li>работа 24/7</li>
+<li>установка Linux, BSD, Proxmox, TrueNAS, ESXi</li>
+<li>запуск Docker, <a href="https://prohomelab.com/posts/what-is-podman/">Podman</a>, <a href="https://prohomelab.com/posts/docker-podman-kubernetes/">Kubernetes</a></li>
+<li>сетевые и “хранилищные” сервисы</li>
+</ul>
+<p>Формально это не NAS и не мини-ПК - это <strong>микросервер</strong>, в котором акцент сделан на сетевые возможности, стабильность и совместимость с серверным софтом с предустанновленной операционной системой <a href="https://www.zimaspace.com/zimaos">ZimaOS</a>.</p>
+<h2 id="зачем-вообще-нужен-zimaboard-2">Зачем вообще нужен ZimaBoard 2</h2>
+<p>Главная идея ZimaBoard 2 - <strong>дать полноценный x86-сервер в максимально компактном и энергоэффективном форм-факторе</strong>.</p>
+<p>Он нужен, если вам:</p>
+<ul>
+<li>надоело ограничение ARM-плат</li>
+<li>хочется нативный Docker без костылей</li>
+<li>нужны SATA-диски без USB-адаптеров</li>
+<li>важна совместимость с Proxmox / ESXi</li>
+<li>хочется «включил и забыл» сервер для дома</li>
+</ul>
+<p>При этом ZimaBoard 2 не пытается конкурировать с полноценными серверами или мощными NUC - его задача <strong>закрывать базовые и средние homelab-сценарии</strong> с минимальными затратами.</p>
+<h2 id="целевая-аудитория">Целевая аудитория</h2>
+<p>ZimaBoard 2 в первую очередь ориентирован на:</p>
+<h3 id="homelab-энтузиастов">Homelab-энтузиастов</h3>
+<p>Тех, кто:</p>
+<ul>
+<li>поднимает свои сервисы</li>
+<li>экспериментирует с сетями, прокси, SSO</li>
+<li>хочет отдельный сервер под тесты и прод</li>
+</ul>
+<h3 id="любителей-self-hosted-и-docker">Любителей self-hosted и Docker</h3>
+<p>Если у вас:</p>
+<ul>
+<li><a href="https://prohomelab.com/posts/traefik-in-docker/">Traefik</a> / Nginx</li>
+<li><a href="https://prohomelab.com/posts/authentik-overview/">Authentik</a> / Authelia / Keycloak</li>
+<li>Vaultwarden, Nextcloud, Jellyfin</li>
+<li>CrowdSec, Prometheus, Grafana</li>
+</ul>
+<p>ZimaBoard 2 отлично подходит как хост под контейнеры.</p>
+<h3 id="devops--администраторов">DevOps / администраторов</h3>
+<p>Как:</p>
+<ul>
+<li>тестовый стенд</li>
+<li>edge-сервер</li>
+<li>VPN-шлюз</li>
+<li>reverse-proxy-узел</li>
+<li>CI/CD-раннер</li>
+<li>Роутер на базе OPNsense/pfSense</li>
+</ul>
+<h3 id="домашних-пользователей-уставших-от-облаков">Домашних пользователей, уставших от «облаков»</h3>
+<p>Для тех, кто хочет:</p>
+<ul>
+<li>хранить данные у себя</li>
+<li>иметь собственный NAS</li>
+<li>не зависеть от подписок и SaaS</li>
+</ul>
+<h2 id="почему-zimaboard-2---это-про-homelab">Почему ZimaBoard 2 - это про homelab</h2>
+<p>В homelab важны не «бенчмарки ради бенчмарков». К сожалению многие обзоры сводятся просто к замерам "безликих попугаев", что просто неприменимо в реальной жизни. В homelab важна, ну или должны быть важна, если желаете, - <strong>практичность</strong>. И тут ZimaBoard 2 попадает точно в цель:</p>
+<ul>
+<li><strong>x86-архитектура</strong> - ставится почти любой серверный дистрибутив</li>
+<li><strong>SATA-порты</strong> - нормальные диски без USB</li>
+<li><strong>Ethernet</strong> - стабильная сеть для сервисов</li>
+<li><strong>Низкое энергопотребление</strong> - можно держать включенным постоянно</li>
+<li><strong>Компактность и пассивное охлаждение</strong> - тихо и без обслуживания</li>
+</ul>
+<p>Это отличный кандидат на роль:</p>
+<ul>
+<li>первого homelab-сервера</li>
+<li>отдельного узла под прокси / SSO</li>
+<li>мини-NAS</li>
+<li>edge-ноды в Proxmox-кластере</li>
+<li>сервера мониторинга или безопасности</li>
+</ul>
+<h2 id="почему-zimaboard-2-во-многих-сценариях-может-быть-лучше-стандартного-nas-типа-synology">Почему ZimaBoard 2 во многих сценариях может быть лучше стандартного NAS типа Synology</h2>
+<p>Synology давно стала синонимом «домашнего NAS». Это удобные, "отполированные" устройства с хорошей экосистемой и простым интерфейсом. Но именно эта «коробочность» со временем начинает мешать - особенно если речь идет не просто о хранении файлов, а о полноценном homelab.</p>
+<p><strong>ZimaBoard 2 предлагает принципиально другой подход.</strong></p>
+<h3 id="1-полный-контроль-вместо-закрытой-экосистемы">1. Полный контроль вместо закрытой экосистемы</h3>
+<p>Synology - это:</p>
+<ul>
+<li>проприетарная DSM</li>
+<li>ограничения на версии пакетов</li>
+<li>зависимость от политики производителя</li>
+<li>невозможность нормально обновлять ядро или систему</li>
+</ul>
+<p>ZimaBoard 2 - это:</p>
+<ul>
+<li>чистый Linux / BSD / гипервизор</li>
+<li>полная свобода выбора ОС</li>
+<li>никаких искусственных ограничений</li>
+<li>стандартные репозитории и обновления</li>
+</ul>
+<p>В homelab это критично: сервер - ваш, а не «арендованный» у вендора.</p>
+<h3 id="2-нормальный-docker-и-контейнеризация">2. Нормальный Docker и контейнеризация</h3>
+<p>На Synology:</p>
+<ul>
+<li>Docker урезан</li>
+<li>часто старые версии</li>
+<li>проблемы с сетями, IPv6, macvlan</li>
+<li>ограничения по привилегиям контейнеров</li>
+</ul>
+<p>На ZimaBoard 2:</p>
+<ul>
+<li>нативный Docker</li>
+<li>полноценный iptables / nftables</li>
+<li>нормальная работа Traefik, Authentik, CrowdSec</li>
+</ul>
+<p>Если вы запускаете больше, чем пару контейнеров - ZimaBoard выигрывает сразу.</p>
+<h3 id="3-гипервизоры-и-виртуализация">3. Гипервизоры и виртуализация</h3>
+<p>Synology:</p>
+<ul>
+<li>виртуализация доступна только на старших моделях</li>
+<li>жесткие аппаратные ограничения</li>
+<li>привязка к DSM</li>
+</ul>
+<p>ZimaBoard 2:</p>
+<ul>
+<li>Proxmox</li>
+<li>ESXi</li>
+<li>KVM / libvirt</li>
+<li>LXC-контейнеры</li>
+</ul>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Заметка</span></div>
+<div class="phl-callout-content">
+<p>устанавливать гипервизор на emmc нерекомендуется</p>
+</div>
+</div>
+<h3 id="4-железо-без-маркетинговых-ограничений">4. Железо без маркетинговых ограничений</h3>
+<p>Synology известна:</p>
+<ul>
+<li>«несовместимыми» дисками</li>
+<li>whitelist’ами</li>
+<li>иными странными ограничениями</li>
+</ul>
+<p>ZimaBoard 2:</p>
+<ul>
+<li>любые SATA-диски</li>
+<li>любые сетевые и программные конфигурации</li>
+</ul>
+<h3 id="5-цена-и-ценность">5. Цена и ценность</h3>
+<p>За цену среднего Synology вы получаете:</p>
+<ul>
+<li>ограниченное железо</li>
+<li>закрытую систему</li>
+<li>зависимость от DSM</li>
+</ul>
+<p>За сопоставимые деньги ZimaBoard 2 дает:</p>
+<ul>
+<li>x86-платформу</li>
+<li>полноценный сервер</li>
+<li>гибкость и масштабируемость</li>
+<li>идеальную основу для homelab</li>
+</ul>
+<h2 id="когда-synology-все-же-лучше">Когда Synology все же лучше</h2>
+<p>Честности ради:</p>
+<p>Synology выигрывает, если вам нужно:</p>
+<ul>
+<li>«включил, работает, забыл»</li>
+<li>минимальная настройка</li>
+<li>пользователи без Linux-опыта</li>
+<li>простой файловый сервер для семьи</li>
+</ul>
+<p>Но как только появляются:</p>
+<ul>
+<li>reverse proxy</li>
+<li>SSO</li>
+<li>VPN</li>
+<li>self-hosted сервисы</li>
+<li>инфраструктурные эксперименты</li>
+</ul>
+<p>Synology быстро становится узким местом.</p>
+<h2 id="вывод">Вывод</h2>
+<p><strong>ZimaBoard 2 - это не убийца Synology, или замена минипк, а шаг дальше.</strong></p>
+<p>Если Synology - это бытовая техника, то ZimaBoard 2 - <strong>настоящий сервер в миниатюре</strong>.<br>
+Для homelab, self-hosted и обучения инфраструктуре он:</p>
+<ul>
+<li>гибче</li>
+<li>честнее</li>
+<li>перспективнее</li>
+</ul>
+<p>И именно поэтому в среде homelab <strong>ZimaBoard 2</strong> - может быть более правильным выбором, чем классический NAS, так как ZimaBoard 2 - это не «очередной одноплатник» и не «еще один мини-ПК». Это <strong>осознанно спроектированный x86-микросервер</strong>, который закрывает реальные потребности homelab-сообщества.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

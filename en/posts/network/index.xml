@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Network | ProHomeLab</title>
+    <link>https://prohomelab.com/en/posts/network/</link>
+    <description>Сайт про homelab, self-hosting и IT: инструкции по установке серверов, виртуализация, Docker, Proxmox, безопасность и автоматизация.</description>
+    <language>en</language>
+    <lastBuildDate>Tue, 04 Nov 2025 00:00:00 GMT</lastBuildDate>
+    <generator>ProHomeLab theme for Astro</generator>
+    <atom:link href="https://prohomelab.com/en/posts/network/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Split DNS - A Guide from LinuxServer.io</title>
+      <link>https://prohomelab.com/en/posts/split-dns/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/split-dns/</guid>
+      <pubDate>Tue, 04 Nov 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Networking</category>
+      <category>OPNsense</category>
+      <category>pfSense</category>
+      <category>Pi-hole</category>
+      <category>AdGuard</category>
+      <description>Split DNS - configuring domain names with different resolution for the internal network and the internet. Operating principles, advantages, and usage examples.</description>
+      <content:encoded><![CDATA[<h2 id="split-dns---linuxserverio">Split DNS - LinuxServer.io</h2>
+<h3 id="what-split-dns-is-in-brief">What <strong>Split DNS</strong> is, in brief</h3>
+<p>The term <strong>Split DNS</strong> is usually translated into Russian as "split DNS" or "split domain name system."</p>
+<p>The idea behind the concept is this: the same domain (for example, <code>stilicho.ru</code>) resolves differently depending on which network the client is querying from: internal (LAN) or external (the internet).</p>
+<p>Translation and usage examples:</p>
+<ul>
+<li><strong>Split DNS</strong> → <strong>Split DNS</strong></li>
+<li><strong>Split-horizon DNS</strong> → sometimes also called <strong>Split DNS</strong> or <strong>DNS with a split horizon</strong></li>
+</ul>
+<h3 id="what-split-dns-is-in-more-detail">What <strong>Split DNS</strong> is, in more detail</h3>
+<p>Below is a translation of <a href="https://docs.linuxserver.io/general/split-dns/">the article from LinuxServer.io</a></p>
+<p><img alt="Diagram of how split DNS works for internal and external networks" loading="lazy" decoding="async" width="1503" height="1149" src="https://prohomelab.com/_astro/0.C9AubAXH_tR2zx.webp"></p>
+<p>Split DNS lets you give different answers to DNS queries for internal and external users, so local requests to your server don't have to go through the router. This has several advantages:</p>
+<ul>
+<li>Faster, since there's no need to go through the router.</li>
+<li>A reverse proxy can easily distinguish between internal and external requests, allowing/denying them, since there's no NAT involved.</li>
+<li>Everything keeps working even without internet access.</li>
+<li>The system keeps working even if the upstream DNS server (your ISP/Google/OpenDNS, etc.) is unavailable.</li>
+</ul>
+<h3 id="requirements">Requirements</h3>
+<ul>
+<li>An internal reverse proxy <strong>listening on port 80/443</strong>.</li>
+<li>An internal DNS resolver that supports overrides or hosting full DNS zones.</li>
+</ul>
+<h3 id="popular-dns-configurations">Popular DNS configurations</h3>
+<p>In these examples, <code>domain.com</code> is assumed to be your domain and <code>10.10.10.10</code> your reverse proxy.</p>
+<h4 id="opnsense">OPNsense</h4>
+<p>Go to Services > Unbound DNS > Overrides > Host Overrides > Add:</p>
+<ul>
+<li>Host: <code>*</code></li>
+<li>Domain: <code>domain.com</code></li>
+<li>Type: <code>A or AAAA</code></li>
+<li>IP: <code>10.10.10.10</code></li>
+</ul>
+<h4 id="pfsense">pfSense</h4>
+<p>Go to Services > DNS Resolver > General Setting > Host Overrides > "Add."</p>
+<ul>
+<li>Host: <code>*</code></li>
+<li>Domain: <code>domain.com</code></li>
+<li>IP Address: <code>10.10.10.10</code></li>
+</ul>
+<h4 id="pi-hole-and-dnsmasq"><strong>Pi-hole</strong> and <strong>dnsmasq</strong></h4>
+<p>Enable <code>dnsmasq.d</code> on pihole (only needed for version 6 or higher; the video was recorded on version 5) with the following command:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">pihole-FTL</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--config</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">misc.etc_dnsmasq_d</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo pihole-FTL --config misc.etc_dnsmasq_d true"><div></div></button></div></figure></div>
+<p>Create a file <code>/etc/dnsmasq.d/domain.conf</code> with the following content:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">address=/domain.com/10.10.10.10</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="address=/domain.com/10.10.10.10"><div></div></button></div></figure></div>
+<h4 id="adguard-home"><strong>AdGuard Home</strong></h4>
+<p>Go to Filters > DNS rewrites > Add DNS rewrite:</p>
+<ul>
+<li>Domain name: <code>*.domain.com</code></li>
+<li>IP Address: <code>10.10.10.10</code></li>
+</ul>
+<h3 id="problems-with-wireguard"><strong>Problems with Wireguard</strong></h3>
+<p>When granting access to a Wireguard server, the Wireguard subdomain should not be split, otherwise the connection will drop when switching between Wi-Fi and mobile data.</p>
+<p>For example, you can exclude <code>wg.domain.com</code> in AdguardHome by creating another DNS rewrite - from <code>wg.domain.com</code> to <code>wg.domain.com</code>, which excludes it from the split.</p>
+<h3 id="nat-reflection--nat-loopback--hairpin-nat"><strong>NAT Reflection / NAT Loopback / Hairpin NAT</strong></h3>
+<p>NAT Reflection is an alternative to split DNS that can provide some, but not all, of the benefits of split DNS. It lets local network devices use the external IP address and get port forwarding without NAT.</p>
+<p>This is usually a setting on specific routers that can be enabled with the corresponding flag.</p>
+<p>Note that using the Cloudflare proxy (that's the orange cloud, which is currently being blocked by Roskomnadzor) will bypass this and still send traffic out.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Virtualizing a Router in Proxmox - Pros, Cons, and Pitfalls</title>
+      <link>https://prohomelab.com/en/posts/router-virtualization-pros-and-cons/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/router-virtualization-pros-and-cons/</guid>
+      <pubDate>Mon, 14 Jul 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Networking</category>
+      <category>Proxmox</category>
+      <category>OPNsense</category>
+      <category>pfSense</category>
+      <category>MikroTik</category>
+      <category>Virtualization</category>
+      <category>Homelab</category>
+      <description>An overview of the advantages and disadvantages of virtualizing a router (OPNsense, pfSense, MikroTik CHR) in Proxmox VE - when it's worth it and when it's better to keep dedicated hardware.</description>
+      <content:encoded><![CDATA[<p>Virtualization is a powerful tool in the arsenal of a homelab enthusiast or system administrator. One interesting, but rather controversial, case is <strong>virtualizing a router</strong>, such as <strong>OPNsense</strong>, <strong>pfSense</strong>, <strong>OpenWrt</strong>, or <strong>MikroTik CHR</strong>, in the <strong>Proxmox VE</strong> hypervisor. Let's break down the pros and cons of this approach.</p>
+<p>If you enjoyed this article, you can support the author by becoming a sponsor on Boosty (link in the contacts section).</p>
+<h2 id="why-virtualize-a-router">Why virtualize a router?</h2>
+<p>Virtualization lets you consolidate your infrastructure: fewer physical devices, centralized management, and flexibility for scaling and redundancy. It's also a great opportunity to test different configurations and systems within a single environment.</p>
+<hr>
+<h2 id="advantages-of-virtualizing-a-router-in-proxmox">Advantages of virtualizing a router in Proxmox</h2>
+<table>
+<thead>
+<tr>
+<th>Advantage</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Hardware savings</strong></td>
+<td>A single server acts as a host for several services, including the router.</td>
+</tr>
+<tr>
+<td><strong>Flexibility</strong></td>
+<td>It's easy to take snapshots, clones, backups, and roll back changes - especially handy when testing new rules and settings.</td>
+</tr>
+<tr>
+<td><strong>Monitoring and management</strong></td>
+<td>Proxmox provides convenient tools for monitoring the resources and state of the VM running the router.</td>
+</tr>
+<tr>
+<td><strong>Isolation</strong></td>
+<td>The router in its own VM/LXC is isolated from other services, simplifying security and fault tolerance.</td>
+</tr>
+<tr>
+<td><strong>SR-IOV and PCI Passthrough support</strong></td>
+<td>Physical interfaces can be passed straight through into the VM for maximum performance.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="disadvantages-and-risks">Disadvantages and risks</h2>
+<table>
+<thead>
+<tr>
+<th>Disadvantage</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Dependency on the host</strong></td>
+<td>If Proxmox "goes down," the router goes down with it, which can result in the loss of access to the entire network.</td>
+</tr>
+<tr>
+<td><strong>More complex boot process</strong></td>
+<td>Boot order issues: Proxmox has to come up before the router, otherwise there will be no network access.</td>
+</tr>
+<tr>
+<td><strong>Passing through network interfaces</strong></td>
+<td>For stable and secure operation, it's advisable to use passthrough or a bridge - this requires experience and careful configuration.</td>
+</tr>
+<tr>
+<td><strong>Networking can become a bottleneck</strong></td>
+<td>Especially when using virtual bridges (Linux Bridge, Open vSwitch), which may not provide sufficient throughput.</td>
+</tr>
+<tr>
+<td><strong>Harder to troubleshoot</strong></td>
+<td>It's harder to debug network errors across multiple layers of abstraction (Proxmox → VM → router OS).</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="whats-better-to-use---vm-or-lxc">What's better to use - VM or LXC?</h2>
+<ul>
+<li><strong>VM (virtual machine)</strong> - preferable for <strong>pfSense</strong> and <strong>OPNsense</strong>, since they're based on FreeBSD and were never designed as an OS meant to run inside a container.</li>
+<li><strong>LXC</strong> - suitable for some Linux-based solutions, but not recommended for critical network services due to the limited level of isolation.</li>
+</ul>
+<hr>
+<h2 id="practical-tips">Practical tips</h2>
+<ul>
+<li>Use a <strong>UPS</strong> and a <strong>watchdog</strong> to minimize the impact of a host failure.</li>
+<li>Take <strong>regular configuration backups</strong> and VM snapshots before updates.</li>
+<li>Separate <strong>management access to Proxmox</strong> from the main routed traffic across different interfaces.</li>
+<li>If you need high availability, consider a <strong>Proxmox VE cluster with HA</strong>, although this adds complexity and cost.</li>
+</ul>
+<hr>
+<h2 id="when-is-it-worth-virtualizing-a-router">When is it worth virtualizing a router?</h2>
+<p>It's a good fit if:</p>
+<ul>
+<li>You already have a stable Proxmox host;</li>
+<li>You're confident in the reliability of your hardware;</li>
+<li>You want to save on hardware and power consumption;</li>
+<li>You need flexibility and redundancy.</li>
+</ul>
+<p>It's not a good fit if:</p>
+<ul>
+<li>You're not confident in the stability of the host;</li>
+<li>You have no alternative access to Proxmox in case of a failure;</li>
+<li>You're building production infrastructure where 100% availability matters.</li>
+</ul>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<p>Virtualizing a router in Proxmox is a powerful but not universal solution. It's a great fit for <strong>homelab projects</strong>, experiments, and resource savings, but it requires attention to detail and a well-thought-out architecture. If you're ready for those challenges - go for it, the result is worth it!</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

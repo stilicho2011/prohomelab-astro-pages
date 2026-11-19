@@ -1,0 +1,384 @@
+<!DOCTYPE html><html lang="ru-RU" dir="ltr" data-scheme="prohomelab" data-theme="light" data-mode="system" data-default-mode="system" data-mode-switch="1" data-fluid="1" data-social-colors="hover" style="--phl-content-width: 48rem"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){const cur = "ru";
+const alts = {"en":"/en/tools/compose-quadlet/"};
+
+      try {
+        const p = localStorage.getItem('phl-lang');
+        if (p && p !== cur && alts[p]) location.replace(alts[p] + location.hash);
+      } catch (e) {}
+    })();</script><title>Конвертер Docker Compose в Podman Quadlet - .container для systemd онлайн | ProHomeLab</title><meta name="description" content="Преобразуйте docker-compose.yml в файлы Podman Quadlet для systemd: .container, .network и .volume, зависимости с ожиданием healthcheck и инструкция по установке. Работает в браузере."><link rel="canonical" href="https://prohomelab.com/tools/compose-quadlet/"><link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tools/compose-quadlet/"><link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tools/compose-quadlet/"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32"><link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"><link rel="manifest" href="/site.webmanifest"><meta property="og:site_name" content="ProHomeLab"><meta property="og:title" content="Конвертер Docker Compose в Podman Quadlet - .container для systemd онлайн"><meta property="og:description" content="Преобразуйте docker-compose.yml в файлы Podman Quadlet для systemd: .container, .network и .volume, зависимости с ожиданием healthcheck и инструкция по установке. Работает в браузере."><meta property="og:type" content="website"><meta property="og:url" content="https://prohomelab.com/tools/compose-quadlet/"><meta property="og:locale" content="ru_RU"><meta property="og:image" content="https://prohomelab.com/images/og-default.png"><meta name="twitter:card" content="summary_large_image"><meta name="yandex-verification" content="103870927"><link rel="alternate" type="application/rss+xml" title="ProHomeLab" href="https://prohomelab.com/index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Конвертер Docker Compose в Podman Quadlet","description":"Преобразуйте docker-compose.yml в файлы Podman Quadlet для systemd: .container, .network и .volume, зависимости с ожиданием healthcheck и инструкция по установке. Работает в браузере.","url":"https://prohomelab.com/tools/compose-quadlet/","inLanguage":"ru","applicationCategory":"DeveloperApplication","operatingSystem":"Any","browserRequirements":"Requires JavaScript","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Person","name":"Stilicho2011","url":"https://prohomelab.com/"}}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Главная","item":"https://prohomelab.com/"},{"@type":"ListItem","position":2,"name":"Инструменты","item":"https://prohomelab.com/tools/"},{"@type":"ListItem","position":3,"name":"Конвертер Docker Compose в Podman Quadlet","item":"https://prohomelab.com/tools/compose-quadlet/"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Что такое Quadlet?","acceptedAnswer":{"@type":"Answer","text":"Генератор systemd, встроенный в Podman. Файлы .container, .network и .volume при systemctl daemon-reload превращаются в обычные сервисы systemd. Контейнеры запускает и перезапускает systemd, демона, как у Docker, нет."}},{"@type":"Question","name":"Куда класть файлы Quadlet?","acceptedAnswer":{"@type":"Answer","text":"Для rootless в ~/.config/containers/systemd/, для системных контейнеров в /etc/containers/systemd/. Подпапки тоже читаются, поэтому конвертер кладет файлы проекта в отдельную папку. Затем systemctl --user daemon-reload (или sudo systemctl daemon-reload) и запуск сервисов."}},{"@type":"Question","name":"Как переносится depends_on?","acceptedAnswer":{"@type":"Answer","text":"В Requires= и After= у зависимого сервиса. Если в Compose стоит condition: service_healthy, сервис-зависимость получает Notify=healthy: systemd считает его запущенным только после успешного healthcheck. Конвертер рассчитан на Podman 5 и новее."}},{"@type":"Question","name":"Почему rootless-контейнеры не стартуют после перезагрузки?","acceptedAnswer":{"@type":"Answer","text":"Пользовательский systemd запускается только при входе пользователя. Чтобы сервисы поднимались сразу после загрузки, включите linger: loginctl enable-linger \"$USER\". Команда есть в README, если отмечен автозапуск."}},{"@type":"Question","name":"Что не переносится?","acceptedAnswer":{"@type":"Answer","text":"Параметры, которым нет прямой замены в Quadlet, например build или deploy, конвертер помечает и просит перенести вручную. restart: unless-stopped становится Restart=always, разница описана в замечаниях."}}]}</script><script>
+      // Light or dark before first paint, so a dark page never flashes white.
+      // data-mode is the choice (system, light, dark), data-theme the result (light or dark).
+      (() => {
+        const d = document.documentElement;
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        let mode = d.dataset.defaultMode || 'system';
+        if (d.dataset.modeSwitch) {
+          try {
+            const saved = localStorage.getItem('phl-theme');
+            if (saved === 'system' || saved === 'light' || saved === 'dark') mode = saved;
+          } catch (e) {}
+        }
+        const apply = () => {
+          d.dataset.mode = mode;
+          d.dataset.theme = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode;
+        };
+        apply();
+        media.addEventListener('change', () => mode === 'system' && apply());
+        window.__phlSetMode = (next) => {
+          mode = next;
+          try {
+            localStorage.setItem('phl-theme', next);
+          } catch (e) {}
+          apply();
+        };
+      })();
+    </script><style>:root:root{--phl-font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-heading:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-mono:'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace}</style><script>(function(){const ym = {"id":"103870927","webvisor":true,"clickmap":true,"trackLinks":true,"accurateTrackBounce":true,"ecommerce":"dataLayer"};
+const ga = {"id":"G-VRHQGK81S9"};
+const umami = {"src":"https://stats.prohomelab.com/script.js","websiteId":"31518a04-7f00-4d16-99f3-759c057c7bf2","recorder":true,"recorderSrc":"https://stats.prohomelab.com/recorder.js"};
+const consent = "opt-in";
+
+      (() => {
+        let started = false;
+        const add = (src, attrs = {}) => {
+          const s = document.createElement('script');
+          s.async = true;
+          s.src = src;
+          for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+          document.head.appendChild(s);
+        };
+        window.__phlAnalytics = () => {
+          if (started) return;
+          started = true;
+          if (ym) {
+            window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+            window.ym.l = Date.now();
+            add(`https://mc.yandex.ru/metrika/tag.js?id=${ym.id}`);
+            const opts = { ssr: true, webvisor: ym.webvisor, clickmap: ym.clickmap, accurateTrackBounce: ym.accurateTrackBounce, trackLinks: ym.trackLinks };
+            if (ym.ecommerce) opts.ecommerce = ym.ecommerce;
+            window.ym(Number(ym.id), 'init', opts);
+          }
+          if (ga) {
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ga.id);
+            add(`https://www.googletagmanager.com/gtag/js?id=${ga.id}`);
+          }
+          if (umami) {
+            const attrs = { 'data-website-id': umami.websiteId };
+            if (umami.domains) attrs['data-domains'] = umami.domains;
+            add(umami.src, { ...attrs, defer: '' });
+            if (umami.recorder) add(umami.recorderSrc, { ...attrs, defer: '' });
+          }
+        };
+        let choice = null;
+        try { choice = localStorage.getItem('phl-consent'); } catch (e) {}
+        if (consent !== 'opt-in' || choice === 'granted') window.__phlAnalytics();
+      })();
+    })();</script><style>.tool-about[data-astro-cid-6hnvvix3]{max-width:46rem;color:var(--phl-text);margin:2rem 0 0;font-size:.9375rem;line-height:1.6}.tool-about[data-astro-cid-6hnvvix3] h2[data-astro-cid-6hnvvix3]{font-family:var(--phl-font-heading);margin:1.75rem 0 .5rem;font-size:1.2rem;line-height:1.3}.tool-about[data-astro-cid-6hnvvix3] h2[data-astro-cid-6hnvvix3]:first-child{margin-top:0}.tool-about[data-astro-cid-6hnvvix3] h3[data-astro-cid-6hnvvix3]{font-family:var(--phl-font-heading);margin:1.1rem 0 .3rem;font-size:1rem;line-height:1.35}.tool-about[data-astro-cid-6hnvvix3] p[data-astro-cid-6hnvvix3]{margin:0 0 .6rem}.tool-about[data-astro-cid-6hnvvix3] code{font-family:var(--phl-font-mono);overflow-wrap:anywhere;padding:0;font-size:.88em;display:inline}
+</style><link rel="stylesheet" href="/_astro/Base.CNmgq2nC.css"><link rel="stylesheet" href="/_astro/traefik-compose.B1A2l_b8.css"><style>.cq-sr{clip-path:inset(50%);white-space:nowrap;width:1px;height:1px;position:absolute;overflow:hidden}.cq-source{padding:1rem 1rem 0}.cq textarea{resize:vertical;border:1px solid var(--phl-line);border-radius:var(--phl-radius);background:var(--tc-field);width:100%;min-width:0;color:inherit;font:.8125rem/1.6 var(--phl-font-mono);tab-size:2;white-space:pre;padding:.6rem .7rem;display:block;overflow:auto}.cq textarea:focus-visible{outline:2px solid var(--phl-accent);outline-offset:2px}.cq textarea::placeholder{color:var(--phl-muted);opacity:1}#cq-source{height:22rem;min-height:10rem}.cq-env{height:6.5rem;min-height:4rem}.cq-note{border-left:3px solid var(--tc-warn);color:var(--tc-warn);background:var(--tc-code-bg);padding:.55rem .75rem;font-size:.875rem;margin:.75rem 1rem 0!important}#cq-status{border-bottom:1px solid var(--phl-line);background:var(--phl-surface);padding:.6rem 1rem;font-size:.875rem}.cq-diagnostics{background:var(--phl-surface);max-height:16rem;overflow:auto}.cq-diagnostics:empty{display:none}.cq-diagnostics details{border-bottom:1px solid var(--phl-line)}.cq-diagnostics summary{cursor:pointer;min-height:var(--tc-target);align-items:center;padding:.5rem 1rem;font-size:.875rem;font-weight:600;display:flex}.cq-diagnostics ul{gap:.45rem;margin:0;padding:0 1rem .75rem 2.1rem;font-size:.8125rem;display:grid}.cq-diagnostics code{font:.75rem var(--phl-font-mono);color:var(--tc-key);overflow-wrap:anywhere;background:0 0;padding:0}.cq-files{border-bottom:1px solid var(--phl-line);background:var(--phl-surface);flex-wrap:wrap;align-items:end;gap:.5rem;padding:.75rem 1rem;display:flex}.cq-files label{flex:14rem}.cq .tc-result pre{white-space:pre}.cq .tc-local a{color:var(--phl-accent)}@media (width>=960px){.cq .tc-result pre{height:min(30rem,100vh - 24rem);min-height:14rem}}
+</style></head><body id="top"><template id="phl-lang-en"><div class="phl-langbar" lang="en" role="region" aria-label="This page is available in English"><div class="phl-langbar-inner"><p>This page is available in English</p><div class="phl-langbar-actions"><a href="/en/tools/compose-quadlet/" hreflang="en" data-phl-lang="en">Switch</a><button type="button" data-phl-lang-stay>Stay here</button></div></div></div></template><script>(function(){const data = {"cur":"ru","alts":{"en":"/en/tools/compose-quadlet/"},"match":{"ru":["ru","uk","be","kk"],"en":["en"]},"byLang":{"ru-ru":"ru","en":"en"},"fallback":"en"};
+
+        (() => {
+          const store = (v) => { try { localStorage.setItem('phl-lang', v); } catch (e) {} };
+          // An explicit choice anywhere (language switcher, the bar) is remembered.
+          document.addEventListener('click', (e) => {
+            const go = e.target.closest('[data-phl-lang]');
+            if (go) return store(go.dataset.phlLang);
+            const link = e.target.closest('a[hreflang]');
+            const key = link && data.byLang[link.getAttribute('hreflang').toLowerCase()];
+            if (key) return store(key);
+            const stay = e.target.closest('[data-phl-lang-stay]');
+            if (stay) { store(data.cur); stay.closest('.phl-langbar')?.remove(); }
+          });
+          let saved = null;
+          try { saved = localStorage.getItem('phl-lang'); } catch (e) {}
+          const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''])
+            .map((l) => String(l).toLowerCase().split('-')[0]);
+          const fits = (key, code) => (data.match[key] || []).includes(code);
+          // The language this reader reads, for other parts of the page (the analytics banner):
+          // the stored choice, else the page language if the browser fits it, else the first
+          // locale the browser fits, else the fallback, else the page language.
+          window.__phlReaderLocale = () => {
+            if (saved && data.match[saved]) return saved;
+            if (list.some((code) => fits(data.cur, code))) return data.cur;
+            for (const code of list) {
+              const key = Object.keys(data.match).find((k) => fits(k, code));
+              if (key) return key;
+            }
+            return data.fallback || data.cur;
+          };
+          if (saved || !Object.keys(data.alts).length) return;
+          if (list.some((code) => fits(data.cur, code))) return;
+          let target = null;
+          for (const code of list) {
+            target = Object.keys(data.alts).find((key) => fits(key, code)) || null;
+            if (target) break;
+          }
+          if (!target && data.fallback && data.fallback !== data.cur && data.alts[data.fallback]) target = data.fallback;
+          const tpl = target && document.getElementById('phl-lang-' + target);
+          if (tpl) document.body.prepend(tpl.content.cloneNode(true));
+        })();
+      })();</script><a class="phl-skip" href="#phl-content">Перейти к тексту</a><header class="phl-header phl-header-sticky"><div class="phl-header-inner"><a class="phl-brand" href="/"><img class="phl-logo phl-logo-light" src="/prohomelab-mark.svg" alt><span class="phl-brand-name">ProHomeLab</span><span class="phl-brand-point" aria-hidden="true"></span></a><nav class="phl-nav" aria-label="Главное меню"><ul class="phl-nav-list"><li><a href="/blog/">Все статьи</a></li><li><details class="phl-dropdown" data-phl-dropdown><summary>Темы<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul class="phl-dropdown-panel"><li><a href="/posts/">Темы</a></li><li><a href="/posts/authentik/">Authentik</a></li><li><a href="/posts/backup/">Backup</a></li><li><a href="/posts/crowdsec/">Crowdsec</a></li><li><a href="/posts/docker-ui/">Docker UI</a></li><li><a href="/posts/hardware/">Hardware</a></li><li><a href="/posts/media-servers/">Media Servers</a></li><li><a href="/posts/network/">Network</a></li><li><a href="/posts/news/">Новости</a></li><li><a href="/posts/nextcloud/">Nextcloud</a></li><li><a href="/posts/opnsense/">OPNsense</a></li><li><a href="/posts/pkm/">PKM</a></li><li><a href="/posts/podman/">Podman</a></li><li><a href="/posts/proxmox/">Proxmox</a></li><li><a href="/posts/selfhosting/">Self-hosting</a></li><li><a href="/posts/single-sign-on/">Single Sign On</a></li><li><a href="/posts/terraform/">Terraform</a></li><li><a href="/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/categories/">Категории</a></li><li><a href="/tags/">Теги</a></li><li><a href="/tools/" aria-current="page">Инструменты</a></li><li><a href="/about/">О проекте</a></li></ul></nav><div class="phl-header-tools phl-has-mobile-menu"><button type="button" class="phl-search-button" data-phl-search-open aria-label="Поиск" title="Поиск" hidden><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg></button><dialog class="phl-search" data-phl-search aria-label="Поиск"><div class="phl-search-box"><div class="phl-search-field"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg><input type="search" data-phl-search-input placeholder="Поиск по статьям" aria-label="Поиск по статьям" autocomplete="off" spellcheck="false"><button type="button" class="phl-search-close" data-phl-search-close aria-label="Закрыть"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></button></div><p class="phl-search-status" data-phl-search-status role="status" aria-live="polite"></p><ol class="phl-search-results" data-phl-search-results></ol><button type="button" class="phl-search-more" data-phl-search-more hidden>Показать еще</button></div></dialog><script>(function(){const options = {"shortcut":true,"pageSize":8,"text":{"noResults":"Ничего не найдено","loading":"Ищу","unavailable":"Поиск работает на собранном сайте (astro build)","more":"Показать еще"}};
+
+  (() => {
+    const open = document.querySelector('[data-phl-search-open]');
+    const dialog = document.querySelector('[data-phl-search]');
+    if (!open || !dialog || typeof dialog.showModal !== 'function') return;
+    const input = dialog.querySelector('[data-phl-search-input]');
+    const list = dialog.querySelector('[data-phl-search-results]');
+    const status = dialog.querySelector('[data-phl-search-status]');
+    const more = dialog.querySelector('[data-phl-search-more]');
+    const t = options.text;
+    let pagefind = null;
+    let failed = false;
+    let results = [];
+    let shown = 0;
+    let query = 0;
+    open.hidden = false;
+
+    const load = async () => {
+      if (pagefind || failed) return pagefind;
+      try {
+        pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+        await pagefind.init();
+      } catch (e) {
+        failed = true;
+        pagefind = null;
+      }
+      return pagefind;
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const render = async () => {
+      const page = results.slice(shown, shown + options.pageSize);
+      const id = query;
+      const data = await Promise.all(page.map((r) => r.data()));
+      if (id !== query) return;
+      for (const d of data) {
+        const li = document.createElement('li');
+        const sub = (d.sub_results || []).filter((x) => x.url !== d.url).slice(0, 2);
+        li.innerHTML =
+          `<a class="phl-search-hit" href="${esc(d.url)}"><span class="phl-search-title">${esc(d.meta?.title || d.url)}</span>` +
+          `<span class="phl-search-excerpt">${d.excerpt || ''}</span></a>` +
+          (sub.length
+            ? `<ul class="phl-search-sub">${sub.map((x) => `<li><a href="${esc(x.url)}">${esc(x.title)}</a></li>`).join('')}</ul>`
+            : '');
+        list.appendChild(li);
+      }
+      shown += page.length;
+      more.hidden = shown >= results.length;
+    };
+    const run = async () => {
+      const term = input.value.trim();
+      const id = ++query;
+      list.innerHTML = '';
+      more.hidden = true;
+      shown = 0;
+      if (!term) { status.textContent = ''; return; }
+      status.textContent = t.loading;
+      const pf = await load();
+      if (id !== query) return;
+      if (!pf) { status.textContent = t.unavailable; return; }
+      const res = await pf.debouncedSearch(term, {}, 200);
+      if (res === null || id !== query) return;
+      results = res.results;
+      status.textContent = results.length ? '' : t.noResults;
+      await render();
+    };
+
+    const show = () => {
+      dialog.showModal();
+      input.focus();
+      input.select();
+      load();
+    };
+    open.addEventListener('click', show);
+    dialog.querySelector('[data-phl-search-close]').addEventListener('click', () => dialog.close());
+    // A click on the backdrop (outside the box) closes the dialog.
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    input.addEventListener('input', run);
+    more.addEventListener('click', render);
+    // Enter opens the first result.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = list.querySelector('a');
+        if (first) { e.preventDefault(); location.href = first.href; }
+      }
+    });
+    if (options.shortcut) {
+      document.addEventListener('keydown', (e) => {
+        if (dialog.open) return;
+        const typing = /^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable;
+        if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          show();
+        }
+      });
+    }
+  })();
+})();</script><ul class="phl-social-links phl-header-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><a class="phl-lang-link" href="/en/tools/compose-quadlet/" hreflang="en" lang="en" title="Язык" data-phl-lang="en">EN</a><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;Как в системе&quot;,&quot;light&quot;:&quot;Светлое&quot;,&quot;dark&quot;:&quot;Темное&quot;}" data-title="Оформление" aria-label="Оформление" title="Оформление"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script><details class="phl-mobile-menu" data-phl-dropdown><summary aria-label="Меню"><span class="phl-mobile-open"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"/></svg></span><span class="phl-mobile-close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></span></summary><nav class="phl-mobile-panel" aria-label="Главное меню"><ul class="phl-mobile-list"><li><a href="/blog/">Все статьи</a></li><li><details><summary>Темы<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul><li><a href="/posts/">Темы</a></li><li><a href="/posts/authentik/">Authentik</a></li><li><a href="/posts/backup/">Backup</a></li><li><a href="/posts/crowdsec/">Crowdsec</a></li><li><a href="/posts/docker-ui/">Docker UI</a></li><li><a href="/posts/hardware/">Hardware</a></li><li><a href="/posts/media-servers/">Media Servers</a></li><li><a href="/posts/network/">Network</a></li><li><a href="/posts/news/">Новости</a></li><li><a href="/posts/nextcloud/">Nextcloud</a></li><li><a href="/posts/opnsense/">OPNsense</a></li><li><a href="/posts/pkm/">PKM</a></li><li><a href="/posts/podman/">Podman</a></li><li><a href="/posts/proxmox/">Proxmox</a></li><li><a href="/posts/selfhosting/">Self-hosting</a></li><li><a href="/posts/single-sign-on/">Single Sign On</a></li><li><a href="/posts/terraform/">Terraform</a></li><li><a href="/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/categories/">Категории</a></li><li><a href="/tags/">Теги</a></li><li><a href="/tools/" aria-current="page">Инструменты</a></li><li><a href="/about/">О проекте</a></li></ul><ul class="phl-social-links phl-mobile-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><p class="phl-mobile-mode"><span>Оформление</span><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;Как в системе&quot;,&quot;light&quot;:&quot;Светлое&quot;,&quot;dark&quot;:&quot;Темное&quot;}" data-title="Оформление" aria-label="Оформление" title="Оформление"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script></p></nav></details></div></div></header><script>
+  // Close open menus on outside click, on Escape, and when another one opens.
+  (() => {
+    if (window.__phlDropdowns) return;
+    window.__phlDropdowns = true;
+    const all = () => document.querySelectorAll('[data-phl-dropdown][open]');
+    document.addEventListener('click', (e) => {
+      all().forEach((d) => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      all().forEach((d) => {
+        d.removeAttribute('open');
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener(
+      'toggle',
+      (e) => {
+        const d = e.target;
+        if (!d.matches?.('[data-phl-dropdown]') || !d.open) return;
+        all().forEach((o) => o !== d && !o.contains(d) && o.removeAttribute('open'));
+      },
+      true,
+    );
+  })();
+</script><main class="phl-main" id="phl-content" tabindex="-1"><div class="tc cq" id="compose-quadlet" data-lang="ru"><header class="tc-heading"><h1>Docker Compose → Podman Quadlet</h1><p>Вставьте Compose и получите .container, .network и .volume для systemd вместе с инструкцией по установке. Все, что нельзя перенести без потерь, конвертер называет явно.</p></header><div class="tc-layout"><form id="cq-form" class="tc-panel" novalidate autocomplete="off"><div class="tc-bar"><h2>Исходный Compose</h2><div class="tc-actions"><button type="button" class="tc-btn" id="cq-open">Открыть YAML</button><button type="button" class="tc-btn" id="cq-example" title="Vaultwarden + PostgreSQL">Пример</button></div></div><input type="file" id="cq-file" accept=".yaml,.yml,.txt" hidden><div class="cq-source"><label for="cq-source" class="cq-sr">Compose YAML</label><textarea id="cq-source" name="source" spellcheck="false" placeholder="services:
+  app:
+    image: docker.io/library/nginx:alpine">name: vaultwarden
+services:
+  vaultwarden:
+    image: docker.io/vaultwarden/server:latest
+    restart: unless-stopped
+    ports:
+      - &quot;127.0.0.1:8080:80&quot;
+    environment:
+      DATABASE_URL: &quot;postgresql://vaultwarden:${DB_PASSWORD:?Set DB_PASSWORD}@db:5432/vaultwarden&quot;
+    volumes:
+      - vaultwarden-data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: docker.io/library/postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vaultwarden
+      POSTGRES_USER: vaultwarden
+      POSTGRES_PASSWORD: &quot;${DB_PASSWORD}&quot;
+    volumes:
+      - database-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, &#39;pg_isready -U &quot;$$POSTGRES_USER&quot; -d &quot;$$POSTGRES_DB&quot;&#39;]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+volumes:
+  vaultwarden-data:
+  database-data:
+</textarea></div><p id="cq-note" class="cq-note" hidden></p><div class="tc-fields"><label>Имя проекта<input name="project" spellcheck="false" placeholder="Из name или prohomelab"><small>Префикс имен systemd-сервисов.</small></label><label>Режим<select name="mode"><option value="rootless">Rootless, текущий пользователь</option><option value="system">Системный, root</option></select></label><label class="tc-wide">Папка Compose на Linux-хосте<input name="base" spellcheck="false" placeholder="/home/user/docker/vaultwarden"><small>Нужна для относительных bind mounts (./data) и env_file.</small></label><label>Версия Podman<select name="version"><option value="6.2">6.2</option><option value="6.1">6.1</option><option value="6.0">6.0</option><option value="5.8">5.8</option><option value="5.0">5.0–5.7</option></select></label><label class="tc-check"><input name="autostart" type="checkbox" checked> Автозапуск после загрузки</label><details class="tc-wide tc-group"><summary>Переменные .env для подстановки</summary><div class="tc-inner"><label>KEY=value<textarea name="env" class="cq-env" spellcheck="false" placeholder="DB_PASSWORD=...">DB_PASSWORD=replace-with-your-password</textarea></label><small>Значения подставляются в Compose и попадут в экспорт. env_file остается ссылкой на файл на хосте.</small></div></details></div><p class="tc-local">Podman 5.x / 6.x · Linux · systemd · cgroups v2</p></form><section class="tc-panel tc-result" aria-labelledby="cq-result-title"><div class="tc-bar"><h2 id="cq-result-title">Quadlet-файлы</h2><div class="tc-actions"><button type="button" class="tc-btn tc-primary" id="cq-zip" disabled>Скачать ZIP</button></div></div><div id="cq-status" role="status" aria-live="polite" class="tc-status-warning"><p>Файлов Quadlet: 5. Замечаний: 6. Прочитайте README.md перед установкой.</p></div><div id="cq-diagnostics" class="cq-diagnostics"></div><div class="cq-files"><label>Файл<select id="cq-files"><option value="vaultwarden-database-data.volume">vaultwarden-database-data.volume</option><option value="vaultwarden-db.container" selected>vaultwarden-db.container</option><option value="vaultwarden-default.network">vaultwarden-default.network</option><option value="vaultwarden-vaultwarden-data.volume">vaultwarden-vaultwarden-data.volume</option><option value="vaultwarden-vaultwarden.container">vaultwarden-vaultwarden.container</option></select></label><div class="tc-actions"><button type="button" class="tc-btn" id="cq-copy" disabled>Копировать</button><button type="button" class="tc-btn" id="cq-download" disabled>Скачать файл</button></div></div><pre tabindex="0" aria-label="Содержимое выбранного файла"><code id="cq-preview">[Unit]
+Description=ProHomeLab / vaultwarden / db
+
+[Container]
+Image=docker.io/library/postgres:17
+ContainerName=vaultwarden-db
+Network=vaultwarden-default.network
+PodmanArgs=--network-alias &quot;db&quot;
+Volume=vaultwarden-database-data.volume:/var/lib/postgresql/data
+Environment=&quot;POSTGRES_DB=vaultwarden&quot;
+Environment=&quot;POSTGRES_USER=vaultwarden&quot;
+Environment=&quot;POSTGRES_PASSWORD=replace-with-your-password&quot;
+HealthCmd=[&quot;/bin/sh&quot;,&quot;-c&quot;,&quot;pg_isready -U \&quot;$$POSTGRES_USER\&quot; -d \&quot;$$POSTGRES_DB\&quot;&quot;]
+HealthInterval=10s
+HealthTimeout=5s
+HealthStartPeriod=30s
+HealthRetries=10
+Notify=healthy
+
+[Service]
+Restart=always
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target
+</code></pre><p class="tc-local">Преобразование идет в браузере, Compose и .env никуда не отправляются. <a href="/tools/compose-quadlet/third-party-licenses.txt">Лицензии компонентов</a></p></section></div><section class="tool-about" aria-labelledby="tool-about-title" data-astro-cid-6hnvvix3><h2 id="tool-about-title" data-astro-cid-6hnvvix3>Как пользоваться</h2><p data-astro-cid-6hnvvix3>Вставьте docker-compose.yml или откройте файл. Конвертер разложит его на файлы Quadlet: по <code>.container</code> на каждый сервис, <code>.network</code> для сетей и <code>.volume</code> для именованных томов. Рядом появится README.md с командами установки для выбранного режима, rootless или системного.</p><p data-astro-cid-6hnvvix3>Укажите папку, где Compose лежит на Linux-хосте: от нее считаются относительные bind mounts вида <code>./data</code> и пути <code>env_file</code>. Переменные из .env можно вставить отдельно, они подставятся в файлы.</p><p data-astro-cid-6hnvvix3>Все, что Quadlet не умеет или умеет иначе, конвертер показывает списком: что перенесено, что проверить и что придется исправить. Архив ZIP со всеми файлами скачивается одной кнопкой.</p><h2 data-astro-cid-6hnvvix3>Вопросы и ответы</h2><h3 data-astro-cid-6hnvvix3>Что такое Quadlet?</h3><p data-astro-cid-6hnvvix3>Генератор systemd, встроенный в Podman. Файлы <code>.container</code>, <code>.network</code> и <code>.volume</code> при <code>systemctl daemon-reload</code> превращаются в обычные сервисы systemd. Контейнеры запускает и перезапускает systemd, демона, как у Docker, нет.</p><h3 data-astro-cid-6hnvvix3>Куда класть файлы Quadlet?</h3><p data-astro-cid-6hnvvix3>Для rootless в <code>~/.config/containers/systemd/</code>, для системных контейнеров в <code>/etc/containers/systemd/</code>. Подпапки тоже читаются, поэтому конвертер кладет файлы проекта в отдельную папку. Затем <code>systemctl --user daemon-reload</code> (или <code>sudo systemctl daemon-reload</code>) и запуск сервисов.</p><h3 data-astro-cid-6hnvvix3>Как переносится depends_on?</h3><p data-astro-cid-6hnvvix3>В <code>Requires=</code> и <code>After=</code> у зависимого сервиса. Если в Compose стоит <code>condition: service_healthy</code>, сервис-зависимость получает <code>Notify=healthy</code>: systemd считает его запущенным только после успешного healthcheck. Конвертер рассчитан на Podman 5 и новее.</p><h3 data-astro-cid-6hnvvix3>Почему rootless-контейнеры не стартуют после перезагрузки?</h3><p data-astro-cid-6hnvvix3>Пользовательский systemd запускается только при входе пользователя. Чтобы сервисы поднимались сразу после загрузки, включите linger: <code>loginctl enable-linger "$USER"</code>. Команда есть в README, если отмечен автозапуск.</p><h3 data-astro-cid-6hnvvix3>Что не переносится?</h3><p data-astro-cid-6hnvvix3>Параметры, которым нет прямой замены в Quadlet, например <code>build</code> или <code>deploy</code>, конвертер помечает и просит перенести вручную. <code>restart: unless-stopped</code> становится <code>Restart=always</code>, разница описана в замечаниях.</p></section><section class="tc-guides" aria-labelledby="cq-guides-title"><h2 id="cq-guides-title">Статьи по теме</h2><ul><li><a href="/posts/quadelts-vs-podlets/">Quadlet и Podlet в Podman</a><span>Что такое Quadlet, где лежат файлы и как ими управлять через systemd.</span></li><li><a href="/posts/what-is-podman/">Podman: альтернатива Docker</a><span>Архитектура без демона, rootless-контейнеры и поды.</span></li><li><a href="/posts/podman-disadvantages/">Недостатки Podman</a><span>Сеть и порты в rootless, совместимость с Compose и другие ограничения.</span></li></ul></section></div><script type="module" src="/_astro/QuadletTool.astro_astro_type_script_index_0_lang.d0NpfEO7.js"></script></main><footer class="phl-footer"><div class="phl-footer-inner"><nav class="phl-footer-nav" aria-label="Меню в подвале"><ul><li><a href="/tools/traefik-compose/">Генератор docker-compose</a></li><li><a href="/tools/compose-quadlet/">Compose в Podman Quadlet</a></li><li><a href="/tools/proxmox-quorum/">Кворум Proxmox</a></li><li><a href="/tools/opnsense-vlan-planner/">Планировщик VLAN</a></li><li><a href="/tools/rackplan/">Планировщик стойки</a></li><li><a href="/privacy/">Политика конфиденциальности</a></li></ul></nav><ul class="phl-social-links phl-footer-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><div class="phl-footer-meta"><p><span>© 2025-2026 Stilicho2011. All Rights Reserved.</span><span class="phl-footer-credit">Тема: <a href="https://prohomelab.com">ProHomeLab</a></span><button type="button" class="phl-consent-open" data-phl-consent-open hidden>Настройки аналитики</button></p><div class="phl-footer-tools"><a class="phl-to-top" href="#top"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l7-7l7 7m-7 7V5"/></svg>Наверх</a></div></div></div></footer><div class="phl-consent" data-phl-consent data-mode="opt-in" role="region" aria-label="Аналитика" hidden><p><span data-phl-consent-text>Разрешить обезличенную статистику посещений?</span> <a href="/privacy/" data-phl-consent-policy>Подробнее</a></p><div class="phl-consent-actions"><button type="button" data-phl-consent-choice="granted">Разрешить</button><button type="button" data-phl-consent-choice="denied">Отказаться</button></div></div><script>(function(){const TEXTS = {"ru":{"lang":"ru-RU","label":"Аналитика","text":"Разрешить обезличенную статистику посещений?","policy":"Подробнее","href":"/privacy/","granted":"Разрешить","denied":"Отказаться","seen":"Понятно"},"en":{"lang":"en","label":"Analytics","text":"Allow anonymous visit statistics?","policy":"Details","href":"/en/privacy/","granted":"Accept","denied":"Decline","seen":"OK"}};
+const PAGE = "ru";
+
+      (() => {
+        const box = document.querySelector('[data-phl-consent]');
+        if (!box) return;
+        const key = 'phl-consent';
+        let saved = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        const texts = TEXTS;
+        const reader = window.__phlReaderLocale && window.__phlReaderLocale();
+        const tx = reader && reader !== PAGE && texts[reader];
+        if (tx) {
+          box.lang = tx.lang;
+          box.setAttribute('aria-label', tx.label);
+          box.querySelector('[data-phl-consent-text]').textContent = tx.text;
+          const pol = box.querySelector('[data-phl-consent-policy]');
+          if (pol && tx.href) { pol.textContent = tx.policy; pol.href = tx.href; }
+          box.querySelectorAll('[data-phl-consent-choice]').forEach((b) => { b.textContent = tx[b.dataset.phlConsentChoice] || b.textContent; });
+        }
+        const show = () => { box.hidden = false; };
+        if (!saved) show();
+        box.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-phl-consent-choice]');
+          if (!b) return;
+          const value = b.dataset.phlConsentChoice;
+          try { localStorage.setItem(key, value); } catch (e) {}
+          box.hidden = true;
+          if (value === 'granted' && window.__phlAnalytics) window.__phlAnalytics();
+          // Declining after accepting: counters already loaded on this page stop with the next page.
+        });
+        document.querySelectorAll('[data-phl-consent-open]').forEach((el) => {
+          el.hidden = false;
+          el.addEventListener('click', (e) => { e.preventDefault(); show(); box.querySelector('button')?.focus(); });
+        });
+      })();
+    })();</script></body></html>

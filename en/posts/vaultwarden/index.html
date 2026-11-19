@@ -1,0 +1,917 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-scheme="prohomelab" data-theme="light" data-mode="system" data-default-mode="system" data-mode-switch="1" data-fluid="1" data-social-colors="hover" style="--phl-content-width: 48rem"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){const cur = "en";
+const alts = {"ru":"/posts/vaultwarden/"};
+
+      try {
+        const p = localStorage.getItem('phl-lang');
+        if (p && p !== cur && alts[p]) location.replace(alts[p] + location.hash);
+      } catch (e) {}
+    })();</script><title>Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden&#39;s | ProHomeLab</title><meta name="description" content="Set up Vaultwarden with Docker Compose, add Authentik SSO and mobile push notifications, and back it up properly - all running on hardware you control."><link rel="canonical" href="https://prohomelab.com/en/posts/vaultwarden/"><link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/vaultwarden/"><link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/vaultwarden/"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32"><link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"><link rel="manifest" href="/site.webmanifest"><meta property="og:site_name" content="ProHomeLab"><meta property="og:title" content="Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden's"><meta property="og:description" content="Set up Vaultwarden with Docker Compose, add Authentik SSO and mobile push notifications, and back it up properly - all running on hardware you control."><meta property="og:type" content="article"><meta property="og:url" content="https://prohomelab.com/en/posts/vaultwarden/"><meta property="og:locale" content="en"><meta property="og:image" content="https://prohomelab.com/_astro/featured.awOVf8Pn_1CLhJQ.jpg"><meta property="og:image:alt" content="Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden's"><meta property="article:published_time" content="2025-10-29T00:00:00.000Z"><meta property="article:modified_time" content="2026-09-28T00:00:00.000Z"><meta property="article:section" content="Self-Hosting"><meta property="article:tag" content="Vaultwarden"><meta property="article:tag" content="Docker"><meta property="article:tag" content="Self-Hosting"><meta property="article:tag" content="SSO"><meta name="twitter:card" content="summary_large_image"><meta name="yandex-verification" content="103870927"><link rel="alternate" type="application/rss+xml" title="ProHomeLab" href="https://prohomelab.com/en/index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","articleSection":"Self-Hosting","name":"Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden's","headline":"Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden's","description":"Set up Vaultwarden with Docker Compose, add Authentik SSO and mobile push notifications, and back it up properly - all running on hardware you control.","inLanguage":"en","url":"https://prohomelab.com/en/posts/vaultwarden/","author":[{"@type":"Person","name":"Stilicho2011","image":"https://prohomelab.com/avatar-stilicho2011.webp","url":"https://prohomelab.com","sameAs":["https://github.com/stilicho2011/ubuntu_rep","https://t.me/stilicho2011_videos","https://www.youtube.com/@prohomelab","https://boosty.to/stilicho2011"]}],"copyrightYear":"2025","datePublished":"2025-10-29T00:00:00.000Z","dateModified":"2026-09-28T00:00:00.000Z","image":"https://prohomelab.com/_astro/featured.awOVf8Pn_1CLhJQ.jpg","keywords":["Vaultwarden","Docker","Self-Hosting","SSO"],"mainEntityOfPage":"https://prohomelab.com/en/posts/vaultwarden/","wordCount":4153}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://prohomelab.com/en/"},{"@type":"ListItem","position":2,"name":"Self-Hosting","item":"https://prohomelab.com/en/posts/selfhosting/"},{"@type":"ListItem","position":3,"name":"Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden's","item":"https://prohomelab.com/en/posts/vaultwarden/"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoObject","name":"Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden's","description":"Set up Vaultwarden with Docker Compose, add Authentik SSO and mobile push notifications, and back it up properly - all running on hardware you control.","thumbnailUrl":["https://i.ytimg.com/vi/zJhB5p6Xrt0/maxresdefault.jpg"],"uploadDate":"2025-10-29T00:00:00.000Z","embedUrl":"https://www.youtube.com/embed/zJhB5p6Xrt0","contentUrl":"https://www.youtube.com/watch?v=zJhB5p6Xrt0"}</script><script>
+      // Light or dark before first paint, so a dark page never flashes white.
+      // data-mode is the choice (system, light, dark), data-theme the result (light or dark).
+      (() => {
+        const d = document.documentElement;
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        let mode = d.dataset.defaultMode || 'system';
+        if (d.dataset.modeSwitch) {
+          try {
+            const saved = localStorage.getItem('phl-theme');
+            if (saved === 'system' || saved === 'light' || saved === 'dark') mode = saved;
+          } catch (e) {}
+        }
+        const apply = () => {
+          d.dataset.mode = mode;
+          d.dataset.theme = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode;
+        };
+        apply();
+        media.addEventListener('change', () => mode === 'system' && apply());
+        window.__phlSetMode = (next) => {
+          mode = next;
+          try {
+            localStorage.setItem('phl-theme', next);
+          } catch (e) {}
+          apply();
+        };
+      })();
+    </script><style>:root:root{--phl-font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-heading:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-mono:'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace}</style><script>(function(){const ym = {"id":"103870927","webvisor":true,"clickmap":true,"trackLinks":true,"accurateTrackBounce":true,"ecommerce":"dataLayer"};
+const ga = {"id":"G-VRHQGK81S9"};
+const umami = {"src":"https://stats.prohomelab.com/script.js","websiteId":"31518a04-7f00-4d16-99f3-759c057c7bf2","recorder":true,"recorderSrc":"https://stats.prohomelab.com/recorder.js"};
+const consent = "opt-in";
+
+      (() => {
+        let started = false;
+        const add = (src, attrs = {}) => {
+          const s = document.createElement('script');
+          s.async = true;
+          s.src = src;
+          for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+          document.head.appendChild(s);
+        };
+        window.__phlAnalytics = () => {
+          if (started) return;
+          started = true;
+          if (ym) {
+            window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+            window.ym.l = Date.now();
+            add(`https://mc.yandex.ru/metrika/tag.js?id=${ym.id}`);
+            const opts = { ssr: true, webvisor: ym.webvisor, clickmap: ym.clickmap, accurateTrackBounce: ym.accurateTrackBounce, trackLinks: ym.trackLinks };
+            if (ym.ecommerce) opts.ecommerce = ym.ecommerce;
+            window.ym(Number(ym.id), 'init', opts);
+          }
+          if (ga) {
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ga.id);
+            add(`https://www.googletagmanager.com/gtag/js?id=${ga.id}`);
+          }
+          if (umami) {
+            const attrs = { 'data-website-id': umami.websiteId };
+            if (umami.domains) attrs['data-domains'] = umami.domains;
+            add(umami.src, { ...attrs, defer: '' });
+            if (umami.recorder) add(umami.recorderSrc, { ...attrs, defer: '' });
+          }
+        };
+        let choice = null;
+        try { choice = localStorage.getItem('phl-consent'); } catch (e) {}
+        if (consent !== 'opt-in' || choice === 'granted') window.__phlAnalytics();
+      })();
+    })();</script><link rel="stylesheet" href="/_astro/Base.CNmgq2nC.css"></head><body id="top"><template id="phl-lang-ru"><div class="phl-langbar" lang="ru-RU" role="region" aria-label="Эта страница есть на русском"><div class="phl-langbar-inner"><p>Эта страница есть на русском</p><div class="phl-langbar-actions"><a href="/posts/vaultwarden/" hreflang="ru-RU" data-phl-lang="ru">Читать на русском</a><button type="button" data-phl-lang-stay>Остаться</button></div></div></div></template><script>(function(){const data = {"cur":"en","alts":{"ru":"/posts/vaultwarden/"},"match":{"ru":["ru","uk","be","kk"],"en":["en"]},"byLang":{"ru-ru":"ru","en":"en"},"fallback":"en"};
+
+        (() => {
+          const store = (v) => { try { localStorage.setItem('phl-lang', v); } catch (e) {} };
+          // An explicit choice anywhere (language switcher, the bar) is remembered.
+          document.addEventListener('click', (e) => {
+            const go = e.target.closest('[data-phl-lang]');
+            if (go) return store(go.dataset.phlLang);
+            const link = e.target.closest('a[hreflang]');
+            const key = link && data.byLang[link.getAttribute('hreflang').toLowerCase()];
+            if (key) return store(key);
+            const stay = e.target.closest('[data-phl-lang-stay]');
+            if (stay) { store(data.cur); stay.closest('.phl-langbar')?.remove(); }
+          });
+          let saved = null;
+          try { saved = localStorage.getItem('phl-lang'); } catch (e) {}
+          const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''])
+            .map((l) => String(l).toLowerCase().split('-')[0]);
+          const fits = (key, code) => (data.match[key] || []).includes(code);
+          // The language this reader reads, for other parts of the page (the analytics banner):
+          // the stored choice, else the page language if the browser fits it, else the first
+          // locale the browser fits, else the fallback, else the page language.
+          window.__phlReaderLocale = () => {
+            if (saved && data.match[saved]) return saved;
+            if (list.some((code) => fits(data.cur, code))) return data.cur;
+            for (const code of list) {
+              const key = Object.keys(data.match).find((k) => fits(k, code));
+              if (key) return key;
+            }
+            return data.fallback || data.cur;
+          };
+          if (saved || !Object.keys(data.alts).length) return;
+          if (list.some((code) => fits(data.cur, code))) return;
+          let target = null;
+          for (const code of list) {
+            target = Object.keys(data.alts).find((key) => fits(key, code)) || null;
+            if (target) break;
+          }
+          if (!target && data.fallback && data.fallback !== data.cur && data.alts[data.fallback]) target = data.fallback;
+          const tpl = target && document.getElementById('phl-lang-' + target);
+          if (tpl) document.body.prepend(tpl.content.cloneNode(true));
+        })();
+      })();</script><a class="phl-skip" href="#phl-content">Skip to content</a><header class="phl-header phl-header-sticky"><div class="phl-header-inner"><a class="phl-brand" href="/en/"><img class="phl-logo phl-logo-light" src="/prohomelab-mark.svg" alt><span class="phl-brand-name">ProHomeLab</span><span class="phl-brand-point" aria-hidden="true"></span></a><nav class="phl-nav" aria-label="Main menu"><ul class="phl-nav-list"><li><a href="/en/blog/">All Articles</a></li><li><details class="phl-dropdown" data-phl-dropdown><summary aria-current="true">Topics<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul class="phl-dropdown-panel"><li><a href="/en/posts/">Topics</a></li><li><a href="/en/posts/authentik/">Authentik</a></li><li><a href="/en/posts/backup/">Backup</a></li><li><a href="/en/posts/crowdsec/">Crowdsec</a></li><li><a href="/en/posts/docker-ui/">Docker UI</a></li><li><a href="/en/posts/hardware/">Hardware</a></li><li><a href="/en/posts/media-servers/">Media Servers</a></li><li><a href="/en/posts/network/">Network</a></li><li><a href="/en/posts/news/">News</a></li><li><a href="/en/posts/nextcloud/">Nextcloud</a></li><li><a href="/en/posts/opnsense/">OPNsense</a></li><li><a href="/en/posts/pkm/">PKM</a></li><li><a href="/en/posts/podman/">Podman</a></li><li><a href="/en/posts/proxmox/">Proxmox</a></li><li><a href="/en/posts/selfhosting/">Self-hosting</a></li><li><a href="/en/posts/single-sign-on/">Single Sign On</a></li><li><a href="/en/posts/terraform/">Terraform</a></li><li><a href="/en/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/en/categories/">Categories</a></li><li><a href="/en/tags/">Tags</a></li><li><a href="/en/tools/">Tools</a></li><li><a href="/en/about/">About</a></li></ul></nav><div class="phl-header-tools phl-has-mobile-menu"><button type="button" class="phl-search-button" data-phl-search-open aria-label="Search" title="Search" hidden><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg></button><dialog class="phl-search" data-phl-search aria-label="Search"><div class="phl-search-box"><div class="phl-search-field"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg><input type="search" data-phl-search-input placeholder="Search articles" aria-label="Search articles" autocomplete="off" spellcheck="false"><button type="button" class="phl-search-close" data-phl-search-close aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></button></div><p class="phl-search-status" data-phl-search-status role="status" aria-live="polite"></p><ol class="phl-search-results" data-phl-search-results></ol><button type="button" class="phl-search-more" data-phl-search-more hidden>Show more</button></div></dialog><script>(function(){const options = {"shortcut":true,"pageSize":8,"text":{"noResults":"Nothing found","loading":"Searching","unavailable":"Search works on the built site (astro build)","more":"Show more"}};
+
+  (() => {
+    const open = document.querySelector('[data-phl-search-open]');
+    const dialog = document.querySelector('[data-phl-search]');
+    if (!open || !dialog || typeof dialog.showModal !== 'function') return;
+    const input = dialog.querySelector('[data-phl-search-input]');
+    const list = dialog.querySelector('[data-phl-search-results]');
+    const status = dialog.querySelector('[data-phl-search-status]');
+    const more = dialog.querySelector('[data-phl-search-more]');
+    const t = options.text;
+    let pagefind = null;
+    let failed = false;
+    let results = [];
+    let shown = 0;
+    let query = 0;
+    open.hidden = false;
+
+    const load = async () => {
+      if (pagefind || failed) return pagefind;
+      try {
+        pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+        await pagefind.init();
+      } catch (e) {
+        failed = true;
+        pagefind = null;
+      }
+      return pagefind;
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const render = async () => {
+      const page = results.slice(shown, shown + options.pageSize);
+      const id = query;
+      const data = await Promise.all(page.map((r) => r.data()));
+      if (id !== query) return;
+      for (const d of data) {
+        const li = document.createElement('li');
+        const sub = (d.sub_results || []).filter((x) => x.url !== d.url).slice(0, 2);
+        li.innerHTML =
+          `<a class="phl-search-hit" href="${esc(d.url)}"><span class="phl-search-title">${esc(d.meta?.title || d.url)}</span>` +
+          `<span class="phl-search-excerpt">${d.excerpt || ''}</span></a>` +
+          (sub.length
+            ? `<ul class="phl-search-sub">${sub.map((x) => `<li><a href="${esc(x.url)}">${esc(x.title)}</a></li>`).join('')}</ul>`
+            : '');
+        list.appendChild(li);
+      }
+      shown += page.length;
+      more.hidden = shown >= results.length;
+    };
+    const run = async () => {
+      const term = input.value.trim();
+      const id = ++query;
+      list.innerHTML = '';
+      more.hidden = true;
+      shown = 0;
+      if (!term) { status.textContent = ''; return; }
+      status.textContent = t.loading;
+      const pf = await load();
+      if (id !== query) return;
+      if (!pf) { status.textContent = t.unavailable; return; }
+      const res = await pf.debouncedSearch(term, {}, 200);
+      if (res === null || id !== query) return;
+      results = res.results;
+      status.textContent = results.length ? '' : t.noResults;
+      await render();
+    };
+
+    const show = () => {
+      dialog.showModal();
+      input.focus();
+      input.select();
+      load();
+    };
+    open.addEventListener('click', show);
+    dialog.querySelector('[data-phl-search-close]').addEventListener('click', () => dialog.close());
+    // A click on the backdrop (outside the box) closes the dialog.
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    input.addEventListener('input', run);
+    more.addEventListener('click', render);
+    // Enter opens the first result.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = list.querySelector('a');
+        if (first) { e.preventDefault(); location.href = first.href; }
+      }
+    });
+    if (options.shortcut) {
+      document.addEventListener('keydown', (e) => {
+        if (dialog.open) return;
+        const typing = /^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable;
+        if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          show();
+        }
+      });
+    }
+  })();
+})();</script><ul class="phl-social-links phl-header-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><a class="phl-lang-link" href="/posts/vaultwarden/" hreflang="ru-RU" lang="ru-RU" title="Language" data-phl-lang="ru">RU</a><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;System&quot;,&quot;light&quot;:&quot;Light&quot;,&quot;dark&quot;:&quot;Dark&quot;}" data-title="Color mode" aria-label="Color mode" title="Color mode"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script><details class="phl-mobile-menu" data-phl-dropdown><summary aria-label="Menu"><span class="phl-mobile-open"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"/></svg></span><span class="phl-mobile-close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></span></summary><nav class="phl-mobile-panel" aria-label="Main menu"><ul class="phl-mobile-list"><li><a href="/en/blog/">All Articles</a></li><li><details><summary>Topics<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul><li><a href="/en/posts/">Topics</a></li><li><a href="/en/posts/authentik/">Authentik</a></li><li><a href="/en/posts/backup/">Backup</a></li><li><a href="/en/posts/crowdsec/">Crowdsec</a></li><li><a href="/en/posts/docker-ui/">Docker UI</a></li><li><a href="/en/posts/hardware/">Hardware</a></li><li><a href="/en/posts/media-servers/">Media Servers</a></li><li><a href="/en/posts/network/">Network</a></li><li><a href="/en/posts/news/">News</a></li><li><a href="/en/posts/nextcloud/">Nextcloud</a></li><li><a href="/en/posts/opnsense/">OPNsense</a></li><li><a href="/en/posts/pkm/">PKM</a></li><li><a href="/en/posts/podman/">Podman</a></li><li><a href="/en/posts/proxmox/">Proxmox</a></li><li><a href="/en/posts/selfhosting/">Self-hosting</a></li><li><a href="/en/posts/single-sign-on/">Single Sign On</a></li><li><a href="/en/posts/terraform/">Terraform</a></li><li><a href="/en/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/en/categories/">Categories</a></li><li><a href="/en/tags/">Tags</a></li><li><a href="/en/tools/">Tools</a></li><li><a href="/en/about/">About</a></li></ul><ul class="phl-social-links phl-mobile-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><p class="phl-mobile-mode"><span>Color mode</span><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;System&quot;,&quot;light&quot;:&quot;Light&quot;,&quot;dark&quot;:&quot;Dark&quot;}" data-title="Color mode" aria-label="Color mode" title="Color mode"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script></p></nav></details></div></div></header><script>
+  // Close open menus on outside click, on Escape, and when another one opens.
+  (() => {
+    if (window.__phlDropdowns) return;
+    window.__phlDropdowns = true;
+    const all = () => document.querySelectorAll('[data-phl-dropdown][open]');
+    document.addEventListener('click', (e) => {
+      all().forEach((d) => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      all().forEach((d) => {
+        d.removeAttribute('open');
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener(
+      'toggle',
+      (e) => {
+        const d = e.target;
+        if (!d.matches?.('[data-phl-dropdown]') || !d.open) return;
+        all().forEach((o) => o !== d && !o.contains(d) && o.removeAttribute('open'));
+      },
+      true,
+    );
+  })();
+</script><main class="phl-main" id="phl-content" tabindex="-1"><div class="phl-progress" aria-hidden="true"><span></span></div><div class="phl-article-grid phl-has-toc"><article class="phl-article" data-pagefind-body><nav class="phl-breadcrumbs" aria-label="Breadcrumbs"><ol><li><a href="/en/">Home</a></li><li><a href="/en/posts/selfhosting/">Self-Hosting</a></li><li><span aria-current="page">Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden&#39;s</span></li></ol></nav><header class="phl-article-header"><p class="phl-eyebrow">Vaultwarden</p><h1 data-pagefind-meta="title">Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden&#39;s</h1><p class="phl-meta"><span class="phl-meta-authors"><a href="/en/authors/stilicho2011/">Stilicho2011</a></span><time datetime="2025-10-29T00:00:00.000Z">October 29, 2025</time><span>Updated <time datetime="2026-09-28T00:00:00.000Z">September 28, 2026</time></span><span>17 min read</span><span class="phl-views">126 views</span></p></header><div class="phl-article-tools"><p class="phl-translations">Also available in: <a href="/posts/vaultwarden/" hreflang="ru-RU">RU</a></p><button type="button" class="phl-zen-toggle" data-phl-zen data-on="Reading mode" data-off="Exit reading mode" aria-pressed="false">Reading mode</button></div><div class="phl-embed phl-yt phl-article-video" data-yt-id="zJhB5p6Xrt0"><a class="phl-yt-link" href="https://www.youtube.com/watch?v=zJhB5p6Xrt0" target="_blank" rel="noopener" aria-label="Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden's"><img src="https://i.ytimg.com/vi/zJhB5p6Xrt0/hqdefault.jpg" alt="Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden's" width="480" height="360" loading="eager" decoding="async"><span class="phl-yt-play" aria-hidden="true"></span></a></div><details class="phl-series"><summary>Part 5 of 24 in the series <a href="/en/series/self-hosting/">Self-Hosting</a></summary><ol><li><a href="/en/posts/fedora-server-42-in-proxmox/">Pros and Cons of Fedora Server 42</a></li><li><a href="/en/posts/linkwarden/">Linkwarden Overview - A Modern Self-Hosted Bookmark Manager</a></li><li><a href="/en/posts/postgres-p-1/">PostgreSQL and pgAdmin in Docker - Beginner Setup Guide</a></li><li><a href="/en/posts/mealie/">Mealie Recipe Manager - Self-Hosted Meal Planning on Docker</a></li><li><span aria-current="page">Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden&#39;s</span></li><li><a href="/en/posts/diun-docker-update-notifications/">Diun - Get Notified When Your Docker Images Have Updates</a></li><li><a href="/en/posts/update-linux-server/">How to Upgrade Linux Server Distributions</a></li><li><a href="/en/posts/homelabbing/">How to Start a Homelab - Hardware, Hypervisor, and Your First Service</a></li><li><a href="/en/posts/best-apps-2025/">The Best Self-Hosted Apps of 2025 - A Personal Roundup</a></li><li><a href="/en/posts/linkwarden-vs-karakeep/">Best Bookmark Manager - Linkwarden or Karakeep</a></li><li><a href="/en/posts/booklore/">BookLore - A Self-Hosted Library and Reader for Your Book Collection</a></li><li><a href="/en/posts/grimmory/">Grimmory - A Self-Hosted Library and Reader for Your Book Collection</a></li><li><a href="/en/posts/pangolin/">Pangolin Tunnel Setup - Expose Homelab Services Without Ports</a></li><li><a href="/en/posts/netbird/">NetBird Self-Hosted - Mesh VPN Without Port Forwarding</a></li><li><a href="/en/posts/postiz-youtube-vk-rutube/">Postiz - Trying to Automate YouTube, VK, and RuTube, and Why Only One Out of Three Actually Works</a></li><li><a href="/en/posts/postgres-p-2/">Connecting Applications to a Shared PostgreSQL and Learning Basic Maintenance - Part 2</a></li><li><a href="/en/posts/dozzle/">Dozzle - A Convenient Real-Time Log Viewer for Docker Containers</a></li><li><a href="/en/posts/docker-default-address-pools/">Docker Hit Its Network Limit - How I Diagnosed and Fixed It with default-address-pools</a></li><li><a href="/en/posts/gotify-push-notifications/">Gotify - Your Own Push Notification Server for the Hypervisor and Beyond</a></li><li><a href="/en/posts/forgejo-komodo-gitops/">Forgejo + Komodo - Turning Docker Compose into GitOps</a></li><li><a href="/en/posts/forgejo-komodo-gitops-tutorial/">GitOps for Homelab - Deploying Forgejo and Komodo From Scratch</a></li><li><a href="/en/posts/gitlab-vs-gitea-vs-forgejo/">GitLab, Gitea, and Forgejo. A Comparison for Grown-Ups - What Actually Fits Your Homelab</a></li><li><a href="/en/posts/renovate-forgejo-komodo/">Auto-Updating Docker Containers - Renovate + Forgejo + Komodo</a></li><li><a href="/en/posts/matrix-synapse-docker/">Matrix Synapse - Setting Up Your Own Server for Decentralized Chat</a></li></ol></details><details class="phl-toc" data-phl-toc><summary class="phl-toc-title">Contents</summary><nav aria-label="Contents"><ul><li class="depth-2"><a href="#vaultwarden" data-phl-toc-link="vaultwarden">Vaultwarden</a></li><li class="depth-3"><a href="#installing-vaultwarden" data-phl-toc-link="installing-vaultwarden">Installing Vaultwarden</a></li><li class="depth-3"><a href="#basic-setup" data-phl-toc-link="basic-setup">Basic setup</a></li><li class="depth-3"><a href="#advanced-setup---env-sso-and-push-notifications" data-phl-toc-link="advanced-setup---env-sso-and-push-notifications">Advanced setup - .env, SSO, and push notifications</a></li><li class="depth-3"><a href="#locking-down-admin_token" data-phl-toc-link="locking-down-admin_token">Locking down ADMIN_TOKEN</a></li><li class="depth-3"><a href="#logging-into-the-admin-panel-for-the-first-time" data-phl-toc-link="logging-into-the-admin-panel-for-the-first-time">Logging into the admin panel for the first time</a></li><li class="depth-3"><a href="#registering-your-first-user" data-phl-toc-link="registering-your-first-user">Registering your first user</a></li><li class="depth-3"><a href="#user-settings" data-phl-toc-link="user-settings">User Settings</a></li><li class="depth-3"><a href="#backups" data-phl-toc-link="backups">Backups</a></li><li class="depth-3"><a href="#common-mistakes" data-phl-toc-link="common-mistakes">Common mistakes</a></li><li class="depth-3"><a href="#faq" data-phl-toc-link="faq">FAQ</a></li><li class="depth-3"><a href="#wrapping-up" data-phl-toc-link="wrapping-up">Wrapping up</a></li></ul></nav></details><div class="phl-prose"><!--phl-feed-start--><h2 id="vaultwarden">Vaultwarden</h2>
+<h3 id="installing-vaultwarden">Installing <strong>Vaultwarden</strong></h3>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Update: I added an advanced setup with SSO (Authentik), push notifications, and moved secrets into an <code>.env</code> file - which is exactly how my own instance runs today.</p>
+</div>
+</div>
+<h4 id="password-managers-in-a-nutshell">Password managers in a nutshell</h4>
+<p>A password manager encrypts your logins, passwords, notes, and other secrets and auto-fills them when you sign into a site or app. The payoff: strong unique passwords everywhere, on-demand random password generation, sync across all your devices, one place for passwords and SSH keys alike, and a full change history.</p>
+<h4 id="what-vaultwarden-actually-is">What Vaultwarden actually is</h4>
+<p>Bitwarden's official server is written in C# and honestly a bit heavy for a homelab box - which is exactly the gap <strong>Vaultwarden</strong> fills. It's one Rust binary and one SQLite file, yet every real Bitwarden client - browser extensions, the phone apps, the desktop app - talks to it and never notices the difference. Same clients, same day-to-day experience, a fraction of the RAM and CPU, and code you (or the dozens of other people contributing to it) can actually read end to end.</p>
+<h4 id="why-bother-self-hosting-it">Why bother self-hosting it</h4>
+<p>The short version - what you actually gain:</p>
+<ul>
+<li><strong>Data ownership</strong>: the database and backups live wherever you put them, under your control, not in someone else's cloud.</li>
+<li><strong>Privacy</strong>: no metadata, no backup copies leaking out to third-party services. You're the only one with the keys.</li>
+<li><strong>Flexibility</strong>: hook up LDAP/SMTP, plug in an external database, add SSO through your own identity provider, run your own TLS through a reverse proxy - it's all yours to configure.</li>
+<li><strong>Lighter footprint</strong>: Vaultwarden sips resources compared to the official Bitwarden Server, so it's both cheaper to run and simpler to manage.</li>
+</ul>
+<p><strong>The catch</strong>: security is now on you - updates, TLS, backups, firewall rules, rotating secrets, all of it.
+There's one point here people love to argue about, though. For some reason a lot of folks assume Bitwarden's cloud is inherently safer just because it's a paid commercial product. Sounds reasonable on the surface. In practice, though, corporate cloud services are constant attack targets, and every so often something gets through. Bitwarden itself has had leaks, and its cloud users have had accounts hijacked more than once. Counterintuitive as it sounds, you'll end up guarding your own little Vaultwarden instance far more carefully than any provider guards theirs. And that's not even counting the fact that - no offense - you're just not that interesting a target to begin with.</p>
+<h4 id="the-game-plan">The game plan</h4>
+<ol>
+<li>Start with a <strong>basic</strong> <code>docker-compose.yml</code> - just enough to get a working server.</li>
+<li>Move on to the <strong>advanced setup</strong>: secrets pulled into <code>.env</code>, SSO via Authentik, push notifications, and some Rocket/logging tweaks - this is what I'm actually running.</li>
+<li>Wire up a reverse proxy and TLS.</li>
+<li>Tour the admin panel, user registration, and organizations.</li>
+<li>Cover backups and the mistakes people keep making.</li>
+</ol>
+<hr>
+<h3 id="basic-setup">Basic setup</h3>
+<p>If all you need is a working server without SSO or any of the extra bells and whistles, this is all you need. There's a more advanced version further down, but starting here is easier.</p>
+<div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.otfqh.css"><script type="module" src="/_astro/ec.0vx5m.js"></script><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8">:  </span><span style="--0:#616972;--1:#99A0A6"># Definition of the Vaultwarden service - the main password manager container.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># Container name in Docker - convenient for commands and logs.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden/server:latest</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># Official Vaultwarden image from Docker Hub (written in Rust).</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># The container will automatically restart if it crashes, but not after a manual stop.</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/path/to/bind/mount/:/data/</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># Mount a local host directory into /data inside the container.</span></div></div><div class="ec-line"><div class="code"><span class="indent">                                       </span><span style="--0:#616972;--1:#99A0A6"># This is where the database, attachments, and Vaultwarden config are stored.</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SIGNUPS_ALLOWED=false</span><span style="--0:#24292E;--1:#E1E4E8">        </span><span style="--0:#616972;--1:#99A0A6"># Disallow new user registrations (false) - improves security.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">ADMIN_TOKEN=replace_with_a_hashed_token</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># See the hashing section below - don't store the token in plain text.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">WEBSOCKET_ENABLED=true</span><span style="--0:#24292E;--1:#E1E4E8">       </span><span style="--0:#616972;--1:#99A0A6"># Enable WebSocket - Bitwarden clients get instant updates.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOMAIN=https://vaultwarden.domain.ru</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># Specify the domain - needed for correct links (password reset, TOTP, etc.)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">TZ=Europe/Moscow</span><span style="--0:#24292E;--1:#E1E4E8">             </span><span style="--0:#616972;--1:#99A0A6"># Set the timezone - correct time in logs and notifications.</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">proxy</span><span style="--0:#24292E;--1:#E1E4E8">                        </span><span style="--0:#616972;--1:#99A0A6"># Attach the container to Traefik's external network so the proxy can discover it.</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># --- HTTP → HTTPS redirect ---</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden.entrypoints=web"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.domain.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.vaultwarden-https-redirect.redirectscheme.scheme=https"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden.middlewares=vaultwarden-https-redirect"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># --- HTTPS (secure) ---</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden-secure.entrypoints=websecure"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden-secure.rule=Host(`vaultwarden.domain.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden-secure.tls=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden-secure.service=vaultwarden"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># --- Backend settings ---</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.vaultwarden.loadbalancer.server.port=80"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">security_opt</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">no-new-privileges:true</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># The container won't be able to escalate its privileges within the system.</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># Use the external Docker network that Traefik already uses.</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:  vaultwarden:  # Definition of the Vaultwarden service - the main password manager container.    container_name: vaultwarden  # Container name in Docker - convenient for commands and logs.    image: vaultwarden/server:latest  # Official Vaultwarden image from Docker Hub (written in Rust).    restart: unless-stopped  # The container will automatically restart if it crashes, but not after a manual stop.    volumes:      - /path/to/bind/mount/:/data/  # Mount a local host directory into /data inside the container.                                       # This is where the database, attachments, and Vaultwarden config are stored.    environment:      - SIGNUPS_ALLOWED=false        # Disallow new user registrations (false) - improves security.      - ADMIN_TOKEN=replace_with_a_hashed_token  # See the hashing section below - don&#x27;t store the token in plain text.      - WEBSOCKET_ENABLED=true       # Enable WebSocket - Bitwarden clients get instant updates.      - DOMAIN=https://vaultwarden.domain.ru  # Specify the domain - needed for correct links (password reset, TOTP, etc.)      - TZ=Europe/Moscow             # Set the timezone - correct time in logs and notifications.    networks:      - proxy                        # Attach the container to Traefik&#x27;s external network so the proxy can discover it.    labels:      - &#x22;traefik.enable=true&#x22;      # --- HTTP → HTTPS redirect ---      - &#x22;traefik.http.routers.vaultwarden.entrypoints=web&#x22;      - &#x22;traefik.http.routers.vaultwarden.rule=Host(&#x60;vaultwarden.domain.ru&#x60;)&#x22;      - &#x22;traefik.http.middlewares.vaultwarden-https-redirect.redirectscheme.scheme=https&#x22;      - &#x22;traefik.http.routers.vaultwarden.middlewares=vaultwarden-https-redirect&#x22;      # --- HTTPS (secure) ---      - &#x22;traefik.http.routers.vaultwarden-secure.entrypoints=websecure&#x22;      - &#x22;traefik.http.routers.vaultwarden-secure.rule=Host(&#x60;vaultwarden.domain.ru&#x60;)&#x22;      - &#x22;traefik.http.routers.vaultwarden-secure.tls=true&#x22;      - &#x22;traefik.http.routers.vaultwarden-secure.service=vaultwarden&#x22;      # --- Backend settings ---      - &#x22;traefik.http.services.vaultwarden.loadbalancer.server.port=80&#x22;      - &#x22;traefik.docker.network=proxy&#x22;    security_opt:      - no-new-privileges:true  # The container won&#x27;t be able to escalate its privileges within the system.networks:  proxy:    external: true  # Use the external Docker network that Traefik already uses."><div></div></button></div></figure></div>
+<h5 id="notes-on-the-basic-setup">Notes on the basic setup</h5>
+<ul>
+<li><code>ADMIN_TOKEN</code> - your key into the admin panel (<code>/admin</code>). No token, no access. Head to <strong>"Locking down ADMIN_TOKEN"</strong> below for how to hash it properly.</li>
+<li><code>SIGNUPS_ALLOWED=false</code> - keep this off if the server's reachable from the internet. Flip it to <code>true</code> only long enough to create your first account, then turn it right back off.</li>
+<li><code>WEBSOCKET_ENABLED=true</code> - gives you real-time sync between clients. Your reverse proxy needs to support proxying <code>Upgrade: websocket</code> for this to actually work.</li>
+</ul>
+<hr>
+<h3 id="advanced-setup---env-sso-and-push-notifications">Advanced setup - .env, SSO, and push notifications</h3>
+<p>Once real people start using the service, you'll want secrets out of the compose file, single sign-on through your own identity provider (mine's <strong><a href="https://prohomelab.com/en/posts/authentik-overview/">Authentik</a></strong>), and actual push notifications on mobile instead of relying on polling or websockets alone. Here's what I'm running right now.</p>
+<h4 id="docker-composeyml">docker-compose.yml</h4>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden/server:latest</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/path/to/docker/vaultwarden/data:/data</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/path/to/docker/vaultwarden/logs:/data/logs</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">ports</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">18083:80</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS_ALLOWED}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SIGNUPS_VERIFY=${VAULTWARDEN_SIGNUPS_VERIFY}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">INVITATIONS_ALLOWED=${VAULTWARDEN_INVITATIONS_ALLOWED}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">WEBSOCKET_ENABLED=true</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">ROCKET_ENV=prod</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">ROCKET_WORKERS=10</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">TZ=${VAULTWARDEN_TZ}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">LOG_LEVEL=error</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">EXTENDED_LOGGING=true</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOMAIN=${VAULTWARDEN_BASE_URL}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_HOST=${VAULTWARDEN_EMAIL__HOST}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_PORT=${VAULTWARDEN_EMAIL__PORT}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_FROM=${VAULTWARDEN_EMAIL__USERNAME}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_USERNAME=${VAULTWARDEN_EMAIL__USERNAME}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_PASSWORD=${VAULTWARDEN_EMAIL__PASSWORD}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_SECURITY=${VAULTWARDEN_EMAIL__SECURITY}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_ENABLED=true</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_AUTHORITY=https://authentik.domain.ru/application/o/vaultwarden/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_CLIENT_ID=${VAULTWARDEN_SSO_CLIENT_ID}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_CLIENT_SECRET=${VAULTWARDEN_SSO_CLIENT_SECRET}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_SCOPES="openid email profile offline_access"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_ALLOW_UNKNOWN_EMAIL_VERIFICATION=false</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_CLIENT_CACHE_EXPIRATION=0</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_ONLY=false</span><span style="--0:#24292E;--1:#E1E4E8">            </span><span style="--0:#616972;--1:#99A0A6"># true - completely disables master-password login, SSO only</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_SIGNUPS_MATCH_EMAIL=true</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># the first SSO login is linked to an existing account by email</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_ENABLED=true</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_INSTALLATION_ID=${VAULTWARDEN_PUSH_INSTALLATION_ID}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_INSTALLATION_KEY=${VAULTWARDEN_PUSH_INSTALLATION_KEY}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_RELAY_URI=https://api.bitwarden.eu</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_IDENTITY_URI=https://identity.bitwarden.eu</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># The reverse proxy is configured separately - see the Traefik/Nginx section below.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Example Traefik labels (if the container is on the same network as the proxy):</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#labels:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.enable=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden.entrypoints=web"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.domain.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.middlewares.vaultwarden-https-redirect.redirectscheme.scheme=https"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden.middlewares=vaultwarden-https-redirect"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden-secure.entrypoints=websecure"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden-secure.rule=Host(`vaultwarden.domain.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden-secure.tls=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden-secure.service=vaultwarden"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.docker.network=proxy"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">security_opt</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">no-new-privileges:true</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:  vaultwarden:    container_name: vaultwarden    image: vaultwarden/server:latest    restart: unless-stopped    volumes:      - /path/to/docker/vaultwarden/data:/data      - /path/to/docker/vaultwarden/logs:/data/logs    ports:      - 18083:80    environment:      - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}      - SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS_ALLOWED}      - SIGNUPS_VERIFY=${VAULTWARDEN_SIGNUPS_VERIFY}      - INVITATIONS_ALLOWED=${VAULTWARDEN_INVITATIONS_ALLOWED}      - WEBSOCKET_ENABLED=true      - ROCKET_ENV=prod      - ROCKET_WORKERS=10      - TZ=${VAULTWARDEN_TZ}      - LOG_LEVEL=error      - EXTENDED_LOGGING=true      - DOMAIN=${VAULTWARDEN_BASE_URL}      - SMTP_HOST=${VAULTWARDEN_EMAIL__HOST}      - SMTP_PORT=${VAULTWARDEN_EMAIL__PORT}      - SMTP_FROM=${VAULTWARDEN_EMAIL__USERNAME}      - SMTP_USERNAME=${VAULTWARDEN_EMAIL__USERNAME}      - SMTP_PASSWORD=${VAULTWARDEN_EMAIL__PASSWORD}      - SMTP_SECURITY=${VAULTWARDEN_EMAIL__SECURITY}      - SSO_ENABLED=true      - SSO_AUTHORITY=https://authentik.domain.ru/application/o/vaultwarden/      - SSO_CLIENT_ID=${VAULTWARDEN_SSO_CLIENT_ID}      - SSO_CLIENT_SECRET=${VAULTWARDEN_SSO_CLIENT_SECRET}      - SSO_SCOPES=&#x22;openid email profile offline_access&#x22;      - SSO_ALLOW_UNKNOWN_EMAIL_VERIFICATION=false      - SSO_CLIENT_CACHE_EXPIRATION=0      - SSO_ONLY=false            # true - completely disables master-password login, SSO only      - SSO_SIGNUPS_MATCH_EMAIL=true  # the first SSO login is linked to an existing account by email      - PUSH_ENABLED=true      - PUSH_INSTALLATION_ID=${VAULTWARDEN_PUSH_INSTALLATION_ID}      - PUSH_INSTALLATION_KEY=${VAULTWARDEN_PUSH_INSTALLATION_KEY}      - PUSH_RELAY_URI=https://api.bitwarden.eu      - PUSH_IDENTITY_URI=https://identity.bitwarden.eu    networks:      - vaultwarden    # The reverse proxy is configured separately - see the Traefik/Nginx section below.    # Example Traefik labels (if the container is on the same network as the proxy):    #labels:    #  - &#x22;traefik.enable=true&#x22;    #  - &#x22;traefik.http.routers.vaultwarden.entrypoints=web&#x22;    #  - &#x22;traefik.http.routers.vaultwarden.rule=Host(&#x60;vaultwarden.domain.ru&#x60;)&#x22;    #  - &#x22;traefik.http.middlewares.vaultwarden-https-redirect.redirectscheme.scheme=https&#x22;    #  - &#x22;traefik.http.routers.vaultwarden.middlewares=vaultwarden-https-redirect&#x22;    #  - &#x22;traefik.http.routers.vaultwarden-secure.entrypoints=websecure&#x22;    #  - &#x22;traefik.http.routers.vaultwarden-secure.rule=Host(&#x60;vaultwarden.domain.ru&#x60;)&#x22;    #  - &#x22;traefik.http.routers.vaultwarden-secure.tls=true&#x22;    #  - &#x22;traefik.http.routers.vaultwarden-secure.service=vaultwarden&#x22;    #  - &#x22;traefik.http.services.vaultwarden.loadbalancer.server.port=80&#x22;    #  - &#x22;traefik.docker.network=proxy&#x22;    security_opt:      - no-new-privileges:truenetworks:  vaultwarden:    external: true"><div></div></button></div></figure></div>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>Here the container publishes port <code>18083:80</code> directly and the Traefik labels are commented out. That's handy if your reverse proxy lives elsewhere - say, a separate Traefik config file instead of Docker labels - or if traffic comes in through a different proxy entirely. If you're using labels like in the basic setup above, uncomment that block and drop the external port publication so it's internal-only.</p>
+</div>
+</div>
+<h4 id="the-env-file">The .env file</h4>
+<p>Secrets, and anything that tends to differ between environments, belong in an <code>.env</code> file sitting next to <code>docker-compose.yml</code>:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">dotenv</span></figcaption><pre data-language="dotenv"><code><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_ADMIN_TOKEN</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">&#x3C;hashed token, see section below></span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Temporary settings for the first registration</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_SIGNUPS_ALLOWED</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">false</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_SIGNUPS_VERIFY</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">true</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_INVITATIONS_ALLOWED</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">true</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Email for notifications</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_EMAIL__HOST</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">smtp.gmail.com</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_EMAIL__PORT</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#005CC5;--1:#79B8FF">465</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_EMAIL__USERNAME</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">&#x3C;your email/SMTP login></span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_EMAIL__PASSWORD</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">"&#x3C;app password>"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_EMAIL__SECURITY</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">force_tls  </span><span style="--0:#616972;--1:#99A0A6"># options: starttls, force_tls, off</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># SSO (Authentik)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_SSO_CLIENT_ID</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">&#x3C;client id from Authentik></span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_SSO_CLIENT_SECRET</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">&#x3C;client secret from Authentik></span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Push notifications</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_PUSH_INSTALLATION_ID</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">&#x3C;installation id from bitwarden.com/host></span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_PUSH_INSTALLATION_KEY</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">&#x3C;installation key from bitwarden.com/host></span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Locale</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_TZ</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">Europe/Moscow</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Base URL (needed for email confirmation and SSO redirect to work correctly)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_BASE_URL</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">https://vaultwarden.domain.ru</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="VAULTWARDEN_ADMIN_TOKEN=<hashed token, see section below># Temporary settings for the first registrationVAULTWARDEN_SIGNUPS_ALLOWED=falseVAULTWARDEN_SIGNUPS_VERIFY=trueVAULTWARDEN_INVITATIONS_ALLOWED=true# Email for notificationsVAULTWARDEN_EMAIL__HOST=smtp.gmail.comVAULTWARDEN_EMAIL__PORT=465VAULTWARDEN_EMAIL__USERNAME=<your email/SMTP login>VAULTWARDEN_EMAIL__PASSWORD=&#x22;<app password>&#x22;VAULTWARDEN_EMAIL__SECURITY=force_tls  # options: starttls, force_tls, off# SSO (Authentik)VAULTWARDEN_SSO_CLIENT_ID=<client id from Authentik>VAULTWARDEN_SSO_CLIENT_SECRET=<client secret from Authentik># Push notificationsVAULTWARDEN_PUSH_INSTALLATION_ID=<installation id from bitwarden.com/host>VAULTWARDEN_PUSH_INSTALLATION_KEY=<installation key from bitwarden.com/host># LocaleVAULTWARDEN_TZ=Europe/Moscow# Base URL (needed for email confirmation and SSO redirect to work correctly)VAULTWARDEN_BASE_URL=https://vaultwarden.domain.ru"><div></div></button></div></figure></div>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p><code>.env</code> holds passwords and secrets in plain text on disk. If your compose files live in a git repo, add it to <code>.gitignore</code> without exception, and lock down the file's permissions (<code>chmod 600 .env</code>).</p>
+</div>
+</div>
+<h5 id="whats-different-from-the-basic-setup">What's different from the basic setup</h5>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ROCKET_ENV=prod</code></td>
+<td>Puts the Rocket web framework - what Vaultwarden's built on - into production mode: less debug noise, slightly different logging behavior.</td>
+</tr>
+<tr>
+<td><code>ROCKET_WORKERS=10</code></td>
+<td>How many worker threads handle requests. The default is fairly conservative; bump it up once you've got several active users or organizations.</td>
+</tr>
+<tr>
+<td><code>LOG_LEVEL=error</code> + <code>EXTENDED_LOGGING=true</code></td>
+<td>Only errors get logged, but with extra context (timestamps, module names) - good for debugging without drowning in noise.</td>
+</tr>
+<tr>
+<td>A separate <code>/data/logs</code> volume</td>
+<td>Logs get written to a file instead of just stdout, which makes it easy to ship them off to something like Promtail/Alloy for a monitoring stack.</td>
+</tr>
+<tr>
+<td><code>SIGNUPS_VERIFY=true</code></td>
+<td>Forces email confirmation on signup - worth having when <code>INVITATIONS_ALLOWED=true</code> and you're inviting people directly.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="setting-up-sso-with-authentik">Setting up SSO with Authentik</h4>
+<p>Vaultwarden supports OpenID Connect logins, so Authentik, Keycloak, Authelia, or any other OIDC provider will work. The logic is the same everywhere; I'll walk through it with Authentik.</p>
+<ol>
+<li>In Authentik, spin up a new <strong>OAuth2/OpenID Provider</strong> with a redirect URI like <code>https://vaultwarden.stilicho.ru/identity/connect/oidc-signin</code>.</li>
+<li>Create an <strong>Application</strong>, point it at the provider from step 1, and give it a slug (mine's <code>vaultwarden</code>, which is why <code>SSO_AUTHORITY</code> ends in <code>.../application/o/vaultwarden/</code>).</li>
+<li>Grab the <strong>Client ID</strong> and <strong>Client Secret</strong> and drop them into <code>VAULTWARDEN_SSO_CLIENT_ID</code> and <code>VAULTWARDEN_SSO_CLIENT_SECRET</code>.</li>
+<li>In the compose file, set <code>SSO_ENABLED=true</code> and point <code>SSO_AUTHORITY</code> at your OIDC provider's base URL - Vaultwarden will fetch <code>.well-known/openid-configuration</code> on its own from there.</li>
+<li><code>SSO_SIGNUPS_MATCH_EMAIL=true</code> means that if a user already has a Vaultwarden account, their first SSO login gets matched to it by email instead of spawning a duplicate.</li>
+<li>Keep <code>SSO_ONLY</code> set to <code>false</code> until you've actually confirmed SSO login works end to end - otherwise a hiccup on the provider's side can lock you out entirely.</li>
+</ol>
+<div class="phl-callout" data-callout="important">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Important</span></div>
+<div class="phl-callout-content">
+<p>Once SSO logs you in successfully for the first time, also test logging in with your regular master password (assuming <code>SSO_ONLY=false</code>) - think of it as your emergency exit if Authentik ever goes down.</p>
+</div>
+</div>
+<h4 id="push-notifications">Push notifications</h4>
+<p><code>PUSH_ENABLED</code> turns on push notifications for Bitwarden's mobile clients - instant one-time login codes, new-device alerts, and so on - without the app having to poll constantly.</p>
+<p>For that you'll need <code>PUSH_INSTALLATION_ID</code> and <code>PUSH_INSTALLATION_KEY</code>, both issued free at <a href="https://bitwarden.com/host">bitwarden.com/host</a> once you register a self-hosted installation. In the example above, <code>PUSH_RELAY_URI</code>/<code>PUSH_IDENTITY_URI</code> point at the European relay (<code>api.bitwarden.eu</code> / <code>identity.bitwarden.eu</code>); if your users aren't in the EU, swap in the global relay (<code>api.bitwarden.com</code> / <code>identity.bitwarden.com</code>) instead.</p>
+<hr>
+<h3 id="locking-down-admin_token">Locking down ADMIN_TOKEN</h3>
+<p>You could just generate a random, sufficiently complex token with any password generator and drop it straight into <code>ADMIN_TOKEN</code> - but storing it as plain text is a bad idea, and Vaultwarden will nag you about it both in the logs and right there in the admin panel.</p>
+<p>The easiest way to hash it properly is Vaultwarden's own built-in command (available since version 1.28), no extra packages required:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">exec</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-it</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">hash</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--preset</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">owasp</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="docker exec -it vaultwarden /vaultwarden hash --preset owasp"><div></div></button></div></figure></div>
+<p>It'll prompt you for the password interactively and spit out a ready-to-use string like <code>$argon2id$v=19$m=...$...</code> - that's what goes into <code>ADMIN_TOKEN</code>. (No need to escape <code>$</code> inside an <code>.env</code> file; but if you're writing the value straight into <code>docker-compose.yml</code> without <code>.env</code>, you'll need to double every <code>$</code> to <code>$$</code>, or Compose will try to interpret them as variable references.)</p>
+<p>More detail is in the <a href="https://github.com/dani-garcia/vaultwarden/wiki/Enabling-admin-page#secure-the-admin_token">Vaultwarden wiki</a>.</p>
+<p>Once that's done, (re)start the container:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">up</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="docker compose up -d"><div></div></button></div></figure></div>
+<p>Worth remembering: <code>/admin</code> is the single most tempting target for brute-forcing on the whole instance. If you want to harden it further with rate-limiting or ban scanners outright at the Traefik level, check out the articles on middlewares in <a href="https://prohomelab.com/en/posts/traefik-middlewares-overview/">Traefik</a> and <a href="https://prohomelab.com/en/posts/crowdsec-in-docker/">CrowdSec</a>.</p>
+<h3 id="logging-into-the-admin-panel-for-the-first-time">Logging into the admin panel for the first time</h3>
+<p>Once the container's up, check its logs - through <strong>Portainer</strong>, say, or just <code>docker logs vaultwarden</code>.</p>
+<p><img alt="Vaultwarden container logs after startup" loading="lazy" decoding="async" width="663" height="348" src="/_astro/3_Vaultwarden_Screenshot_202.Cervh9kj_1gqccF.webp"></p>
+<p>If everything checks out, the app stays quiet - meaning the token's properly hashed. Otherwise you'll get a warning that the token is stored in plain text and that this is insecure (it won't break anything by itself, but it does weaken the admin panel's defenses).</p>
+<p>To get to the admin panel, type your Vaultwarden address into the browser and tack on <strong>/admin</strong> at the end.</p>
+<p><img alt="Vaultwarden admin panel login form (/admin)" loading="lazy" decoding="async" width="1793" height="322" src="/_astro/1_Vaultwarden_Screenshot_202.Bbs0Wkqw_2p2JnG.webp"></p>
+<p>Enter the admin password and you're in. Head to the <strong>General settings</strong> tab - that's the main configuration hub.</p>
+<p><img alt="The General settings section in the admin panel" loading="lazy" decoding="async" width="1491" height="834" src="/_astro/Vaultwarden_Screenshot_202.j3faUJXW_ZDoUBA.webp"></p>
+<p>Right up top there's a reminder that anything you set here in the admin panel overrides whatever's in your environment variables (mail server settings, for instance) or the app's own defaults. Values that will get overridden are highlighted in yellow.</p>
+<h4 id="touring-general-settings">Touring "General settings"</h4>
+<h5 id="domain">Domain</h5>
+<ul>
+<li><strong>What it is:</strong> the main domain Vaultwarden runs on.</li>
+<li><strong>Example:</strong> <code>https://vaultwarden.stilicho.ru</code></li>
+<li><strong>What it's for:</strong> used in links - invitations, password reset, email notifications, SSO redirects.</li>
+<li><strong>Heads up:</strong> change the domain and you'll also need to update <code>WEBSOCKET_ADDRESS</code> and the redirect URI in your OIDC provider.</li>
+</ul>
+<h5 id="websocket-address">WebSocket Address</h5>
+<ul>
+<li><strong>What it is:</strong> the WebSocket endpoint that keeps Bitwarden clients in sync.</li>
+<li><strong>Example:</strong> <code>wss://vault.stilicho.ru/notifications/hub</code></li>
+<li><strong>What it's for:</strong> instant sync - a password added on one device shows up immediately on the others.</li>
+<li><strong>Note:</strong> if you're behind <a href="https://prohomelab.com/en/posts/traefik-in-lxc-part-1/">Traefik</a> or another proxy, make sure <code>/notifications/hub</code> is actually forwarded.</li>
+</ul>
+<h5 id="web-vault-enabled">Web Vault Enabled</h5>
+<ul>
+<li><strong>What it is:</strong> toggles the web vault interface on or off.</li>
+<li><strong>Default:</strong> on.</li>
+<li><strong>Why turn it off:</strong> if you only want people using the Bitwarden Desktop/Mobile clients.</li>
+</ul>
+<h5 id="user-registration-allow-new-signups">User Registration (Allow new signups)</h5>
+<ul>
+<li><strong>Environment variable:</strong> <code>SIGNUPS_ALLOWED</code></li>
+<li><strong>Options:</strong> <code>true</code> lets anyone register; <code>false</code> means signups only happen manually - admin creates accounts via <code>/admin</code> or sends invites.</li>
+<li><strong>Tip:</strong> turn this off on a public-facing server. Only flip it on briefly to create your own first account.</li>
+</ul>
+<h5 id="require-email-verification-on-signups">Require email verification on signups</h5>
+<ul>
+<li><strong>Variable:</strong> <code>SIGNUPS_VERIFY</code></li>
+<li><strong>My take:</strong> turn it on once SMTP's configured, especially if <code>INVITATIONS_ALLOWED=true</code> - it catches email typos before they become a problem.</li>
+</ul>
+<h5 id="invitation-allow-invitations">Invitation (Allow invitations)</h5>
+<ul>
+<li><strong>Variable:</strong> <code>INVITATIONS_ALLOWED</code></li>
+<li><strong>My take:</strong> leave it on if you're using Organizations at all - otherwise nobody can actually join one.</li>
+</ul>
+<h5 id="smtp-enabled">SMTP Enabled</h5>
+<ul>
+<li><strong>Variables:</strong> <code>SMTP_*</code></li>
+<li><strong>My take:</strong> get SMTP working before you create any organizations, or before someone inevitably needs a password reset.</li>
+</ul>
+<h5 id="sso-enabled">SSO Enabled</h5>
+<ul>
+<li><strong>Variable:</strong> <code>SSO_ENABLED</code></li>
+<li><strong>What it is:</strong> turns on OpenID Connect login. The admin UI also shows you the current connection status to the provider plus some diagnostics - handy when <code>SSO_AUTHORITY</code> isn't quite right.</li>
+</ul>
+<h5 id="e-mail-domain-whitelist">E-mail Domain Whitelist</h5>
+<ul>
+<li><strong>Example:</strong> <code>stilicho.ru,prohomelab.com</code></li>
+<li><strong>What it's for:</strong> restricts registration to specific domains - your own, or a company's.</li>
+</ul>
+<h5 id="allow-password-hints">Allow password hints</h5>
+<ul>
+<li><strong>My take:</strong> feel free to disable this - no reason to hand an attacker a hint.</li>
+</ul>
+<h5 id="yubikey-otps-enabled">YubiKey OTPs Enabled</h5>
+<ul>
+<li><strong>Variables:</strong> <code>YUBICO_CLIENT_ID</code>, <code>YUBICO_SECRET_KEY</code></li>
+<li><strong>What it's for:</strong> two-factor auth via physical YubiKeys.</li>
+</ul>
+<h5 id="websocket-notifications-enabled">WebSocket Notifications Enabled</h5>
+<ul>
+<li><strong>Note:</strong> needs a properly configured reverse proxy. <a href="https://github.com/dani-garcia/vaultwarden/wiki/Enabling-WebSocket-notifications">WebSocket Docs</a></li>
+</ul>
+<h5 id="admin-token">Admin Token</h5>
+<ul>
+<li><strong>What it is:</strong> shows the token currently guarding the admin panel. It can only be changed via the environment variable (<code>ADMIN_TOKEN</code> in <code>.env</code>) - the panel itself won't let you swap it live without restarting the container.</li>
+</ul>
+<h5 id="disable-two-factor-remember">Disable Two-Factor remember</h5>
+<ul>
+<li><strong>My take:</strong> turn this on for public servers, for extra safety. Worth knowing: on recent Vaultwarden versions, "remembered" 2FA sessions expire after 30 days regardless of this setting.</li>
+</ul>
+<div class="phl-callout" data-callout="important">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Important</span></div>
+<div class="phl-callout-content">
+<p>One section you really shouldn't skip is <strong>SMTP EMAIL SETTINGS</strong>. If you're planning to invite anyone - family, coworkers, whoever - these settings are non-negotiable.</p>
+</div>
+</div>
+<p>Everything else is up to taste, but personally I'd shut off open self-registration in the app. Doing so has zero effect on invitations or SSO.</p>
+<h4 id="the-users-section">The Users section</h4>
+<p>The "Users" table lists everyone with access to the vault, along with their status, confirmation level, and activity. You can also invite new users here, and manually confirm SSO accounts if <code>SSO_SIGNUPS_MATCH_EMAIL</code> didn't catch them automatically.</p>
+<p><img alt="The Users section in the admin panel" loading="lazy" decoding="async" width="1529" height="575" src="/_astro/Vaultwarden_vaultwarden_us.B695HTX6_isylM.webp"></p>
+<h4 id="what-an-organization-actually-is">What an Organization actually is</h4>
+<p>An <strong>Organization</strong> is a group of users sharing certain items - logins, passwords, secure notes, whatever - with each other. Think of it as the equivalent of a corporate or family vault in Bitwarden Cloud.</p>
+<p><img alt="The Organizations section in the admin panel" loading="lazy" decoding="async" width="1403" height="417" src="/_astro/Vaultwarden_vaultwarden_or.Bmftl5st_HeGAs.webp"></p>
+<h5 id="the-basic-idea">The basic idea</h5>
+<ul>
+<li>You've got a personal vault that only you can see.</li>
+<li>Inside an Organization, you can spin up shared collections, for example:
+<ul>
+<li>"DevOps" - CI/CD passwords, SSH keys, API tokens</li>
+<li>"Marketing" - social media and ad account logins</li>
+<li>"Family" - shared subscriptions (Netflix, Spotify, you name it)</li>
+</ul>
+</li>
+</ul>
+<h5 id="how-it-actually-works">How it actually works</h5>
+<ol>
+<li>The admin creates an organization (say, "ProHomelab").</li>
+<li>Adds members by email - they need an account on the same server, whether via regular signup, an invite, or SSO.</li>
+<li>Sets up Collections (categories for shared data).</li>
+<li>Assigns access rights per collection: read, write, or admin.</li>
+<li>Those entries then show up directly in each user's Bitwarden client - web, desktop, or mobile.</li>
+</ol>
+<h5 id="example-structure">Example structure</h5>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Organization</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">ProHomelab</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#1E7734;--1:#85E89D">├── Collection</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">Infrastructure</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">│    ├── Proxmox login</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">│    ├── Traefik dashboard</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">│    └── Grafana API key</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#1E7734;--1:#85E89D">├── Collection</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">Media</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">│    ├── Jellyfin admin</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">│    └── Audiobookshelf credentials</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Organization: ProHomelab ├── Collection: Infrastructure │    ├── Proxmox login │    ├── Traefik dashboard │    └── Grafana API key ├── Collection: Media │    ├── Jellyfin admin │    └── Audiobookshelf credentials"><div></div></button></div></figure></div>
+<h5 id="the-role-types">The role types</h5>
+<ul>
+<li><strong>Owner</strong> - full control over the organization.</li>
+<li><strong>Admin</strong> - manages users and collections.</li>
+<li><strong>Manager</strong> - manages just their own collections.</li>
+<li><strong>User</strong> - uses whatever access they've been granted, no admin rights.</li>
+</ul>
+<h5 id="a-few-important-details">A few important details</h5>
+<ul>
+<li>You don't need Organizations at all for purely personal use.</li>
+<li>Invitations require <code>INVITATIONS_ALLOWED</code> turned on and working SMTP.</li>
+<li>Nothing stops you from running several organizations on one server.</li>
+<li>Personal encryption keys are supported, so even the admin can't peek at a member's password contents.</li>
+</ul>
+<h3 id="registering-your-first-user">Registering your first user</h3>
+<p>Head to your Vaultwarden's address (mine's <code>vaultwarden.stilicho.ru</code>) and hit <strong>Create Account</strong>.</p>
+<p><img alt="First-user registration form for Vaultwarden" loading="lazy" decoding="async" width="1650" height="690" src="/_astro/Vaultwarden_vaultwarden_cr.BooJSlvF_R5rkW.webp"></p>
+<p>Fill in an email and a nickname.</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>To register that very first user, you'll need to temporarily allow open registration (<code>SIGNUPS_ALLOWED=true</code>). Once your first (admin) account exists, flip it back to <code>false</code>.</p>
+<p>If you've already got SSO enabled with <code>SSO_SIGNUPS_MATCH_EMAIL=true</code>, it's still simplest to create that first user through regular signup or an invite, then just log in via SSO afterward - the accounts will link up automatically by email.</p>
+</div>
+</div>
+<p>By default the password needs to be at least 12 characters; Vaultwarden checks it for complexity and offers to check whether it's shown up in a known breach.</p>
+<p><img alt="Vault master password" loading="lazy" decoding="async" width="843" height="719" src="/_astro/Vaultwarden_vaultwarden_ma.CV2_jgGR_Z2bc4DR.webp"></p>
+<p>From there, you're in the vault.</p>
+<p><img alt="Vaultwarden vault after first login" loading="lazy" decoding="async" width="2000" height="899" src="/_astro/Vaultwarden_vaultwarden_va.DKUTtobG_Z15J3p9.webp"></p>
+<p>At the top you'll see a nudge through the first three steps: create an account, install the browser extension, import data from another password manager. Export formats vary depending on where you're coming from, but the drill is always the same - export a file there, import it here.</p>
+<h3 id="user-settings">User Settings</h3>
+<p>User settings are whatever a regular Vaultwarden user sees after logging into the Web Vault at <code>https://vaultwarden.&#x3C;your-domain>.ru</code>.</p>
+<p>Let's look at <strong>Vaults</strong> - the heart of the whole system, where passwords, tokens, notes, and other secrets actually live.</p>
+<p>💡 So you don't mix these up:</p>
+<ul>
+<li><strong>Vaults</strong> - the personal store (plus shared ones via Organizations).</li>
+<li><strong>Settings</strong> - how the vault behaves.</li>
+<li><strong>Admin Panel</strong> (<code>/admin</code>) - server-side configuration.</li>
+</ul>
+<h4 id="the-basic-layout">The basic layout</h4>
+<h5 id="1-items-vault-entries">1. Items (vault entries)</h5>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>What it's for</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Login</strong></td>
+<td>Login + password + URL</td>
+<td>GitHub, an SSH panel, Grafana</td>
+</tr>
+<tr>
+<td><strong>Card</strong></td>
+<td>Bank card details</td>
+<td>Visa, MasterCard</td>
+</tr>
+<tr>
+<td><strong>Identity</strong></td>
+<td>Personal info</td>
+<td>Full name, address, email</td>
+</tr>
+<tr>
+<td><strong>Secure Note</strong></td>
+<td>Free-form text</td>
+<td>SSH key, API token, a config snippet</td>
+</tr>
+</tbody>
+</table>
+<p>Every item has a name, a type, its own fields (username, password, URL, and so on), and optionally a TOTP code, attachments, notes, and a link to an Organization/Collection.</p>
+<h5 id="2-collections">2. Collections</h5>
+<p>If you belong to an Organization, you'll see a list of Collections in the left panel - shared folders holding entries available to a group of people. No organization, no Collections shown.</p>
+<h5 id="3-navigation-tabs">3. Navigation tabs</h5>
+<table>
+<thead>
+<tr>
+<th>Tab</th>
+<th>What it's for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>All Items</strong></td>
+<td>Every entry, personal and shared</td>
+</tr>
+<tr>
+<td><strong>Favorites</strong></td>
+<td>Items you've starred</td>
+</tr>
+<tr>
+<td><strong>Folders</strong></td>
+<td>Your own personal folder structure</td>
+</tr>
+<tr>
+<td><strong>Trash</strong></td>
+<td>Deleted entries you can still restore</td>
+</tr>
+<tr>
+<td><strong>Organizations</strong></td>
+<td>Access to shared vaults</td>
+</tr>
+</tbody>
+</table>
+<h5 id="4-adding-new-entries">4. Adding new entries</h5>
+<p>The <strong>+ New Item</strong> button opens the entry creation form. You'll find "Generate password" (the built-in generator), "Add TOTP" (a one-time 2FA code), and "Attach file" (if <code>ENABLE_ATTACHMENTS=true</code> is set).</p>
+<h5 id="5-search-and-filtering">5. Search and filtering</h5>
+<p>Search runs against name, username, domain, and notes - entirely locally, so nothing gets sent to the server in plain text. You can also filter by item type, organization/collection, or tags.</p>
+<h5 id="6-folders">6. Folders</h5>
+<p>A personal structure that has nothing to do with organizations. Anything in a folder stays visible only to you, even if other members share your organization.</p>
+<h5 id="7-trash">7. Trash</h5>
+<p>Deleted entries don't vanish right away - they sit in the trash, where you can restore them or wipe them for good.</p>
+<h5 id="8-the-item-context-menu">8. The item context menu</h5>
+<p>View, Edit, Clone, Move to Folder/Collection, Add Favorite, Delete.</p>
+<h5 id="9-password-generator">9. Password Generator</h5>
+<p>Spins up a password to whatever length and complexity you need - letters, digits, symbols, the option to exclude lookalike characters - available right from the Vault.</p>
+<hr>
+<h3 id="backups">Backups</h3>
+<p>One question that comes up constantly is how exactly you're supposed to back up Vaultwarden. Here's a setup that works and doesn't take much effort.</p>
+<p>For SQLite (the default database), it's enough to copy the whole data directory while the container isn't actively writing to it - or, better, use <code>sqlite3 .backup</code> to get a consistent snapshot without stopping the service at all:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#!/usr/bin/env bash</span></div></div><div class="ec-line"><div class="code"><span style="--0:#005CC5;--1:#79B8FF">set</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-e</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">SRC</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">"/path/to/docker/vaultwarden/data"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">DEST</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">"/backup/vaultwarden/$(</span><span style="--0:#6F42C1;--1:#B392F0">date</span><span style="--0:#032F62;--1:#9ECBFF"> +%F)"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">mkdir</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-p</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$DEST</span><span style="--0:#032F62;--1:#9ECBFF">"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sqlite3</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$SRC</span><span style="--0:#032F62;--1:#9ECBFF">/db.sqlite3"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">".backup '</span><span style="--0:#24292E;--1:#E1E4E8">$DEST</span><span style="--0:#032F62;--1:#9ECBFF">/db.sqlite3'"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">cp</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-r</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$SRC</span><span style="--0:#032F62;--1:#9ECBFF">/attachments"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$DEST</span><span style="--0:#032F62;--1:#9ECBFF">/"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">2></span><span style="--0:#032F62;--1:#9ECBFF">/dev/null</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">||</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">cp</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-r</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$SRC</span><span style="--0:#032F62;--1:#9ECBFF">/sends"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$DEST</span><span style="--0:#032F62;--1:#9ECBFF">/"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">2></span><span style="--0:#032F62;--1:#9ECBFF">/dev/null</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">||</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">cp</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$SRC</span><span style="--0:#032F62;--1:#9ECBFF">/rsa_key"</span><span style="--0:#005CC5;--1:#79B8FF">*</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$DEST</span><span style="--0:#032F62;--1:#9ECBFF">/"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">2></span><span style="--0:#032F62;--1:#9ECBFF">/dev/null</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">||</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># clean up backups older than 14 days</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">find</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/backup/vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-maxdepth</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">1</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-mtime</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">+14</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-exec</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">rm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-rf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">{}</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">\;</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="#!/usr/bin/env bashset -eSRC=&#x22;/path/to/docker/vaultwarden/data&#x22;DEST=&#x22;/backup/vaultwarden/$(date +%F)&#x22;mkdir -p &#x22;$DEST&#x22;sqlite3 &#x22;$SRC/db.sqlite3&#x22; &#x22;.backup &#x27;$DEST/db.sqlite3&#x27;&#x22;cp -r &#x22;$SRC/attachments&#x22; &#x22;$DEST/&#x22; 2>/dev/null || truecp -r &#x22;$SRC/sends&#x22; &#x22;$DEST/&#x22; 2>/dev/null || truecp &#x22;$SRC/rsa_key&#x22;* &#x22;$DEST/&#x22; 2>/dev/null || true# clean up backups older than 14 daysfind /backup/vaultwarden -maxdepth 1 -mtime +14 -exec rm -rf {} \;"><div></div></button></div></figure></div>
+<p>Hook this up to cron - once a day is plenty - and actually test that these backups restore. A backup nobody's ever restored is, as the saying goes, just a file taking up disk space.</p>
+<p>Running PostgreSQL or MySQL instead? Use <code>pg_dump</code> or <code>mysqldump</code> respectively instead of copying the SQLite file.</p>
+<h3 id="common-mistakes">Common mistakes</h3>
+<ul>
+<li><strong><code>DOMAIN</code> doesn't match your real HTTPS address</strong> - breaks email confirmation and TOTP/2FA. Double-check it matches exactly what the browser sees, protocol included, no trailing slash.</li>
+<li><strong>WebSocket won't connect</strong> - the reverse proxy isn't forwarding <code>/notifications/hub</code> with the <code>Upgrade</code>/<code>Connection</code> headers. Check your proxy config.</li>
+<li><strong>SSO redirects straight to an error</strong> - either the redirect URI configured in your OIDC provider doesn't match Vaultwarden's actual address, or <code>SSO_AUTHORITY</code> isn't pointing at the provider's/application's root URL.</li>
+<li><strong>Push notifications never arrive</strong> - <code>PUSH_INSTALLATION_ID</code>/<code>PUSH_INSTALLATION_KEY</code> are stale or wrong, or you've got the wrong relay region selected (<code>.com</code> instead of <code>.eu</code>, or vice versa).</li>
+<li><strong>Logs warn about a plain-text ADMIN_TOKEN</strong> - the token isn't hashed; see the <code>vaultwarden hash --preset owasp</code> section above.</li>
+</ul>
+<h3 id="faq">FAQ</h3>
+<p><strong>Can I run Vaultwarden without owning a domain?</strong>
+Technically, yes - over IP. But the Web Vault needs a secure context (HTTPS) for the Web Crypto API to function, and getting a proper TLS cert without a domain is a real headache. In practice, without a real domain, it just won't work well.</p>
+<p><strong>Is SSO required?</strong>
+No, it's entirely optional. Regular master-password login works fine on its own. And turning on SSO doesn't disable built-in authentication either - you keep both.</p>
+<p><strong>Can I migrate my data from Bitwarden Cloud?</strong>
+Yes - export your vault from Bitwarden Cloud (Settings → Export Vault) and import it into a fresh Vaultwarden account.</p>
+<p><strong>What if I lose ADMIN_TOKEN?</strong>
+Generate a new one with <code>vaultwarden hash --preset owasp</code>, update <code>.env</code> or the environment variable, and restart the container. None of your users' data is affected.</p>
+<h3 id="wrapping-up">Wrapping up</h3>
+<table>
+<thead>
+<tr>
+<th>Section / Item</th>
+<th>What it's for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>All Items</strong></td>
+<td>Every entry the user owns</td>
+</tr>
+<tr>
+<td><strong>Folders</strong></td>
+<td>Personal categories</td>
+</tr>
+<tr>
+<td><strong>Collections</strong></td>
+<td>Shared categories (within organizations)</td>
+</tr>
+<tr>
+<td><strong>Trash</strong></td>
+<td>The trash bin</td>
+</tr>
+<tr>
+<td><strong>Add Item</strong></td>
+<td>Add a login / note / card</td>
+</tr>
+<tr>
+<td><strong>Search</strong></td>
+<td>Search across the Vault</td>
+</tr>
+<tr>
+<td><strong>Password Generator</strong></td>
+<td>Generate strong passwords</td>
+</tr>
+<tr>
+<td><strong>SSO</strong></td>
+<td>Single sign-on through an external identity provider</td>
+</tr>
+<tr>
+<td><strong>Push</strong></td>
+<td>Instant push notifications on mobile</td>
+</tr>
+</tbody>
+</table>
+<p>No single article can cover everything this app is capable of, so for the full picture, check the <a href="https://github.com/dani-garcia/vaultwarden/wiki">official Vaultwarden documentation</a>.</p><!--phl-feed-end--></div><footer class="phl-article-footer"><p class="phl-article-terms"><a class="phl-term-cat" href="/en/categories/vaultwarden/">Vaultwarden</a><a href="/en/tags/vaultwarden/">#Vaultwarden</a><a href="/en/tags/docker/">#Docker</a><a href="/en/tags/self-hosting/">#Self-Hosting</a><a href="/en/tags/sso/">#SSO</a></p><p class="phl-license">License: CC BY 4.0</p><div class="phl-share"><span class="phl-share-label">Share</span><a href="https://t.me/share/url?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fvaultwarden%2F&amp;text=Vaultwarden%20in%20Docker%20-%20Your%20Own%20Password%20Vault%2C%20Not%20Bitwarden's" target="_blank" rel="noopener noreferrer" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://x.com/intent/post?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fvaultwarden%2F&amp;text=Vaultwarden%20in%20Docker%20-%20Your%20Own%20Password%20Vault%2C%20Not%20Bitwarden's" target="_blank" rel="noopener noreferrer" aria-label="X" title="X" style="--phl-brand-l:#000000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.234 10.162L22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299l-.929-1.329L3.076 1.56h3.182l5.965 8.532l.929 1.329l7.754 11.09h-3.182z"/></svg></a><a href="https://www.reddit.com/submit?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fvaultwarden%2F&amp;title=Vaultwarden%20in%20Docker%20-%20Your%20Own%20Password%20Vault%2C%20Not%20Bitwarden's" target="_blank" rel="noopener noreferrer" aria-label="Reddit" title="Reddit" style="--phl-brand-l:#ff4500;--phl-brand-d:#ff4500" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12c0 3.314 1.343 6.314 3.515 8.485l-2.286 2.286A.72.72 0 0 0 1.738 24H12c6.627 0 12-5.373 12-12S18.627 0 12 0m4.388 3.199a1.999 1.999 0 1 1-1.947 2.46v.002a2.37 2.37 0 0 0-2.032 2.341v.007c1.776.067 3.4.567 4.686 1.363a2.802 2.802 0 1 1 2.908 4.753c-.088 3.256-3.637 5.876-7.997 5.876c-4.361 0-7.905-2.617-7.998-5.87a2.8 2.8 0 0 1 1.189-5.34c.645 0 1.239.218 1.712.585c1.275-.79 2.881-1.291 4.64-1.365v-.01a3.23 3.23 0 0 1 2.88-3.207a2 2 0 0 1 1.959-1.595m-8.085 8.376c-.784 0-1.459.78-1.506 1.797s.64 1.429 1.426 1.429s1.371-.369 1.418-1.385s-.553-1.841-1.338-1.841m7.406 0c-.786 0-1.385.824-1.338 1.841s.634 1.385 1.418 1.385c.785 0 1.473-.413 1.426-1.429c-.046-1.017-.721-1.797-1.506-1.797m-3.703 4.013c-.974 0-1.907.048-2.77.135a.222.222 0 0 0-.183.305a3.2 3.2 0 0 0 2.953 1.964a3.2 3.2 0 0 0 2.953-1.964a.222.222 0 0 0-.184-.305a28 28 0 0 0-2.769-.135"/></svg></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fvaultwarden%2F" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn" style="--phl-brand-l:#0a66c2;--phl-brand-d:#0b73da" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037c-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85c3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.06 2.06 0 0 1-2.063-2.065a2.064 2.064 0 1 1 2.063 2.065m1.782 13.019H3.555V9h3.564zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg></a><a href="mailto:?subject=Vaultwarden%20in%20Docker%20-%20Your%20Own%20Password%20Vault%2C%20Not%20Bitwarden's&amp;body=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fvaultwarden%2F" rel="noopener noreferrer" aria-label="Email" title="Email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a></div><section class="phl-author-box"><h2>Author</h2><div class="phl-author"><img class="phl-author-image" src="/avatar-stilicho2011.webp" alt="" width="64" height="64" loading="lazy"><div class="phl-author-body"><p class="phl-author-name"><a href="/en/authors/stilicho2011/">Stilicho2011</a></p><p class="phl-author-bio">Writing about homelab, self-hosting, automation and open-source solutions</p><p class="phl-author-links"><a href="mailto:pavel@prohomelab.com" rel="me noopener" aria-label="email" title="email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener" target="_blank" aria-label="github" title="github" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a><a href="https://t.me/stilicho2011_videos" rel="me noopener" target="_blank" aria-label="telegram" title="telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://www.youtube.com/@prohomelab" rel="me noopener" target="_blank" aria-label="youtube" title="youtube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a><a href="https://boosty.to/stilicho2011" rel="me noopener" target="_blank" aria-label="boosty" title="boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></p></div></div></section></footer><nav class="phl-prevnext" aria-label="Previous / Next"><a class="phl-prevnext-prev" href="/en/posts/mealie/" rel="prev"><span class="phl-prevnext-label">Previous</span><span class="phl-prevnext-title">Mealie Recipe Manager - Self-Hosted Meal Planning on Docker</span></a><a class="phl-prevnext-next" href="/en/posts/diun-docker-update-notifications/" rel="next"><span class="phl-prevnext-label">Next</span><span class="phl-prevnext-title">Diun - Get Notified When Your Docker Images Have Updates</span></a></nav><section class="phl-related"><h2>Related articles</h2><div class="phl-cards"><article class="phl-card"><a class="phl-card-cover" href="/en/posts/authentik-overview-proxy-oidc/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.FM-hjN3Y_1z483g.webp" srcset="/_astro/featured.FM-hjN3Y_1Sq1QA.webp 320w, /_astro/featured.FM-hjN3Y_zkRyK.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">SSO</span><time datetime="2025-11-16T00:00:00.000Z">November 16, 2025</time><span class="phl-views">30 views</span></p><h3 class="phl-card-title"><a href="/en/posts/authentik-overview-proxy-oidc/">OIDC, OAuth2, and Proxy Provider in Authentik - How to Protect Any Application</a></h3><p class="phl-card-summary">A detailed explanation of how Authentik&#39;s Proxy Provider adds authentication and SSO to any application. A simple flow diagram, key concepts, and usage examples.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/en/posts/authentik-setup/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured2.Cirzp2l__Z135jN5.webp" srcset="/_astro/featured2.Cirzp2l__1UOI1i.webp 320w, /_astro/featured2.Cirzp2l__2kap3G.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1344" height="768"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">SSO</span><time datetime="2025-11-16T00:00:00.000Z">November 16, 2025</time><span class="phl-views">33 views</span></p><h3 class="phl-card-title"><a href="/en/posts/authentik-setup/">Authentik - Initial Setup After Installation</a></h3><p class="phl-card-summary">A first-run walkthrough for Authentik, the identity provider that hands every other self-hosted app one shared login instead of a dozen separate ones - first user, MFA, sessions, and API tokens.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/en/posts/authentik-password-recovery/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.D_BRxKk2_KykWc.webp" srcset="/_astro/featured.D_BRxKk2_HLRpn.webp 320w, /_astro/featured.D_BRxKk2_ZAigRs.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">SSO</span><time datetime="2026-01-12T00:00:00.000Z">January 12, 2026</time><span class="phl-card-video">▶ video</span><span class="phl-views">46 views</span></p><h3 class="phl-card-title"><a href="/en/posts/authentik-password-recovery/">Setting Up Password Recovery in Authentik</a></h3><p class="phl-card-summary">A detailed guide to setting up password recovery in Authentik, covering flows, stages, and policies, along with recommendations for protecting against username enumeration attacks.</p></div></article></div></section></article></div><script type="module" src="/_astro/MermaidLoader.astro_astro_type_script_index_0_lang.D0cD853-.js"></script><script type="module">document.querySelectorAll(`.phl-yt`).forEach(e=>{let t=e.querySelector(`.phl-yt-link`);t?.addEventListener(`click`,n=>{n.preventDefault();let r=e.dataset.ytId,i=e.dataset.ytParams?`&${e.dataset.ytParams}`:``,a=document.createElement(`iframe`);a.src=`https://www.youtube-nocookie.com/embed/${r}?autoplay=1${i}`,a.title=t.getAttribute(`aria-label`)??`YouTube video`,a.allow=`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share`,a.allowFullscreen=!0,e.replaceChildren(a)})});var e=matchMedia(`(prefers-reduced-motion: reduce)`).matches;document.querySelectorAll(`.phl-carousel`).forEach(t=>{let n=t.querySelector(`.phl-carousel-track`),r=n?[...n.children]:[];if(!n||r.length<2)return;let i=t=>{let i=(t+r.length)%r.length;n.scrollTo({left:r[i].offsetLeft-n.offsetLeft,behavior:e?`auto`:`smooth`})},a=()=>Math.round(n.scrollLeft/n.clientWidth),o=document.createElement(`div`);o.className=`phl-carousel-nav`,o.innerHTML=`<button type="button" class="phl-carousel-prev" aria-label="Previous">‹</button><span class="phl-carousel-dots"></span><button type="button" class="phl-carousel-next" aria-label="Next">›</button>`;let s=o.querySelector(`.phl-carousel-dots`);r.forEach((e,t)=>{let n=document.createElement(`button`);n.type=`button`,n.setAttribute(`aria-label`,`${t+1} / ${r.length}`),n.addEventListener(`click`,()=>i(t)),s.appendChild(n)});let c=()=>[...s.children].forEach((e,t)=>e.toggleAttribute(`aria-current`,t===a()));n.addEventListener(`scroll`,()=>requestAnimationFrame(c),{passive:!0}),o.querySelector(`.phl-carousel-prev`).addEventListener(`click`,()=>i(a()-1)),o.querySelector(`.phl-carousel-next`).addEventListener(`click`,()=>i(a()+1)),t.appendChild(o),c();let l=Number(t.dataset.interval);if(l>0&&!e){let e=!1;t.addEventListener(`mouseenter`,()=>e=!0),t.addEventListener(`mouseleave`,()=>e=!1),t.addEventListener(`focusin`,()=>e=!0),setInterval(()=>!e&&i(a()+1),Math.max(l,1500))}});var t=e=>`phl-tabs:${e}`,n=[...document.querySelectorAll(`.phl-tabs`)],r=(e,i,a=!0)=>{let o=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!o.some(e=>e.dataset.label===i))return;o.forEach(e=>e.hidden=e.dataset.label!==i),e.querySelectorAll(`:scope > .phl-tablist button`).forEach(e=>e.setAttribute(`aria-selected`,String(e.dataset.label===i)));let s=e.dataset.group;if(a&&s){try{localStorage.setItem(t(s),i)}catch{}n.filter(t=>t!==e&&t.dataset.group===s).forEach(e=>r(e,i,!1))}};n.forEach((e,n)=>{let i=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!i.length)return;let a=document.createElement(`div`);a.className=`phl-tablist`,a.setAttribute(`role`,`tablist`),i.forEach((t,o)=>{let s=document.createElement(`button`);s.type=`button`,s.setAttribute(`role`,`tab`),s.id=`phl-tab-${n}-${o}`,s.dataset.label=t.dataset.label,s.innerHTML=t.querySelector(`.phl-tab-label`)?.innerHTML??t.dataset.label??``,t.setAttribute(`role`,`tabpanel`),t.setAttribute(`aria-labelledby`,s.id),s.addEventListener(`click`,()=>r(e,t.dataset.label)),s.addEventListener(`keydown`,e=>{let t=e.key===`ArrowRight`?1:e.key===`ArrowLeft`?-1:0;if(!t)return;let n=a.children[(o+t+i.length)%i.length];n.focus(),n.click()}),a.appendChild(s)}),e.prepend(a),e.classList.add(`phl-tabs-ready`);let o=null;try{o=e.dataset.group?localStorage.getItem(t(e.dataset.group)):null}catch{}r(e,o??e.dataset.default??i[0].dataset.label,!1)}),document.querySelectorAll(`.phl-accordion[data-mode="collapse"]`).forEach(e=>{let t=[...e.querySelectorAll(`:scope > .phl-accordion-item`)];t.forEach(e=>e.addEventListener(`toggle`,()=>e.open&&t.forEach(t=>t!==e&&(t.open=!1))))});var i=document.querySelectorAll(`.phl-prose img:not(.nozoom)`);if(i.length){let e=document.createElement(`dialog`);e.className=`phl-lightbox`,e.innerHTML=`<img alt=""><button type="button" class="phl-lightbox-close" aria-label="Close">×</button>`,document.body.appendChild(e);let t=e.querySelector(`img`);e.addEventListener(`click`,()=>e.close()),i.forEach(n=>{n.closest(`a, .phl-yt, .phl-repo`)||(n.classList.add(`phl-zoomable`),n.addEventListener(`click`,()=>{t.src=n.currentSrc||n.src,t.alt=n.alt,e.showModal()}))})}</script><script type="module" src="/_astro/ChartTypeitClient.astro_astro_type_script_index_0_lang.CjHU9QBU.js"></script><script>(function(){const smartToc = true;
+const tableHint = "The table scrolls sideways";
+const wideBlocks = true;
+const wideCode = false;
+
+  // TOC: collapsed on phones, open from 768 px (decision 0007).
+  // Follows width changes too (rotating a tablet, resizing the window).
+  const toc = document.querySelector('[data-phl-toc]');
+  const wide = matchMedia('(min-width: 768px)');
+  const syncToc = () => toc && toc.toggleAttribute('open', wide.matches);
+  syncToc();
+  wide.addEventListener('change', syncToc);
+
+  // Current section in the TOC.
+  if (toc && smartToc && 'IntersectionObserver' in window) {
+    const links = new Map([...toc.querySelectorAll('[data-phl-toc-link]')].map((a) => [a.dataset.phlTocLink, a]));
+    const heads = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+    const visible = new Set();
+    const mark = () => {
+      const current = heads.find((h) => visible.has(h.id)) ?? [...heads].reverse().find((h) => h.getBoundingClientRect().top < 120);
+      links.forEach((a, id) => a.toggleAttribute('aria-current', current?.id === id));
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id)));
+        mark();
+      },
+      { rootMargin: '0px 0px -70% 0px' },
+    );
+    heads.forEach((h) => io.observe(h));
+  }
+
+  // Wide blocks: tables and screenshots (and code, with wideCode) wider than the text column get data-phl-wide.
+  // Measured against the column width itself, not the window, so the result is the same on a
+  // phone and a desktop. The CSS lets them grow only on large screens (styles/layout.css).
+  if (wideBlocks) {
+    const root = document.documentElement;
+    const raw = getComputedStyle(root).getPropertyValue('--phl-content-width').trim();
+    const rem = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const column = raw.endsWith('rem') ? parseFloat(raw) * rem : parseFloat(raw) || 736;
+    // With the info column (from 1680 px) a block next to it must not grow over it:
+    // such blocks get data-phl-wide="beside-info" and stay in the text column.
+    const info = document.querySelector('.phl-article-info');
+    const large = matchMedia('(min-width: 1680px)');
+    const wideEls = new Set();
+    const classify = () => {
+      const bottom = info && large.matches ? info.getBoundingClientRect().bottom + 24 : -Infinity;
+      // Top to bottom: a block that does not grow keeps the ones below in place, a growing one
+      // only pushes them further down, so one pass is stable.
+      [...wideEls].sort((x, y) => (x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)).forEach((el) => {
+        const value = el.getBoundingClientRect().top < bottom ? 'beside-info' : '';
+        if (el.getAttribute('data-phl-wide') !== value) el.setAttribute('data-phl-wide', value);
+      });
+    };
+    let queued = false;
+    const queue = () => {
+      if (queued) return;
+      queued = true;
+      // A timer, not requestAnimationFrame: that one never fires in hidden tabs and some previews.
+      setTimeout(() => { queued = false; classify(); }, 50);
+    };
+    const mark = (el) => {
+      if (!el || wideEls.has(el)) return;
+      el.setAttribute('data-phl-wide', 'beside-info');
+      wideEls.add(el);
+      queue();
+    };
+    if (info) {
+      // Image loads, an opened series list, a resized window all move blocks.
+      if ('ResizeObserver' in window) new ResizeObserver(queue).observe(document.querySelector('.phl-article') ?? document.body);
+      addEventListener('resize', queue);
+    }
+    if (wideCode) document.querySelectorAll('.phl-prose .expressive-code').forEach((ec) => {
+      const pre = ec.querySelector('pre');
+      if (pre && pre.scrollWidth > column + 1) mark(ec);
+    });
+    document.querySelectorAll('.phl-prose table').forEach((t) => {
+      if (t.scrollWidth > column + 1) mark(t);
+    });
+    // A screenshot: an image clearly larger than the column, alone in its paragraph or figure.
+    const block = (img) => {
+      const fig = img.closest('.phl-prose figure');
+      if (fig) return fig;
+      const p = img.closest('.phl-prose > p');
+      return p && p.querySelectorAll('img').length === 1 && !p.textContent.trim() ? p : null;
+    };
+    const check = (img) => {
+      const w = Number(img.getAttribute('width')) || img.naturalWidth;
+      if (w >= column * 1.25 && !img.closest('.phl-gallery, .phl-carousel, .phl-card, .phl-repo')) mark(block(img));
+    };
+    document.querySelectorAll('.phl-prose img').forEach((img) => {
+      if (img.getAttribute('width') || img.complete) check(img);
+      else img.addEventListener('load', () => check(img), { once: true });
+    });
+  }
+
+  // Wide tables: say that they scroll, and mark the side where columns are hidden.
+  document.querySelectorAll('.phl-prose table').forEach((table) => {
+    const hint = document.createElement('p');
+    hint.className = 'phl-table-hint';
+    hint.textContent = tableHint;
+    hint.hidden = true;
+    table.before(hint);
+    table.tabIndex = 0;
+    const update = () => {
+      const hidden = table.scrollWidth - table.clientWidth > 1;
+      const pos = Math.abs(table.scrollLeft);
+      const atStart = pos < 2;
+      const atEnd = pos >= table.scrollWidth - table.clientWidth - 2;
+      const sides = [];
+      if (hidden && !atStart) sides.push('start');
+      if (hidden && !atEnd) sides.push('end');
+      table.dataset.phlScroll = sides.join(' ');
+      hint.hidden = !hidden;
+    };
+    table.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  });
+
+  // Reading progress.
+  const bar = document.querySelector('.phl-progress span');
+  const article = document.querySelector('.phl-article');
+  if (bar && article) {
+    const update = () => {
+      const r = article.getBoundingClientRect();
+      const total = r.height - innerHeight;
+      const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 1;
+      bar.style.transform = `scaleX(${p})`;
+    };
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+
+  // Reading mode: hides everything but the text; remembered; Escape exits.
+  const zen = document.querySelector('[data-phl-zen]');
+  if (zen) {
+    const set = (on) => {
+      document.documentElement.classList.toggle('phl-zen', on);
+      zen.setAttribute('aria-pressed', String(on));
+      zen.textContent = on ? zen.dataset.off : zen.dataset.on;
+      try { localStorage.setItem('phl-zen', on ? '1' : ''); } catch (e) {}
+    };
+    let saved = false;
+    try { saved = localStorage.getItem('phl-zen') === '1'; } catch (e) {}
+    if (saved) set(true);
+    zen.addEventListener('click', () => set(!document.documentElement.classList.contains('phl-zen')));
+    addEventListener('keydown', (e) => e.key === 'Escape' && document.documentElement.classList.contains('phl-zen') && set(false));
+  }
+})();</script></main><footer class="phl-footer"><div class="phl-footer-inner"><nav class="phl-footer-nav" aria-label="Footer menu"><ul><li><a href="/en/tools/traefik-compose/">Docker Compose generator</a></li><li><a href="/en/tools/compose-quadlet/">Compose to Podman Quadlet</a></li><li><a href="/en/tools/proxmox-quorum/">Proxmox quorum</a></li><li><a href="/en/tools/opnsense-vlan-planner/">VLAN planner</a></li><li><a href="/en/tools/rackplan/">Rack planner</a></li><li><a href="/en/privacy/">Privacy policy</a></li></ul></nav><ul class="phl-social-links phl-footer-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><div class="phl-footer-meta"><p><span>© 2025-2026 Stilicho2011. All Rights Reserved.</span><span class="phl-footer-credit">Theme: <a href="https://prohomelab.com">ProHomeLab</a></span><button type="button" class="phl-consent-open" data-phl-consent-open hidden>Analytics settings</button></p><div class="phl-footer-tools"><a class="phl-to-top" href="#top"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l7-7l7 7m-7 7V5"/></svg>Back to top</a></div></div></div></footer><div class="phl-consent" data-phl-consent data-mode="opt-in" role="region" aria-label="Analytics" hidden><p><span data-phl-consent-text>Allow anonymous visit statistics?</span> <a href="/en/privacy/" data-phl-consent-policy>Details</a></p><div class="phl-consent-actions"><button type="button" data-phl-consent-choice="granted">Accept</button><button type="button" data-phl-consent-choice="denied">Decline</button></div></div><script>(function(){const TEXTS = {"ru":{"lang":"ru-RU","label":"Аналитика","text":"Разрешить обезличенную статистику посещений?","policy":"Подробнее","href":"/privacy/","granted":"Разрешить","denied":"Отказаться","seen":"Понятно"},"en":{"lang":"en","label":"Analytics","text":"Allow anonymous visit statistics?","policy":"Details","href":"/en/privacy/","granted":"Accept","denied":"Decline","seen":"OK"}};
+const PAGE = "en";
+
+      (() => {
+        const box = document.querySelector('[data-phl-consent]');
+        if (!box) return;
+        const key = 'phl-consent';
+        let saved = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        const texts = TEXTS;
+        const reader = window.__phlReaderLocale && window.__phlReaderLocale();
+        const tx = reader && reader !== PAGE && texts[reader];
+        if (tx) {
+          box.lang = tx.lang;
+          box.setAttribute('aria-label', tx.label);
+          box.querySelector('[data-phl-consent-text]').textContent = tx.text;
+          const pol = box.querySelector('[data-phl-consent-policy]');
+          if (pol && tx.href) { pol.textContent = tx.policy; pol.href = tx.href; }
+          box.querySelectorAll('[data-phl-consent-choice]').forEach((b) => { b.textContent = tx[b.dataset.phlConsentChoice] || b.textContent; });
+        }
+        const show = () => { box.hidden = false; };
+        if (!saved) show();
+        box.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-phl-consent-choice]');
+          if (!b) return;
+          const value = b.dataset.phlConsentChoice;
+          try { localStorage.setItem(key, value); } catch (e) {}
+          box.hidden = true;
+          if (value === 'granted' && window.__phlAnalytics) window.__phlAnalytics();
+          // Declining after accepting: counters already loaded on this page stop with the next page.
+        });
+        document.querySelectorAll('[data-phl-consent-open]').forEach((el) => {
+          el.hidden = false;
+          el.addEventListener('click', (e) => { e.preventDefault(); show(); box.querySelector('button')?.focus(); });
+        });
+      })();
+    })();</script></body></html>

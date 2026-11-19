@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Media Servers | ProHomeLab</title>
+    <link>https://prohomelab.com/en/posts/media-servers/</link>
+    <description>Сайт про homelab, self-hosting и IT: инструкции по установке серверов, виртуализация, Docker, Proxmox, безопасность и автоматизация.</description>
+    <language>en</language>
+    <lastBuildDate>Mon, 14 Jul 2025 00:00:00 GMT</lastBuildDate>
+    <generator>ProHomeLab theme for Astro</generator>
+    <atom:link href="https://prohomelab.com/en/posts/media-servers/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Audiobookshelf Docker Setup - Self-Hosted Audiobook Server</title>
+      <link>https://prohomelab.com/en/posts/audiobookshelf-install-docker/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/audiobookshelf-install-docker/</guid>
+      <pubDate>Mon, 14 Jul 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Media Servers</category>
+      <category>Audiobookshelf</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <description>A complete guide to installing and configuring Audiobookshelf for storing and listening to audiobooks on your own server. All steps are covered, from installation to the web interface and mobile access.</description>
+      <content:encoded><![CDATA[<h2 id="audiobookshelf---the-best-self-hosted-audiobook-server">Audiobookshelf - the best self-hosted audiobook server</h2>
+<p>If you enjoyed this article, you can support the author by becoming a sponsor on Boosty (link in the "Contacts" section).</p>
+<hr>
+<h3 id="introduction">Introduction</h3>
+<p>Hey, welcome back to <strong>Stilicho2011</strong>. Today we're digging into a self-hosted app I really like - <strong>Audiobookshelf</strong>.</p>
+<p>If you've got a growing pile of audiobooks and want to listen on any device, keep your progress in sync, and stop relying on someone else's app to do it - stick around, this one's worth it.</p>
+<hr>
+<h3 id="what-is-audiobookshelf">What is Audiobookshelf?</h3>
+<p><strong>Audiobookshelf</strong> is a free, fully open-source web app that turns your own server into a full-blown audiobook library.</p>
+<p>Project site: <a href="https://www.audiobookshelf.org">audiobookshelf.org</a><br>
+Source code: <a href="https://github.com/advplyr/audiobookshelf">github.com/advplyr/audiobookshelf</a></p>
+<p><strong>Key features:</strong></p>
+<ul>
+<li>Upload and organize audiobooks</li>
+<li>Listen through a browser and a mobile app</li>
+<li>Sync progress across devices</li>
+<li>Bookmarks and notes</li>
+<li>Full control and privacy</li>
+</ul>
+<hr>
+<h3 id="installing-via-docker">Installing via Docker</h3>
+<p>The easiest way to install Audiobookshelf is with Docker. Here's the minimal <code>docker-compose.yml</code> I used in the video:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">audiobookshelf</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">ghcr.io/advplyr/audiobookshelf:latest</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">audiobookshelf</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#ports:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - 13378:80</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/mnt/media:/audiobooks</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/mnt/media:/podcasts</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/user/docker/audiobookshelf/config:/config</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/user/docker/audiobookshelf/metadata:/metadata</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">TZ=Europe/Moscow</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">security_opt</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">no-new-privileges:true</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.audiobookshelf.entrypoints=web"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.audiobookshelf.rule=Host(`audiobookshelf.domain.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.audiobookshelf-https-redirect.redirectscheme.scheme=https"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.audiobookshelf.middlewares=audiobookshelf-https-redirect"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.audiobookshelf-secure.entrypoints=websecure"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.audiobookshelf-secure.rule=Host(`audiobookshelf.domain.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.audiobookshelf-secure.tls=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.audiobookshelf-secure.service=audiobookshelf"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.audiobookshelf.loadbalancer.server.port=80"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:  audiobookshelf:    image: ghcr.io/advplyr/audiobookshelf:latest    container_name: audiobookshelf    #ports:    #  - 13378:80    volumes:      - /mnt/media:/audiobooks      - /mnt/media:/podcasts      - /home/user/docker/audiobookshelf/config:/config      - /home/user/docker/audiobookshelf/metadata:/metadata    environment:      - TZ=Europe/Moscow    restart: unless-stopped    security_opt:      - no-new-privileges:true    networks:      proxy:    labels:      - &#x22;traefik.enable=true&#x22;      - &#x22;traefik.http.routers.audiobookshelf.entrypoints=web&#x22;      - &#x22;traefik.http.routers.audiobookshelf.rule=Host(&#x60;audiobookshelf.domain.ru&#x60;)&#x22;      - &#x22;traefik.http.middlewares.audiobookshelf-https-redirect.redirectscheme.scheme=https&#x22;      - &#x22;traefik.http.routers.audiobookshelf.middlewares=audiobookshelf-https-redirect&#x22;      - &#x22;traefik.http.routers.audiobookshelf-secure.entrypoints=websecure&#x22;      - &#x22;traefik.http.routers.audiobookshelf-secure.rule=Host(&#x60;audiobookshelf.domain.ru&#x60;)&#x22;      - &#x22;traefik.http.routers.audiobookshelf-secure.tls=true&#x22;      - &#x22;traefik.http.routers.audiobookshelf-secure.service=audiobookshelf&#x22;      - &#x22;traefik.http.services.audiobookshelf.loadbalancer.server.port=80&#x22;      - &#x22;traefik.docker.network=proxy&#x22;networks:  proxy:    external: true"><div></div></button></div></figure></div>
+<p>Starting the service</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">up</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="docker compose up -d"><div></div></button></div></figure></div>
+<p>After starting - open <code>https://audiobookshelf.domain.ru</code> in your browser</p>
+<h3 id="interface-and-features">Interface and features</h3>
+<p>Once you log in for the first time, you can:</p>
+<ul>
+<li>point it at folders full of audiobooks;</li>
+<li>let it pull in covers and descriptions automatically;</li>
+<li>use the built-in player, which is genuinely pleasant to use;</li>
+<li>keep track of your progress across books;</li>
+<li>leave bookmarks and notes as you go.</li>
+</ul>
+<p>Supported formats: <code>.mp3</code>, <code>.m4b</code> (with chapter support), ID3 tags, and embedded covers. There's a mobile-friendly mode (PWA or plain browser), plus support for multiple users.</p>
+<hr>
+<h3 id="locking-it-down-for-remote-access">Locking it down for remote access</h3>
+<p>You'll want to put Audiobookshelf behind a reverse proxy - Traefik paired with <a href="https://prohomelab.com/en/posts/authelia-docker-install/">Authelia</a>, <a href="https://prohomelab.com/en/posts/authentik-overview/">Authentik</a>, Keycloak, or Zitadel works well, or even just Nginx with Basic Auth if you want to keep it simple.</p>
+<p>Grab a Let's Encrypt certificate too, so you can listen from anywhere over HTTPS without exposing raw HTTP to the internet.</p>
+<hr>
+<h3 id="pros-and-cons">Pros and cons</h3>
+<h4 id="pros">Pros</h4>
+<ul>
+<li>Free and open source.</li>
+<li>Clean, no-nonsense interface.</li>
+<li>Great sync, great mobile support.</li>
+<li>Runs entirely on your own hardware.</li>
+</ul>
+<h4 id="cons">Cons</h4>
+<ul>
+<li>No full-text search inside your books.</li>
+<li>Some formats need transcoding first.</li>
+<li>Can't stream directly out of cloud storage.</li>
+</ul>
+<hr>
+<h3 id="its-not-just-for-audiobooks">It's not just for audiobooks</h3>
+<p>The name is a little misleading, honestly - Audiobookshelf can do a lot more than just serve up <code>.mp3</code> files:</p>
+<ul>
+<li><strong>Podcasts.</strong> Their own library type - subscribe to an RSS feed and Audiobookshelf grabs new episodes on a schedule, no separate podcast app needed.</li>
+<li><strong>E-books and comics.</strong> On top of audio, it handles <code>.epub</code>, <code>.pdf</code>, and comics in <code>.cbz</code>/<code>.cbr</code> - great if you want your whole home library under one roof instead of splitting it across apps.</li>
+<li><strong>Metadata lookups.</strong> Covers, descriptions, authors, and series get pulled in automatically - Audible for audiobooks, OpenLibrary and Google Books for everything else.</li>
+<li><strong>Per-user permissions.</strong> Each account can be scoped to specific libraries, with or without download rights - handy when the whole family shares the same server.</li>
+<li><strong>Sleep timer, playback speed, chapter navigation</strong> - the small stuff that actually matters when you're listening to audiobooks, and it's all there out of the box.</li>
+</ul>
+<hr>
+<h3 id="mobile-access">Mobile access</h3>
+<p>Beyond the web UI, there are official open-source apps for <strong>Android</strong> and <strong>iOS</strong>, with offline downloads, background playback, and Android Auto/CarPlay support. Progress syncs across every device automatically, so you can start a chapter in the car on CarPlay and pick it right back up in the browser that evening.</p>
+<hr>
+<h3 id="getting-started">Getting started</h3>
+<ol>
+<li>Spin up a container from the <code>docker-compose.yml</code> above (or run it in an LXC/VM on your server, if you'd rather).</li>
+<li>Mount your audiobook, podcast, and book folders into the matching volumes.</li>
+<li>Open the web UI, create an admin account, and set up your libraries - audiobooks, podcasts, and books stay separate.</li>
+<li>Let Audiobookshelf scan everything - covers and metadata show up on their own.</li>
+<li>Install the mobile app and log in with the same account to keep progress in sync.</li>
+<li>Put the service behind a reverse proxy with SSL, like we covered above.</li>
+</ol>
+<hr>
+<h3 id="conclusion">Conclusion</h3>
+<p>Audiobookshelf is a fantastic self-hosted option for more than just audiobooks - podcasts, e-books, and comics all fit in the same library. It takes a few minutes to stand up in Docker, hands you full control over your media, and cuts any third-party cloud service out of the picture entirely. If you've already got a home server running, this is one of the first projects worth throwing at it.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

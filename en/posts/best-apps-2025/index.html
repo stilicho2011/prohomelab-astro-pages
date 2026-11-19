@@ -1,0 +1,773 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-scheme="prohomelab" data-theme="light" data-mode="system" data-default-mode="system" data-mode-switch="1" data-fluid="1" data-social-colors="hover" style="--phl-content-width: 48rem"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){const cur = "en";
+const alts = {"ru":"/posts/best-apps-2025/"};
+
+      try {
+        const p = localStorage.getItem('phl-lang');
+        if (p && p !== cur && alts[p]) location.replace(alts[p] + location.hash);
+      } catch (e) {}
+    })();</script><title>The Best Self-Hosted Apps of 2025 - A Personal Roundup | ProHomeLab</title><meta name="description" content="A roundup of self-hosted apps from 2025 that I've personally tested in my own homelab - media servers, productivity tools, security, and automation. With video."><link rel="canonical" href="https://prohomelab.com/en/posts/best-apps-2025/"><link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/best-apps-2025/"><link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/best-apps-2025/"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32"><link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"><link rel="manifest" href="/site.webmanifest"><meta property="og:site_name" content="ProHomeLab"><meta property="og:title" content="The Best Self-Hosted Apps of 2025 - A Personal Roundup"><meta property="og:description" content="A roundup of self-hosted apps from 2025 that I've personally tested in my own homelab - media servers, productivity tools, security, and automation. With video."><meta property="og:type" content="article"><meta property="og:url" content="https://prohomelab.com/en/posts/best-apps-2025/"><meta property="og:locale" content="en"><meta property="og:image" content="https://prohomelab.com/_astro/featured.CTvLhaCp_1tlUez.jpg"><meta property="og:image:alt" content="The Best Self-Hosted Apps of 2025 - A Personal Roundup"><meta property="article:published_time" content="2026-01-02T00:00:00.000Z"><meta property="article:section" content="Self-Hosting"><meta property="article:tag" content="open source"><meta property="article:tag" content="Self-Hosting"><meta name="twitter:card" content="summary_large_image"><meta name="yandex-verification" content="103870927"><link rel="alternate" type="application/rss+xml" title="ProHomeLab" href="https://prohomelab.com/en/index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","articleSection":"Self-Hosting","name":"The Best Self-Hosted Apps of 2025 - A Personal Roundup","headline":"The Best Self-Hosted Apps of 2025 - A Personal Roundup","description":"A roundup of self-hosted apps from 2025 that I've personally tested in my own homelab - media servers, productivity tools, security, and automation. With video.","inLanguage":"en","url":"https://prohomelab.com/en/posts/best-apps-2025/","author":[{"@type":"Person","name":"Stilicho2011","image":"https://prohomelab.com/avatar-stilicho2011.webp","url":"https://prohomelab.com","sameAs":["https://github.com/stilicho2011/ubuntu_rep","https://t.me/stilicho2011_videos","https://www.youtube.com/@prohomelab","https://boosty.to/stilicho2011"]}],"copyrightYear":"2026","datePublished":"2026-01-02T00:00:00.000Z","dateModified":"2026-01-02T00:00:00.000Z","image":"https://prohomelab.com/_astro/featured.CTvLhaCp_1tlUez.jpg","keywords":["open source","Self-Hosting"],"mainEntityOfPage":"https://prohomelab.com/en/posts/best-apps-2025/","wordCount":2427}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://prohomelab.com/en/"},{"@type":"ListItem","position":2,"name":"Self-Hosting","item":"https://prohomelab.com/en/posts/selfhosting/"},{"@type":"ListItem","position":3,"name":"The Best Self-Hosted Apps of 2025 - A Personal Roundup","item":"https://prohomelab.com/en/posts/best-apps-2025/"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoObject","name":"The Best Self-Hosted Apps of 2025 - A Personal Roundup","description":"A roundup of self-hosted apps from 2025 that I've personally tested in my own homelab - media servers, productivity tools, security, and automation. With video.","thumbnailUrl":["https://i.ytimg.com/vi/EWTbvI3BBwM/maxresdefault.jpg"],"uploadDate":"2026-01-02T00:00:00.000Z","embedUrl":"https://www.youtube.com/embed/EWTbvI3BBwM","contentUrl":"https://www.youtube.com/watch?v=EWTbvI3BBwM"}</script><script>
+      // Light or dark before first paint, so a dark page never flashes white.
+      // data-mode is the choice (system, light, dark), data-theme the result (light or dark).
+      (() => {
+        const d = document.documentElement;
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        let mode = d.dataset.defaultMode || 'system';
+        if (d.dataset.modeSwitch) {
+          try {
+            const saved = localStorage.getItem('phl-theme');
+            if (saved === 'system' || saved === 'light' || saved === 'dark') mode = saved;
+          } catch (e) {}
+        }
+        const apply = () => {
+          d.dataset.mode = mode;
+          d.dataset.theme = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode;
+        };
+        apply();
+        media.addEventListener('change', () => mode === 'system' && apply());
+        window.__phlSetMode = (next) => {
+          mode = next;
+          try {
+            localStorage.setItem('phl-theme', next);
+          } catch (e) {}
+          apply();
+        };
+      })();
+    </script><style>:root:root{--phl-font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-heading:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-mono:'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace}</style><script>(function(){const ym = {"id":"103870927","webvisor":true,"clickmap":true,"trackLinks":true,"accurateTrackBounce":true,"ecommerce":"dataLayer"};
+const ga = {"id":"G-VRHQGK81S9"};
+const umami = {"src":"https://stats.prohomelab.com/script.js","websiteId":"31518a04-7f00-4d16-99f3-759c057c7bf2","recorder":true,"recorderSrc":"https://stats.prohomelab.com/recorder.js"};
+const consent = "opt-in";
+
+      (() => {
+        let started = false;
+        const add = (src, attrs = {}) => {
+          const s = document.createElement('script');
+          s.async = true;
+          s.src = src;
+          for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+          document.head.appendChild(s);
+        };
+        window.__phlAnalytics = () => {
+          if (started) return;
+          started = true;
+          if (ym) {
+            window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+            window.ym.l = Date.now();
+            add(`https://mc.yandex.ru/metrika/tag.js?id=${ym.id}`);
+            const opts = { ssr: true, webvisor: ym.webvisor, clickmap: ym.clickmap, accurateTrackBounce: ym.accurateTrackBounce, trackLinks: ym.trackLinks };
+            if (ym.ecommerce) opts.ecommerce = ym.ecommerce;
+            window.ym(Number(ym.id), 'init', opts);
+          }
+          if (ga) {
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ga.id);
+            add(`https://www.googletagmanager.com/gtag/js?id=${ga.id}`);
+          }
+          if (umami) {
+            const attrs = { 'data-website-id': umami.websiteId };
+            if (umami.domains) attrs['data-domains'] = umami.domains;
+            add(umami.src, { ...attrs, defer: '' });
+            if (umami.recorder) add(umami.recorderSrc, { ...attrs, defer: '' });
+          }
+        };
+        let choice = null;
+        try { choice = localStorage.getItem('phl-consent'); } catch (e) {}
+        if (consent !== 'opt-in' || choice === 'granted') window.__phlAnalytics();
+      })();
+    })();</script><link rel="stylesheet" href="/_astro/Base.CNmgq2nC.css"></head><body id="top"><template id="phl-lang-ru"><div class="phl-langbar" lang="ru-RU" role="region" aria-label="Эта страница есть на русском"><div class="phl-langbar-inner"><p>Эта страница есть на русском</p><div class="phl-langbar-actions"><a href="/posts/best-apps-2025/" hreflang="ru-RU" data-phl-lang="ru">Читать на русском</a><button type="button" data-phl-lang-stay>Остаться</button></div></div></div></template><script>(function(){const data = {"cur":"en","alts":{"ru":"/posts/best-apps-2025/"},"match":{"ru":["ru","uk","be","kk"],"en":["en"]},"byLang":{"ru-ru":"ru","en":"en"},"fallback":"en"};
+
+        (() => {
+          const store = (v) => { try { localStorage.setItem('phl-lang', v); } catch (e) {} };
+          // An explicit choice anywhere (language switcher, the bar) is remembered.
+          document.addEventListener('click', (e) => {
+            const go = e.target.closest('[data-phl-lang]');
+            if (go) return store(go.dataset.phlLang);
+            const link = e.target.closest('a[hreflang]');
+            const key = link && data.byLang[link.getAttribute('hreflang').toLowerCase()];
+            if (key) return store(key);
+            const stay = e.target.closest('[data-phl-lang-stay]');
+            if (stay) { store(data.cur); stay.closest('.phl-langbar')?.remove(); }
+          });
+          let saved = null;
+          try { saved = localStorage.getItem('phl-lang'); } catch (e) {}
+          const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''])
+            .map((l) => String(l).toLowerCase().split('-')[0]);
+          const fits = (key, code) => (data.match[key] || []).includes(code);
+          // The language this reader reads, for other parts of the page (the analytics banner):
+          // the stored choice, else the page language if the browser fits it, else the first
+          // locale the browser fits, else the fallback, else the page language.
+          window.__phlReaderLocale = () => {
+            if (saved && data.match[saved]) return saved;
+            if (list.some((code) => fits(data.cur, code))) return data.cur;
+            for (const code of list) {
+              const key = Object.keys(data.match).find((k) => fits(k, code));
+              if (key) return key;
+            }
+            return data.fallback || data.cur;
+          };
+          if (saved || !Object.keys(data.alts).length) return;
+          if (list.some((code) => fits(data.cur, code))) return;
+          let target = null;
+          for (const code of list) {
+            target = Object.keys(data.alts).find((key) => fits(key, code)) || null;
+            if (target) break;
+          }
+          if (!target && data.fallback && data.fallback !== data.cur && data.alts[data.fallback]) target = data.fallback;
+          const tpl = target && document.getElementById('phl-lang-' + target);
+          if (tpl) document.body.prepend(tpl.content.cloneNode(true));
+        })();
+      })();</script><a class="phl-skip" href="#phl-content">Skip to content</a><header class="phl-header phl-header-sticky"><div class="phl-header-inner"><a class="phl-brand" href="/en/"><img class="phl-logo phl-logo-light" src="/prohomelab-mark.svg" alt><span class="phl-brand-name">ProHomeLab</span><span class="phl-brand-point" aria-hidden="true"></span></a><nav class="phl-nav" aria-label="Main menu"><ul class="phl-nav-list"><li><a href="/en/blog/">All Articles</a></li><li><details class="phl-dropdown" data-phl-dropdown><summary aria-current="true">Topics<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul class="phl-dropdown-panel"><li><a href="/en/posts/">Topics</a></li><li><a href="/en/posts/authentik/">Authentik</a></li><li><a href="/en/posts/backup/">Backup</a></li><li><a href="/en/posts/crowdsec/">Crowdsec</a></li><li><a href="/en/posts/docker-ui/">Docker UI</a></li><li><a href="/en/posts/hardware/">Hardware</a></li><li><a href="/en/posts/media-servers/">Media Servers</a></li><li><a href="/en/posts/network/">Network</a></li><li><a href="/en/posts/news/">News</a></li><li><a href="/en/posts/nextcloud/">Nextcloud</a></li><li><a href="/en/posts/opnsense/">OPNsense</a></li><li><a href="/en/posts/pkm/">PKM</a></li><li><a href="/en/posts/podman/">Podman</a></li><li><a href="/en/posts/proxmox/">Proxmox</a></li><li><a href="/en/posts/selfhosting/">Self-hosting</a></li><li><a href="/en/posts/single-sign-on/">Single Sign On</a></li><li><a href="/en/posts/terraform/">Terraform</a></li><li><a href="/en/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/en/categories/">Categories</a></li><li><a href="/en/tags/">Tags</a></li><li><a href="/en/tools/">Tools</a></li><li><a href="/en/about/">About</a></li></ul></nav><div class="phl-header-tools phl-has-mobile-menu"><button type="button" class="phl-search-button" data-phl-search-open aria-label="Search" title="Search" hidden><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg></button><dialog class="phl-search" data-phl-search aria-label="Search"><div class="phl-search-box"><div class="phl-search-field"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg><input type="search" data-phl-search-input placeholder="Search articles" aria-label="Search articles" autocomplete="off" spellcheck="false"><button type="button" class="phl-search-close" data-phl-search-close aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></button></div><p class="phl-search-status" data-phl-search-status role="status" aria-live="polite"></p><ol class="phl-search-results" data-phl-search-results></ol><button type="button" class="phl-search-more" data-phl-search-more hidden>Show more</button></div></dialog><script>(function(){const options = {"shortcut":true,"pageSize":8,"text":{"noResults":"Nothing found","loading":"Searching","unavailable":"Search works on the built site (astro build)","more":"Show more"}};
+
+  (() => {
+    const open = document.querySelector('[data-phl-search-open]');
+    const dialog = document.querySelector('[data-phl-search]');
+    if (!open || !dialog || typeof dialog.showModal !== 'function') return;
+    const input = dialog.querySelector('[data-phl-search-input]');
+    const list = dialog.querySelector('[data-phl-search-results]');
+    const status = dialog.querySelector('[data-phl-search-status]');
+    const more = dialog.querySelector('[data-phl-search-more]');
+    const t = options.text;
+    let pagefind = null;
+    let failed = false;
+    let results = [];
+    let shown = 0;
+    let query = 0;
+    open.hidden = false;
+
+    const load = async () => {
+      if (pagefind || failed) return pagefind;
+      try {
+        pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+        await pagefind.init();
+      } catch (e) {
+        failed = true;
+        pagefind = null;
+      }
+      return pagefind;
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const render = async () => {
+      const page = results.slice(shown, shown + options.pageSize);
+      const id = query;
+      const data = await Promise.all(page.map((r) => r.data()));
+      if (id !== query) return;
+      for (const d of data) {
+        const li = document.createElement('li');
+        const sub = (d.sub_results || []).filter((x) => x.url !== d.url).slice(0, 2);
+        li.innerHTML =
+          `<a class="phl-search-hit" href="${esc(d.url)}"><span class="phl-search-title">${esc(d.meta?.title || d.url)}</span>` +
+          `<span class="phl-search-excerpt">${d.excerpt || ''}</span></a>` +
+          (sub.length
+            ? `<ul class="phl-search-sub">${sub.map((x) => `<li><a href="${esc(x.url)}">${esc(x.title)}</a></li>`).join('')}</ul>`
+            : '');
+        list.appendChild(li);
+      }
+      shown += page.length;
+      more.hidden = shown >= results.length;
+    };
+    const run = async () => {
+      const term = input.value.trim();
+      const id = ++query;
+      list.innerHTML = '';
+      more.hidden = true;
+      shown = 0;
+      if (!term) { status.textContent = ''; return; }
+      status.textContent = t.loading;
+      const pf = await load();
+      if (id !== query) return;
+      if (!pf) { status.textContent = t.unavailable; return; }
+      const res = await pf.debouncedSearch(term, {}, 200);
+      if (res === null || id !== query) return;
+      results = res.results;
+      status.textContent = results.length ? '' : t.noResults;
+      await render();
+    };
+
+    const show = () => {
+      dialog.showModal();
+      input.focus();
+      input.select();
+      load();
+    };
+    open.addEventListener('click', show);
+    dialog.querySelector('[data-phl-search-close]').addEventListener('click', () => dialog.close());
+    // A click on the backdrop (outside the box) closes the dialog.
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    input.addEventListener('input', run);
+    more.addEventListener('click', render);
+    // Enter opens the first result.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = list.querySelector('a');
+        if (first) { e.preventDefault(); location.href = first.href; }
+      }
+    });
+    if (options.shortcut) {
+      document.addEventListener('keydown', (e) => {
+        if (dialog.open) return;
+        const typing = /^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable;
+        if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          show();
+        }
+      });
+    }
+  })();
+})();</script><ul class="phl-social-links phl-header-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><a class="phl-lang-link" href="/posts/best-apps-2025/" hreflang="ru-RU" lang="ru-RU" title="Language" data-phl-lang="ru">RU</a><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;System&quot;,&quot;light&quot;:&quot;Light&quot;,&quot;dark&quot;:&quot;Dark&quot;}" data-title="Color mode" aria-label="Color mode" title="Color mode"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script><details class="phl-mobile-menu" data-phl-dropdown><summary aria-label="Menu"><span class="phl-mobile-open"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"/></svg></span><span class="phl-mobile-close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></span></summary><nav class="phl-mobile-panel" aria-label="Main menu"><ul class="phl-mobile-list"><li><a href="/en/blog/">All Articles</a></li><li><details><summary>Topics<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul><li><a href="/en/posts/">Topics</a></li><li><a href="/en/posts/authentik/">Authentik</a></li><li><a href="/en/posts/backup/">Backup</a></li><li><a href="/en/posts/crowdsec/">Crowdsec</a></li><li><a href="/en/posts/docker-ui/">Docker UI</a></li><li><a href="/en/posts/hardware/">Hardware</a></li><li><a href="/en/posts/media-servers/">Media Servers</a></li><li><a href="/en/posts/network/">Network</a></li><li><a href="/en/posts/news/">News</a></li><li><a href="/en/posts/nextcloud/">Nextcloud</a></li><li><a href="/en/posts/opnsense/">OPNsense</a></li><li><a href="/en/posts/pkm/">PKM</a></li><li><a href="/en/posts/podman/">Podman</a></li><li><a href="/en/posts/proxmox/">Proxmox</a></li><li><a href="/en/posts/selfhosting/">Self-hosting</a></li><li><a href="/en/posts/single-sign-on/">Single Sign On</a></li><li><a href="/en/posts/terraform/">Terraform</a></li><li><a href="/en/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/en/categories/">Categories</a></li><li><a href="/en/tags/">Tags</a></li><li><a href="/en/tools/">Tools</a></li><li><a href="/en/about/">About</a></li></ul><ul class="phl-social-links phl-mobile-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><p class="phl-mobile-mode"><span>Color mode</span><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;System&quot;,&quot;light&quot;:&quot;Light&quot;,&quot;dark&quot;:&quot;Dark&quot;}" data-title="Color mode" aria-label="Color mode" title="Color mode"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script></p></nav></details></div></div></header><script>
+  // Close open menus on outside click, on Escape, and when another one opens.
+  (() => {
+    if (window.__phlDropdowns) return;
+    window.__phlDropdowns = true;
+    const all = () => document.querySelectorAll('[data-phl-dropdown][open]');
+    document.addEventListener('click', (e) => {
+      all().forEach((d) => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      all().forEach((d) => {
+        d.removeAttribute('open');
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener(
+      'toggle',
+      (e) => {
+        const d = e.target;
+        if (!d.matches?.('[data-phl-dropdown]') || !d.open) return;
+        all().forEach((o) => o !== d && !o.contains(d) && o.removeAttribute('open'));
+      },
+      true,
+    );
+  })();
+</script><main class="phl-main" id="phl-content" tabindex="-1"><div class="phl-progress" aria-hidden="true"><span></span></div><div class="phl-article-grid phl-has-toc"><article class="phl-article" data-pagefind-body><nav class="phl-breadcrumbs" aria-label="Breadcrumbs"><ol><li><a href="/en/">Home</a></li><li><a href="/en/posts/selfhosting/">Self-Hosting</a></li><li><span aria-current="page">The Best Self-Hosted Apps of 2025 - A Personal Roundup</span></li></ol></nav><header class="phl-article-header"><p class="phl-eyebrow">Self-Hosting</p><h1 data-pagefind-meta="title">The Best Self-Hosted Apps of 2025 - A Personal Roundup</h1><p class="phl-meta"><span class="phl-meta-authors"><a href="/en/authors/stilicho2011/">Stilicho2011</a></span><time datetime="2026-01-02T00:00:00.000Z">January 2, 2026</time><span>12 min read</span><span class="phl-views">31 views</span></p></header><div class="phl-article-tools"><p class="phl-translations">Also available in: <a href="/posts/best-apps-2025/" hreflang="ru-RU">RU</a></p><button type="button" class="phl-zen-toggle" data-phl-zen data-on="Reading mode" data-off="Exit reading mode" aria-pressed="false">Reading mode</button></div><div class="phl-embed phl-yt phl-article-video" data-yt-id="EWTbvI3BBwM"><a class="phl-yt-link" href="https://www.youtube.com/watch?v=EWTbvI3BBwM" target="_blank" rel="noopener" aria-label="The Best Self-Hosted Apps of 2025 - A Personal Roundup"><img src="https://i.ytimg.com/vi/EWTbvI3BBwM/hqdefault.jpg" alt="The Best Self-Hosted Apps of 2025 - A Personal Roundup" width="480" height="360" loading="eager" decoding="async"><span class="phl-yt-play" aria-hidden="true"></span></a></div><details class="phl-series"><summary>Part 9 of 24 in the series <a href="/en/series/self-hosting/">Self-Hosting</a></summary><ol><li><a href="/en/posts/fedora-server-42-in-proxmox/">Pros and Cons of Fedora Server 42</a></li><li><a href="/en/posts/linkwarden/">Linkwarden Overview - A Modern Self-Hosted Bookmark Manager</a></li><li><a href="/en/posts/postgres-p-1/">PostgreSQL and pgAdmin in Docker - Beginner Setup Guide</a></li><li><a href="/en/posts/mealie/">Mealie Recipe Manager - Self-Hosted Meal Planning on Docker</a></li><li><a href="/en/posts/vaultwarden/">Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden&#39;s</a></li><li><a href="/en/posts/diun-docker-update-notifications/">Diun - Get Notified When Your Docker Images Have Updates</a></li><li><a href="/en/posts/update-linux-server/">How to Upgrade Linux Server Distributions</a></li><li><a href="/en/posts/homelabbing/">How to Start a Homelab - Hardware, Hypervisor, and Your First Service</a></li><li><span aria-current="page">The Best Self-Hosted Apps of 2025 - A Personal Roundup</span></li><li><a href="/en/posts/linkwarden-vs-karakeep/">Best Bookmark Manager - Linkwarden or Karakeep</a></li><li><a href="/en/posts/booklore/">BookLore - A Self-Hosted Library and Reader for Your Book Collection</a></li><li><a href="/en/posts/grimmory/">Grimmory - A Self-Hosted Library and Reader for Your Book Collection</a></li><li><a href="/en/posts/pangolin/">Pangolin Tunnel Setup - Expose Homelab Services Without Ports</a></li><li><a href="/en/posts/netbird/">NetBird Self-Hosted - Mesh VPN Without Port Forwarding</a></li><li><a href="/en/posts/postiz-youtube-vk-rutube/">Postiz - Trying to Automate YouTube, VK, and RuTube, and Why Only One Out of Three Actually Works</a></li><li><a href="/en/posts/postgres-p-2/">Connecting Applications to a Shared PostgreSQL and Learning Basic Maintenance - Part 2</a></li><li><a href="/en/posts/dozzle/">Dozzle - A Convenient Real-Time Log Viewer for Docker Containers</a></li><li><a href="/en/posts/docker-default-address-pools/">Docker Hit Its Network Limit - How I Diagnosed and Fixed It with default-address-pools</a></li><li><a href="/en/posts/gotify-push-notifications/">Gotify - Your Own Push Notification Server for the Hypervisor and Beyond</a></li><li><a href="/en/posts/forgejo-komodo-gitops/">Forgejo + Komodo - Turning Docker Compose into GitOps</a></li><li><a href="/en/posts/forgejo-komodo-gitops-tutorial/">GitOps for Homelab - Deploying Forgejo and Komodo From Scratch</a></li><li><a href="/en/posts/gitlab-vs-gitea-vs-forgejo/">GitLab, Gitea, and Forgejo. A Comparison for Grown-Ups - What Actually Fits Your Homelab</a></li><li><a href="/en/posts/renovate-forgejo-komodo/">Auto-Updating Docker Containers - Renovate + Forgejo + Komodo</a></li><li><a href="/en/posts/matrix-synapse-docker/">Matrix Synapse - Setting Up Your Own Server for Decentralized Chat</a></li></ol></details><details class="phl-toc" data-phl-toc><summary class="phl-toc-title">Contents</summary><nav aria-label="Contents"><ul><li class="depth-2"><a href="#introduction" data-phl-toc-link="introduction">Introduction</a></li><li class="depth-2"><a href="#pangolin" data-phl-toc-link="pangolin">Pangolin</a></li><li class="depth-3"><a href="#️-core-mechanisms-and-architecture" data-phl-toc-link="️-core-mechanisms-and-architecture">⚙️ Core mechanisms and architecture</a></li><li class="depth-2"><a href="#papra" data-phl-toc-link="papra">Papra</a></li><li class="depth-3"><a href="#-what-is-papra" data-phl-toc-link="-what-is-papra">📌 What is Papra</a></li><li class="depth-3"><a href="#-what-its-for" data-phl-toc-link="-what-its-for">🎯 What it&#39;s for</a></li><li class="depth-3"><a href="#-target-audience" data-phl-toc-link="-target-audience">👤 Target audience</a></li><li class="depth-3"><a href="#-pros-1" data-phl-toc-link="-pros-1">🎉 Pros</a></li><li class="depth-3"><a href="#-cons--limitations" data-phl-toc-link="-cons--limitations">⚠ Cons / limitations</a></li><li class="depth-3"><a href="#-summary" data-phl-toc-link="-summary">📊 Summary</a></li><li class="depth-2"><a href="#tinyauth" data-phl-toc-link="tinyauth">TinyAuth</a></li><li class="depth-3"><a href="#-what-is-tinyauth" data-phl-toc-link="-what-is-tinyauth">🚀 What is TinyAuth</a></li><li class="depth-3"><a href="#-who-tinyauth-is-for" data-phl-toc-link="-who-tinyauth-is-for">👥 Who TinyAuth is for</a></li><li class="depth-3"><a href="#️-how-it-works" data-phl-toc-link="️-how-it-works">⚙️ How it works</a></li><li class="depth-3"><a href="#-tinyauth-pros" data-phl-toc-link="-tinyauth-pros">👍 TinyAuth pros</a></li><li class="depth-3"><a href="#-cons-and-limitations-1" data-phl-toc-link="-cons-and-limitations-1">👎 Cons and limitations</a></li><li class="depth-3"><a href="#-where-it-makes-sense-to-use-it" data-phl-toc-link="-where-it-makes-sense-to-use-it">📌 Where it makes sense to use it</a></li><li class="depth-3"><a href="#-when-its-better-not-to-use-tinyauth" data-phl-toc-link="-when-its-better-not-to-use-tinyauth">🛑 When it&#39;s better not to use TinyAuth</a></li><li class="depth-3"><a href="#-alternatives-more-often-used-in-more-complex-environments" data-phl-toc-link="-alternatives-more-often-used-in-more-complex-environments">📌 Alternatives (more often used in more complex environments)</a></li><li class="depth-2"><a href="#zerobyte" data-phl-toc-link="zerobyte">Zerobyte</a></li><li class="depth-3"><a href="#-what-is-zerobyte" data-phl-toc-link="-what-is-zerobyte">📌 What is Zerobyte</a></li><li class="depth-3"><a href="#-key-features" data-phl-toc-link="-key-features">🧠 Key features</a></li><li class="depth-3"><a href="#-target-audience-1" data-phl-toc-link="-target-audience-1">👤 Target audience</a></li><li class="depth-3"><a href="#-zerobyte-pros" data-phl-toc-link="-zerobyte-pros">👍 Zerobyte pros</a></li><li class="depth-3"><a href="#-cons-and-limitations-2" data-phl-toc-link="-cons-and-limitations-2">👎 Cons and limitations</a></li><li class="depth-3"><a href="#-how-it-differs-from-restic" data-phl-toc-link="-how-it-differs-from-restic">🧩 How it differs from Restic</a></li><li class="depth-3"><a href="#-example-usage-scenario" data-phl-toc-link="-example-usage-scenario">🧪 Example usage scenario</a></li></ul></nav></details><div class="phl-prose"><!--phl-feed-start--><h2 id="introduction">Introduction</h2>
+<p>People often write to me asking for a review of one app or another. Usually this is because the person asking is stuck on something, but it's worth noting that sometimes people also ask to see current, modern apps. And there's one important point here. Apps come out often, and the ideas behind them are interesting. But there's one catch: personally, I want to see how the app and its author hold up over time. So it doesn't end up like it often does with open source - the author gets tired, gets a paying job, and the app gets abandoned.</p>
+<p>Today I want to talk about apps that were released in 2025, immediately caught the community's attention, and so far show no signs of being abandoned. If you're completely new to this and still not sure what <a href="https://prohomelab.com/en/posts/homelabbing/">homelabbing</a> even is, start there first, then come back here for specific apps to try.</p>
+<h2 id="pangolin">Pangolin</h2>
+<p><strong><a href="https://prohomelab.com/en/posts/pangolin/">Pangolin</a> is an open-source platform for remote access and proxying with a focus on security (zero-trust)</strong>. The project's main goal is to provide a <strong>self-hostable alternative to Cloudflare Tunnel / Twingate / Zero-Trust VPN</strong>, allowing you to securely publish internal services to the internet and provide access to private resources via a browser or client applications.</p>
+<p>✔️ Combines a <strong>reverse proxy (under the hood, Traefik)</strong> and <strong>Zero-Trust VPN / WireGuard tunnels</strong>
+✔️ Has a <strong>management dashboard</strong>, authentication, and role-based access
+✔️ Designed for both self-hosted installations and management via the Pangolin Cloud control service</p>
+<p>The repository contains TypeScript code, the Dashboard UI interfaces, and server-side logic for managing access and routing.</p>
+<h3 id="️-core-mechanisms-and-architecture">⚙️ Core mechanisms and architecture</h3>
+<h4 id="️-components">🛠️ Components</h4>
+<p>📌 <strong>Pangolin Server</strong> - the central server with a UI and API that manages access to resources.</p>
+<p>📌 <strong>Newt</strong> - a tunnel agent (site connector) that establishes a secure connection between a remote network/host and the Pangolin Server via a WireGuard-like tunnel (often in userspace).</p>
+<p>📌 <strong>Clients</strong> - users or machines that connect to services through Pangolin and get access to "Private Resources".</p>
+<hr>
+<h4 id="-authentication-and-authorization">🔑 Authentication and authorization</h4>
+<p>Pangolin supports:</p>
+<ul>
+<li><strong>Built-in authentication with a UI</strong></li>
+<li><strong>Integration with external IdPs (OAuth2/OIDC)</strong> - for example, Authentik or Keycloak.</li>
+<li><strong>Auto-provisioning of users</strong> on login via an external IdP.</li>
+</ul>
+<p>Access rules for resources can be configured by:</p>
+<ul>
+<li><strong>IP / CIDR range</strong></li>
+<li><strong>URL path</strong></li>
+<li><strong>Roles/groups</strong></li>
+<li><strong>ASN rules</strong></li>
+<li><strong>Port and protocol-level rules</strong> (TCP/UDP).</li>
+</ul>
+<hr>
+<h4 id="-networking-mechanisms">🌐 Networking mechanisms</h4>
+<p>🚀 A <strong>WireGuard-like tunnel</strong> provides secure communication between the server and remote sites/clients.</p>
+<p>🚀 <strong>Zero-Trust Network Access (ZTNA)</strong> - access is determined not by the presence of a VPN connection, but by the access policy for each resource.</p>
+<p>🚀 <strong>Magic DNS</strong> - resolves friendly names inside the private network when a client connects.</p>
+<hr>
+<h4 id="-use-cases">📌 Use cases</h4>
+<p>Pangolin is a good fit for:</p>
+<p>✅ Publishing internal web services (UIs, APIs, dashboards, etc.) through a browser without opening ports directly
+✅ Providing access to SSH, RDP, databases, or other internal services
+✅ Uniting multiple networks/offices under a single secure infrastructure
+✅ Zero-Trust Remote Access (ZTNA) instead of a traditional VPN</p>
+<hr>
+<h4 id="-pros">👍 Pros</h4>
+<p><strong>🔐 Security and Zero-Trust</strong></p>
+<ul>
+<li>Granular resource-level access, doesn't grant full access to the whole network.</li>
+<li>Support for external OAuth2/OIDC IdPs.</li>
+</ul>
+<p><strong>🌍 Flexible networking capabilities</strong></p>
+<ul>
+<li>Support for tunnels through NAT/firewalls (Newt).</li>
+<li>Clients for Windows/Mac/Linux.</li>
+</ul>
+<p><strong>📊 UI + management</strong></p>
+<ul>
+<li>A dashboard with access controls, logs, and settings.</li>
+<li>Fine-grained access rule configuration.</li>
+</ul>
+<p><strong>🔄 Active community and frequent updates</strong></p>
+<ul>
+<li>Active releases with new features (firewall, ACL, DNS, magic DNS, etc.).</li>
+</ul>
+<hr>
+<h4 id="-cons-and-limitations">👎 Cons and limitations</h4>
+<p>⚠️ <strong>Complexity</strong></p>
+<ul>
+<li>
+<p>Initial setup can be difficult for beginners (DNS, tunnels, firewall).</p>
+<p><strong>⚠️ Configuration dependency</strong></p>
+</li>
+<li>
+<p>Misconfiguration can lead to vulnerabilities (for example, authentication CVEs in insecure configurations).</p>
+</li>
+</ul>
+<p>⚠️ <strong>The upstream project is still evolving</strong></p>
+<ul>
+<li>Some components (for example, mobile clients) still need work and a release is planned for later.</li>
+</ul>
+<p>⚠️ <strong>DNS dependency and external access</strong></p>
+<ul>
+<li>If DNS/server components are unavailable, services can stop resolving (as shown in practical cases).</li>
+</ul>
+<p>⚠️ <strong>License</strong></p>
+<ul>
+<li>The core code is under <strong>AGPL-3</strong> (which requires opening up changes for public use); commercial variants with different terms also exist.</li>
+</ul>
+<p><strong>Pangolin is a great self-hosted alternative to Cloudflare Tunnels and classic VPN solutions with a Zero-Trust approach</strong>, if you need advanced routing, authentication, and role-based access without directly forwarding ports into your network.</p>
+<h2 id="papra"><strong>Papra</strong></h2>
+<h3 id="-what-is-papra">📌 What is Papra</h3>
+<p><strong>Papra is a cloud and open-source platform for managing and archiving documents.</strong> It helps organize, store, and quickly find any files in one place, eliminating the "chaos" of folders and data scattered across different services.</p>
+<p>Core ideas:</p>
+<ul>
+<li>centralized document storage;</li>
+<li>convenient organization via tags and "organizations";</li>
+<li>powerful search;</li>
+<li>extensibility via API and integrations;</li>
+<li>the ability to self-host (run it yourself on your own server).</li>
+</ul>
+<hr>
+<h3 id="-what-its-for">🎯 What it's for</h3>
+<p>Papra solves the classic problems of digital document management:</p>
+<p>✔️ <strong>Centralized storage</strong> - all documents in one place instead of hundreds of folders on disk.</p>
+<p>✔️ <strong>Organization and metadata</strong> - tags, automatic tagging rules, "organization" structures for teams.
+✔️ <strong>Search and quick access</strong> - full-text search across documents lets you find what you need in seconds.
+✔️ <strong>Integrations and automation</strong> - API, webhooks, CLI, email import, and SDK let you embed Papra into your workflows.
+✔️ <strong>Archiving</strong> - suitable for both everyday use and long-term storage of important documents.</p>
+<hr>
+<h3 id="-target-audience">👤 Target audience</h3>
+<h4 id="-individual-users">🔹 Individual users</h4>
+<ul>
+<li>storing personal documents: scans, applications, contracts, insurance, receipts, etc.;</li>
+<li>convenient storage and search;</li>
+<li>access from different devices.</li>
+</ul>
+<h4 id="-small-and-medium-teams">🔹 Small and medium teams</h4>
+<ul>
+<li>shared access to documents between employees;</li>
+<li>organization by project or group;</li>
+<li>action auditing and access management.</li>
+</ul>
+<h4 id="-professionals-and-companies">🔹 Professionals and companies</h4>
+<ul>
+<li>archiving legally important documents;</li>
+<li>integration with other systems via API and webhooks;</li>
+<li>monitoring of user activity and auditing.</li>
+</ul>
+<h4 id="-tech-enthusiasts-and-self-hosters">🔹 Tech enthusiasts and self-hosters</h4>
+<ul>
+<li>running the service on your own infrastructure;</li>
+<li>control over your data, with no cloud provider involved.</li>
+</ul>
+<h3 id="-pros-1">🎉 Pros</h3>
+<p><strong>✅ Centralized document management</strong>
+All documents and metadata are gathered in one place, easy to organize and find.</p>
+<p><strong>✅ Powerful search</strong>
+Fast full-text search - even across the content of uploaded files.</p>
+<p><strong>✅ Flexible organization</strong>
+Tags, automatic classification rules, "organization" hierarchies.</p>
+<p><strong>✅ Developer tools</strong>
+API, CLI, SDK, and webhooks let you automate tasks or integrate Papra into other services.</p>
+<p><strong>✅ Email import</strong>
+You can email documents to a unique address, and Papra automatically saves the attachments.</p>
+<p><strong>✅ Open-source and self-hostable</strong>
+You can run Papra on your own host for free.</p>
+<p><strong>✅ Transparency and privacy</strong>
+Papra positions itself as an ethical and independent solution that doesn't sell your data.</p>
+<hr>
+<h3 id="-cons--limitations">⚠ Cons / limitations</h3>
+<p><strong>❗ Requires setup (if self-hosted)</strong>
+To run Papra on your own server, you need basic Docker and admin skills.</p>
+<p><strong>❗ Basic features are still evolving</strong>
+Some advanced features, such as document sharing or upload requests, may not yet be implemented or are still in development.</p>
+<p><strong>❗ A paid plan for large volumes</strong>
+The cloud version has a free tier with limited storage and members, and larger organizations need a paid plan.</p>
+<p><strong>❗ Not a highly specialized DMS</strong>
+This isn't a large enterprise document management system with advanced workflows, version control, or complex permissions - compared to major enterprise DMS platforms.</p>
+<hr>
+<h3 id="-summary">📊 Summary</h3>
+<p><strong>Papra</strong> is a convenient, modern toolset for managing, searching, and archiving documents that can be used as a personal archive as well as by teams. It's a good fit for anyone who wants to:</p>
+<p>✔ centralize all their documents;
+✔ have powerful search and metadata;
+✔ have control over their data via self-hosting;
+✔ integrate document management into their workflows.</p>
+<p>If you need an enterprise DMS solution with advanced business workflows, Papra can be a good foundation, but you may need to integrate it with other systems.</p>
+<h2 id="tinyauth">TinyAuth</h2>
+<h3 id="-what-is-tinyauth">🚀 What is TinyAuth</h3>
+<p><strong>TinyAuth</strong> is a lightweight authentication (login/access control) app that helps protect web services and applications in a simple way: it shows a login screen before granting access to a protected service and verifies the user.</p>
+<p>TinyAuth's core idea is <strong>simplicity</strong>:</p>
+<ul>
+<li>minimal dependencies (no complex database, interfaces, or heaps of configuration),</li>
+<li>configuration via environment variables,</li>
+<li>integration with popular proxies (for example, Traefik, Nginx, Caddy),</li>
+<li>support for basic login (OAuth, TOTP two-factor authentication, etc.).</li>
+</ul>
+<p>This solution is much simpler than comprehensive products like Authentik, Keycloak, or other IAM/SSO systems geared toward corporate networks and large projects.</p>
+<hr>
+<h3 id="-who-tinyauth-is-for">👥 Who TinyAuth is for</h3>
+<p><strong>Target audience:</strong></p>
+<p>✅ <strong>Homelab enthusiasts</strong> who want to quickly protect their self-hosted services (for example: web panels, home services, personal dashboards).</p>
+<p>✅ People looking for a <strong>minimalist, simple solution</strong> without complex infrastructure.</p>
+<p>✅ Those using reverse proxies (Traefik, Nginx, Caddy) who want to add a simple login check before accessing services.</p>
+<p>👎 <strong>Not the best choice for large organizations</strong> or systems with:</p>
+<ul>
+<li>complex user management,</li>
+<li>LDAP/AD integration,</li>
+<li>multi-tier access permissions,</li>
+<li>dynamic user updates without a restart.</li>
+</ul>
+<hr>
+<h3 id="️-how-it-works">⚙️ How it works</h3>
+<p>TinyAuth is usually deployed as a container (for example, Docker) and sits between the user and the protected service:</p>
+<ol>
+<li>The user's request hits TinyAuth.</li>
+<li>TinyAuth displays a login screen.</li>
+<li>After successful authentication, the request continues on to the service.</li>
+</ol>
+<p>Configuration happens via environment variables - for example, the user list, secrets, OAuth settings, etc.</p>
+<p>Sessions are stateless (no database on the server side), which keeps the system simple, but comes with a limitation: the server <strong>cannot automatically terminate a session</strong> so that it "expires" server-side.</p>
+<hr>
+<h3 id="-tinyauth-pros">👍 TinyAuth pros</h3>
+<p><strong>✔️ Simplicity and lightness</strong></p>
+<ul>
+<li>Configures without complex setups.</li>
+<li>Doesn't require a separate database.</li>
+<li>Minimal dependencies.</li>
+</ul>
+<p><strong>✔️ Good integration with reverse proxies</strong></p>
+<p>Works out of the box with Traefik, Nginx, Caddy, and other servers.</p>
+<p><strong>✔️ Two-factor authentication support</strong></p>
+<p>You can add 2FA (for example, TOTP), which raises the security level compared to a simple login/password.</p>
+<p><strong>✔️ Open source and lightweight for homelabs</strong></p>
+<p>A great fit for protecting internal services for home-server enthusiasts.</p>
+<hr>
+<h3 id="-cons-and-limitations-1">👎 Cons and limitations</h3>
+<p><strong>⚠️ Not designed for large projects</strong></p>
+<ul>
+<li>No full-fledged user management system.</li>
+<li>No LDAP/Active Directory support or complex access rights.</li>
+</ul>
+<p><strong>⚠️ Stateless (limited sessions)</strong></p>
+<p>The server can't "expire" sessions like a full authenticator; session management is simplified.</p>
+<p><strong>⚠️ Poor scaling at the enterprise level</strong></p>
+<p>If you need dozens of groups/roles, centralized management, and dynamic user updates - TinyAuth may be inconvenient.</p>
+<p><strong>⚠️ Requires a restart to update configuration</strong></p>
+<p>Any change to the user list/access rights often requires a restart.</p>
+<h3 id="-where-it-makes-sense-to-use-it">📌 Where it makes sense to use it</h3>
+<p>✨ Protecting home web services (a home Proxmox/AdGuard/Nextcloud).</p>
+<p>✨ Paired with Traefik/Nginx for basic protection.</p>
+<p>✨ When you need simple authentication without corporate IAM solutions.</p>
+<hr>
+<h3 id="-when-its-better-not-to-use-tinyauth">🛑 When it's better not to use TinyAuth</h3>
+<p>❌ If you need corporate IAM built to standards.</p>
+<p>❌ If you need centralized LDAP/AD access or SSO across many services.</p>
+<p>❌ If you have many users and complex rights/groups.</p>
+<hr>
+<h3 id="-alternatives-more-often-used-in-more-complex-environments">📌 Alternatives (more often used in more complex environments)</h3>
+<ul>
+<li><strong>Authentik</strong> - a flexible IAM/SSO with LDAP/AD support.</li>
+<li><strong>Keycloak</strong> - a powerful enterprise SSO/OAuth platform.</li>
+<li><strong>Authelia</strong> - a reverse-proxy-oriented authenticator.</li>
+<li><strong>OAuth-Proxy</strong>/OAuth2-Proxy - lightweight proxies for OAuth authorization.</li>
+</ul>
+<h2 id="zerobyte"><strong>Zerobyte</strong></h2>
+<h3 id="-what-is-zerobyte">📌 What is Zerobyte</h3>
+<p><strong>Zerobyte</strong> is a system for <strong>scheduling, running, monitoring, and restoring backups</strong>. It's built on top of the popular tool <strong>Restic</strong>, which handles the actual backup process (encryption, deduplication, etc.). Zerobyte adds to Restic:</p>
+<ul>
+<li>a modern <strong>web interface</strong> (GUI) for management;</li>
+<li>a backup job <strong>scheduler</strong>;</li>
+<li>status and log monitoring;</li>
+<li>flexible retention and encryption policies;
+all of this is easy to configure without running commands manually.</li>
+</ul>
+<p>🔐 Backups are encrypted and compressed, and stored on various types of storage (local disk, cloud, S3-compatible service, etc.).</p>
+<hr>
+<h3 id="-key-features">🧠 Key features</h3>
+<p>✔️ <strong>Automatic backups</strong> with a scheduler and schedules.
+✔️ <strong>Encryption and compression</strong> of data via Restic.
+✔️ <strong>Support for various sources</strong>: local directories, NFS, SMB, WebDAV, etc.
+✔️ <strong>Multiple storage options</strong> for saving backups:</p>
+<ul>
+<li>local directories;</li>
+<li>S3-compatible storage;</li>
+<li>cloud providers via <code>rclone</code> (Google Drive, Dropbox, etc.).
+✔️ A web interface for <strong>monitoring all jobs and restoring files</strong>.</li>
+</ul>
+<p>📦 Can run via <strong>Docker + Docker Compose</strong> (the standard method).</p>
+<hr>
+<h3 id="-target-audience-1">👤 Target audience</h3>
+<p>Zerobyte is aimed primarily at:</p>
+<p>🎯 <strong>Home-lab enthusiasts and self-hosters</strong> - people who manage their own servers, NAS, or home clusters and want a convenient interface for backups.
+🎯 <strong>Small companies and IT specialists</strong> who need a simple backup system without complex enterprise infrastructure.
+🎯 Any users for whom <strong>Restic alone is too inconvenient</strong> via the CLI, but who like its functionality.</p>
+<hr>
+<h3 id="-zerobyte-pros">👍 Zerobyte pros</h3>
+<p>✅ A <strong>simple web interface</strong> that makes backup work easier (no CLI needed).
+✅ <strong>Flexible settings</strong> for scheduling and retention policies.
+✅ <strong>Encryption and deduplication</strong> courtesy of Restic.
+✅ Support for <strong>various storage backends</strong>, including cloud storage via rclone.
+✅ Can serve as a <strong>centralized backup location</strong> for a large amount of data.</p>
+<hr>
+<h3 id="-cons-and-limitations-2">👎 Cons and limitations</h3>
+<p>⚠️ <strong>Still in early development (0.x)</strong> - there may be API changes, bugs, and instability.
+⚠️ <strong>Depends on Docker</strong> - no official support for running without containers.
+⚠️ Some features (for example, database backups, stopping services before a backup) aren't built in - you need to arrange them yourself with scripts.
+⚠️ It's <strong>not always considered ready for large enterprise environments</strong> (better suited for smaller installations).</p>
+<hr>
+<h3 id="-how-it-differs-from-restic">🧩 How it differs from Restic</h3>
+<p>Restic on its own is a <strong>CLI backup tool</strong> - powerful, but without a graphical interface or scheduler. Zerobyte takes Restic and:</p>
+<p>📍 adds convenience: a GUI, schedules, monitoring;
+📍 makes management more accessible for non-CLI users.</p>
+<hr>
+<h3 id="-example-usage-scenario">🧪 Example usage scenario</h3>
+<ol>
+<li>Run Zerobyte via Docker on your home server.</li>
+<li>Add data sources through the web interface: home folders, NFS/SMB shares.</li>
+<li>Configure a backup destination (for example, S3-compatible storage or a cloud service via rclone).</li>
+<li>Create a schedule for automatic backups.</li>
+<li>In case of failure, restore data through the web interface.</li>
+</ol>
+<p>For a full installation and setup walkthrough, see the dedicated article: <a href="https://prohomelab.com/en/posts/zerobyte/">Zerobyte - Backup Automation</a>.</p><!--phl-feed-end--></div><footer class="phl-article-footer"><p class="phl-article-terms"><a class="phl-term-cat" href="/en/categories/self-hosting/">Self-Hosting</a><a href="/en/tags/open-source/">#open source</a><a href="/en/tags/self-hosting/">#Self-Hosting</a></p><p class="phl-license">License: CC BY 4.0</p><div class="phl-share"><span class="phl-share-label">Share</span><a href="https://t.me/share/url?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fbest-apps-2025%2F&amp;text=The%20Best%20Self-Hosted%20Apps%20of%202025%20-%20A%20Personal%20Roundup" target="_blank" rel="noopener noreferrer" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://x.com/intent/post?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fbest-apps-2025%2F&amp;text=The%20Best%20Self-Hosted%20Apps%20of%202025%20-%20A%20Personal%20Roundup" target="_blank" rel="noopener noreferrer" aria-label="X" title="X" style="--phl-brand-l:#000000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.234 10.162L22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299l-.929-1.329L3.076 1.56h3.182l5.965 8.532l.929 1.329l7.754 11.09h-3.182z"/></svg></a><a href="https://www.reddit.com/submit?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fbest-apps-2025%2F&amp;title=The%20Best%20Self-Hosted%20Apps%20of%202025%20-%20A%20Personal%20Roundup" target="_blank" rel="noopener noreferrer" aria-label="Reddit" title="Reddit" style="--phl-brand-l:#ff4500;--phl-brand-d:#ff4500" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12c0 3.314 1.343 6.314 3.515 8.485l-2.286 2.286A.72.72 0 0 0 1.738 24H12c6.627 0 12-5.373 12-12S18.627 0 12 0m4.388 3.199a1.999 1.999 0 1 1-1.947 2.46v.002a2.37 2.37 0 0 0-2.032 2.341v.007c1.776.067 3.4.567 4.686 1.363a2.802 2.802 0 1 1 2.908 4.753c-.088 3.256-3.637 5.876-7.997 5.876c-4.361 0-7.905-2.617-7.998-5.87a2.8 2.8 0 0 1 1.189-5.34c.645 0 1.239.218 1.712.585c1.275-.79 2.881-1.291 4.64-1.365v-.01a3.23 3.23 0 0 1 2.88-3.207a2 2 0 0 1 1.959-1.595m-8.085 8.376c-.784 0-1.459.78-1.506 1.797s.64 1.429 1.426 1.429s1.371-.369 1.418-1.385s-.553-1.841-1.338-1.841m7.406 0c-.786 0-1.385.824-1.338 1.841s.634 1.385 1.418 1.385c.785 0 1.473-.413 1.426-1.429c-.046-1.017-.721-1.797-1.506-1.797m-3.703 4.013c-.974 0-1.907.048-2.77.135a.222.222 0 0 0-.183.305a3.2 3.2 0 0 0 2.953 1.964a3.2 3.2 0 0 0 2.953-1.964a.222.222 0 0 0-.184-.305a28 28 0 0 0-2.769-.135"/></svg></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fbest-apps-2025%2F" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn" style="--phl-brand-l:#0a66c2;--phl-brand-d:#0b73da" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037c-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85c3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.06 2.06 0 0 1-2.063-2.065a2.064 2.064 0 1 1 2.063 2.065m1.782 13.019H3.555V9h3.564zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg></a><a href="mailto:?subject=The%20Best%20Self-Hosted%20Apps%20of%202025%20-%20A%20Personal%20Roundup&amp;body=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fbest-apps-2025%2F" rel="noopener noreferrer" aria-label="Email" title="Email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a></div><section class="phl-author-box"><h2>Author</h2><div class="phl-author"><img class="phl-author-image" src="/avatar-stilicho2011.webp" alt="" width="64" height="64" loading="lazy"><div class="phl-author-body"><p class="phl-author-name"><a href="/en/authors/stilicho2011/">Stilicho2011</a></p><p class="phl-author-bio">Writing about homelab, self-hosting, automation and open-source solutions</p><p class="phl-author-links"><a href="mailto:pavel@prohomelab.com" rel="me noopener" aria-label="email" title="email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener" target="_blank" aria-label="github" title="github" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a><a href="https://t.me/stilicho2011_videos" rel="me noopener" target="_blank" aria-label="telegram" title="telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://www.youtube.com/@prohomelab" rel="me noopener" target="_blank" aria-label="youtube" title="youtube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a><a href="https://boosty.to/stilicho2011" rel="me noopener" target="_blank" aria-label="boosty" title="boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></p></div></div></section></footer><nav class="phl-prevnext" aria-label="Previous / Next"><a class="phl-prevnext-prev" href="/en/posts/homelabbing/" rel="prev"><span class="phl-prevnext-label">Previous</span><span class="phl-prevnext-title">How to Start a Homelab - Hardware, Hypervisor, and Your First Service</span></a><a class="phl-prevnext-next" href="/en/posts/linkwarden-vs-karakeep/" rel="next"><span class="phl-prevnext-label">Next</span><span class="phl-prevnext-title">Best Bookmark Manager - Linkwarden or Karakeep</span></a></nav><section class="phl-related"><h2>Related articles</h2><div class="phl-cards"><article class="phl-card"><a class="phl-card-cover" href="/en/posts/homelabbing/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.CqDETyGV_25S1dJ.webp" srcset="/_astro/featured.CqDETyGV_UphDk.webp 320w, /_astro/featured.CqDETyGV_ZnEQDv.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Self-Hosting</span><time datetime="2025-12-22T00:00:00.000Z">December 22, 2025</time><span class="phl-views">72 views</span></p><h3 class="phl-card-title"><a href="/en/posts/homelabbing/">How to Start a Homelab - Hardware, Hypervisor, and Your First Service</a></h3><p class="phl-card-summary">A homelab is your own small infrastructure for experiments and self-hosted services. A first-homelab checklist covering hardware, hypervisor, your first service, backups, and security - plus what my homelab looks like and where to go next.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/en/posts/booklore/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.CjxeRfC1_1tInqO.webp" srcset="/_astro/featured.CjxeRfC1_Z2mTErS.webp 320w, /_astro/featured.CjxeRfC1_1ock4d.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Self-Hosting</span><time datetime="2026-03-16T00:00:00.000Z">March 16, 2026</time><span class="phl-card-video">▶ video</span><span class="phl-views">80 views</span></p><h3 class="phl-card-title"><a href="/en/posts/booklore/">BookLore - A Self-Hosted Library and Reader for Your Book Collection</a></h3><p class="phl-card-summary">A detailed guide to installing and configuring BookLore: deploying it in Docker, adding books, organizing your library, and using the built-in web reader.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/en/posts/grimmory/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.CXnSGBNo_1L72jN.webp" srcset="/_astro/featured.CXnSGBNo_14LLtk.webp 320w, /_astro/featured.CXnSGBNo_ZeimNv.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Self-Hosting</span><time datetime="2026-04-02T00:00:00.000Z">April 2, 2026</time><span class="phl-card-video">▶ video</span><span class="phl-views">54 views</span></p><h3 class="phl-card-title"><a href="/en/posts/grimmory/">Grimmory - A Self-Hosted Library and Reader for Your Book Collection</a></h3><p class="phl-card-summary">A detailed walkthrough for installing and configuring Grimmory: deploying it in Docker, adding books, organizing your library, and using the built-in web reader.</p></div></article></div></section></article></div><script type="module" src="/_astro/MermaidLoader.astro_astro_type_script_index_0_lang.D0cD853-.js"></script><script type="module">document.querySelectorAll(`.phl-yt`).forEach(e=>{let t=e.querySelector(`.phl-yt-link`);t?.addEventListener(`click`,n=>{n.preventDefault();let r=e.dataset.ytId,i=e.dataset.ytParams?`&${e.dataset.ytParams}`:``,a=document.createElement(`iframe`);a.src=`https://www.youtube-nocookie.com/embed/${r}?autoplay=1${i}`,a.title=t.getAttribute(`aria-label`)??`YouTube video`,a.allow=`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share`,a.allowFullscreen=!0,e.replaceChildren(a)})});var e=matchMedia(`(prefers-reduced-motion: reduce)`).matches;document.querySelectorAll(`.phl-carousel`).forEach(t=>{let n=t.querySelector(`.phl-carousel-track`),r=n?[...n.children]:[];if(!n||r.length<2)return;let i=t=>{let i=(t+r.length)%r.length;n.scrollTo({left:r[i].offsetLeft-n.offsetLeft,behavior:e?`auto`:`smooth`})},a=()=>Math.round(n.scrollLeft/n.clientWidth),o=document.createElement(`div`);o.className=`phl-carousel-nav`,o.innerHTML=`<button type="button" class="phl-carousel-prev" aria-label="Previous">‹</button><span class="phl-carousel-dots"></span><button type="button" class="phl-carousel-next" aria-label="Next">›</button>`;let s=o.querySelector(`.phl-carousel-dots`);r.forEach((e,t)=>{let n=document.createElement(`button`);n.type=`button`,n.setAttribute(`aria-label`,`${t+1} / ${r.length}`),n.addEventListener(`click`,()=>i(t)),s.appendChild(n)});let c=()=>[...s.children].forEach((e,t)=>e.toggleAttribute(`aria-current`,t===a()));n.addEventListener(`scroll`,()=>requestAnimationFrame(c),{passive:!0}),o.querySelector(`.phl-carousel-prev`).addEventListener(`click`,()=>i(a()-1)),o.querySelector(`.phl-carousel-next`).addEventListener(`click`,()=>i(a()+1)),t.appendChild(o),c();let l=Number(t.dataset.interval);if(l>0&&!e){let e=!1;t.addEventListener(`mouseenter`,()=>e=!0),t.addEventListener(`mouseleave`,()=>e=!1),t.addEventListener(`focusin`,()=>e=!0),setInterval(()=>!e&&i(a()+1),Math.max(l,1500))}});var t=e=>`phl-tabs:${e}`,n=[...document.querySelectorAll(`.phl-tabs`)],r=(e,i,a=!0)=>{let o=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!o.some(e=>e.dataset.label===i))return;o.forEach(e=>e.hidden=e.dataset.label!==i),e.querySelectorAll(`:scope > .phl-tablist button`).forEach(e=>e.setAttribute(`aria-selected`,String(e.dataset.label===i)));let s=e.dataset.group;if(a&&s){try{localStorage.setItem(t(s),i)}catch{}n.filter(t=>t!==e&&t.dataset.group===s).forEach(e=>r(e,i,!1))}};n.forEach((e,n)=>{let i=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!i.length)return;let a=document.createElement(`div`);a.className=`phl-tablist`,a.setAttribute(`role`,`tablist`),i.forEach((t,o)=>{let s=document.createElement(`button`);s.type=`button`,s.setAttribute(`role`,`tab`),s.id=`phl-tab-${n}-${o}`,s.dataset.label=t.dataset.label,s.innerHTML=t.querySelector(`.phl-tab-label`)?.innerHTML??t.dataset.label??``,t.setAttribute(`role`,`tabpanel`),t.setAttribute(`aria-labelledby`,s.id),s.addEventListener(`click`,()=>r(e,t.dataset.label)),s.addEventListener(`keydown`,e=>{let t=e.key===`ArrowRight`?1:e.key===`ArrowLeft`?-1:0;if(!t)return;let n=a.children[(o+t+i.length)%i.length];n.focus(),n.click()}),a.appendChild(s)}),e.prepend(a),e.classList.add(`phl-tabs-ready`);let o=null;try{o=e.dataset.group?localStorage.getItem(t(e.dataset.group)):null}catch{}r(e,o??e.dataset.default??i[0].dataset.label,!1)}),document.querySelectorAll(`.phl-accordion[data-mode="collapse"]`).forEach(e=>{let t=[...e.querySelectorAll(`:scope > .phl-accordion-item`)];t.forEach(e=>e.addEventListener(`toggle`,()=>e.open&&t.forEach(t=>t!==e&&(t.open=!1))))});var i=document.querySelectorAll(`.phl-prose img:not(.nozoom)`);if(i.length){let e=document.createElement(`dialog`);e.className=`phl-lightbox`,e.innerHTML=`<img alt=""><button type="button" class="phl-lightbox-close" aria-label="Close">×</button>`,document.body.appendChild(e);let t=e.querySelector(`img`);e.addEventListener(`click`,()=>e.close()),i.forEach(n=>{n.closest(`a, .phl-yt, .phl-repo`)||(n.classList.add(`phl-zoomable`),n.addEventListener(`click`,()=>{t.src=n.currentSrc||n.src,t.alt=n.alt,e.showModal()}))})}</script><script type="module" src="/_astro/ChartTypeitClient.astro_astro_type_script_index_0_lang.CjHU9QBU.js"></script><script>(function(){const smartToc = true;
+const tableHint = "The table scrolls sideways";
+const wideBlocks = true;
+const wideCode = false;
+
+  // TOC: collapsed on phones, open from 768 px (decision 0007).
+  // Follows width changes too (rotating a tablet, resizing the window).
+  const toc = document.querySelector('[data-phl-toc]');
+  const wide = matchMedia('(min-width: 768px)');
+  const syncToc = () => toc && toc.toggleAttribute('open', wide.matches);
+  syncToc();
+  wide.addEventListener('change', syncToc);
+
+  // Current section in the TOC.
+  if (toc && smartToc && 'IntersectionObserver' in window) {
+    const links = new Map([...toc.querySelectorAll('[data-phl-toc-link]')].map((a) => [a.dataset.phlTocLink, a]));
+    const heads = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+    const visible = new Set();
+    const mark = () => {
+      const current = heads.find((h) => visible.has(h.id)) ?? [...heads].reverse().find((h) => h.getBoundingClientRect().top < 120);
+      links.forEach((a, id) => a.toggleAttribute('aria-current', current?.id === id));
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id)));
+        mark();
+      },
+      { rootMargin: '0px 0px -70% 0px' },
+    );
+    heads.forEach((h) => io.observe(h));
+  }
+
+  // Wide blocks: tables and screenshots (and code, with wideCode) wider than the text column get data-phl-wide.
+  // Measured against the column width itself, not the window, so the result is the same on a
+  // phone and a desktop. The CSS lets them grow only on large screens (styles/layout.css).
+  if (wideBlocks) {
+    const root = document.documentElement;
+    const raw = getComputedStyle(root).getPropertyValue('--phl-content-width').trim();
+    const rem = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const column = raw.endsWith('rem') ? parseFloat(raw) * rem : parseFloat(raw) || 736;
+    // With the info column (from 1680 px) a block next to it must not grow over it:
+    // such blocks get data-phl-wide="beside-info" and stay in the text column.
+    const info = document.querySelector('.phl-article-info');
+    const large = matchMedia('(min-width: 1680px)');
+    const wideEls = new Set();
+    const classify = () => {
+      const bottom = info && large.matches ? info.getBoundingClientRect().bottom + 24 : -Infinity;
+      // Top to bottom: a block that does not grow keeps the ones below in place, a growing one
+      // only pushes them further down, so one pass is stable.
+      [...wideEls].sort((x, y) => (x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)).forEach((el) => {
+        const value = el.getBoundingClientRect().top < bottom ? 'beside-info' : '';
+        if (el.getAttribute('data-phl-wide') !== value) el.setAttribute('data-phl-wide', value);
+      });
+    };
+    let queued = false;
+    const queue = () => {
+      if (queued) return;
+      queued = true;
+      // A timer, not requestAnimationFrame: that one never fires in hidden tabs and some previews.
+      setTimeout(() => { queued = false; classify(); }, 50);
+    };
+    const mark = (el) => {
+      if (!el || wideEls.has(el)) return;
+      el.setAttribute('data-phl-wide', 'beside-info');
+      wideEls.add(el);
+      queue();
+    };
+    if (info) {
+      // Image loads, an opened series list, a resized window all move blocks.
+      if ('ResizeObserver' in window) new ResizeObserver(queue).observe(document.querySelector('.phl-article') ?? document.body);
+      addEventListener('resize', queue);
+    }
+    if (wideCode) document.querySelectorAll('.phl-prose .expressive-code').forEach((ec) => {
+      const pre = ec.querySelector('pre');
+      if (pre && pre.scrollWidth > column + 1) mark(ec);
+    });
+    document.querySelectorAll('.phl-prose table').forEach((t) => {
+      if (t.scrollWidth > column + 1) mark(t);
+    });
+    // A screenshot: an image clearly larger than the column, alone in its paragraph or figure.
+    const block = (img) => {
+      const fig = img.closest('.phl-prose figure');
+      if (fig) return fig;
+      const p = img.closest('.phl-prose > p');
+      return p && p.querySelectorAll('img').length === 1 && !p.textContent.trim() ? p : null;
+    };
+    const check = (img) => {
+      const w = Number(img.getAttribute('width')) || img.naturalWidth;
+      if (w >= column * 1.25 && !img.closest('.phl-gallery, .phl-carousel, .phl-card, .phl-repo')) mark(block(img));
+    };
+    document.querySelectorAll('.phl-prose img').forEach((img) => {
+      if (img.getAttribute('width') || img.complete) check(img);
+      else img.addEventListener('load', () => check(img), { once: true });
+    });
+  }
+
+  // Wide tables: say that they scroll, and mark the side where columns are hidden.
+  document.querySelectorAll('.phl-prose table').forEach((table) => {
+    const hint = document.createElement('p');
+    hint.className = 'phl-table-hint';
+    hint.textContent = tableHint;
+    hint.hidden = true;
+    table.before(hint);
+    table.tabIndex = 0;
+    const update = () => {
+      const hidden = table.scrollWidth - table.clientWidth > 1;
+      const pos = Math.abs(table.scrollLeft);
+      const atStart = pos < 2;
+      const atEnd = pos >= table.scrollWidth - table.clientWidth - 2;
+      const sides = [];
+      if (hidden && !atStart) sides.push('start');
+      if (hidden && !atEnd) sides.push('end');
+      table.dataset.phlScroll = sides.join(' ');
+      hint.hidden = !hidden;
+    };
+    table.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  });
+
+  // Reading progress.
+  const bar = document.querySelector('.phl-progress span');
+  const article = document.querySelector('.phl-article');
+  if (bar && article) {
+    const update = () => {
+      const r = article.getBoundingClientRect();
+      const total = r.height - innerHeight;
+      const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 1;
+      bar.style.transform = `scaleX(${p})`;
+    };
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+
+  // Reading mode: hides everything but the text; remembered; Escape exits.
+  const zen = document.querySelector('[data-phl-zen]');
+  if (zen) {
+    const set = (on) => {
+      document.documentElement.classList.toggle('phl-zen', on);
+      zen.setAttribute('aria-pressed', String(on));
+      zen.textContent = on ? zen.dataset.off : zen.dataset.on;
+      try { localStorage.setItem('phl-zen', on ? '1' : ''); } catch (e) {}
+    };
+    let saved = false;
+    try { saved = localStorage.getItem('phl-zen') === '1'; } catch (e) {}
+    if (saved) set(true);
+    zen.addEventListener('click', () => set(!document.documentElement.classList.contains('phl-zen')));
+    addEventListener('keydown', (e) => e.key === 'Escape' && document.documentElement.classList.contains('phl-zen') && set(false));
+  }
+})();</script></main><footer class="phl-footer"><div class="phl-footer-inner"><nav class="phl-footer-nav" aria-label="Footer menu"><ul><li><a href="/en/tools/traefik-compose/">Docker Compose generator</a></li><li><a href="/en/tools/compose-quadlet/">Compose to Podman Quadlet</a></li><li><a href="/en/tools/proxmox-quorum/">Proxmox quorum</a></li><li><a href="/en/tools/opnsense-vlan-planner/">VLAN planner</a></li><li><a href="/en/tools/rackplan/">Rack planner</a></li><li><a href="/en/privacy/">Privacy policy</a></li></ul></nav><ul class="phl-social-links phl-footer-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><div class="phl-footer-meta"><p><span>© 2025-2026 Stilicho2011. All Rights Reserved.</span><span class="phl-footer-credit">Theme: <a href="https://prohomelab.com">ProHomeLab</a></span><button type="button" class="phl-consent-open" data-phl-consent-open hidden>Analytics settings</button></p><div class="phl-footer-tools"><a class="phl-to-top" href="#top"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l7-7l7 7m-7 7V5"/></svg>Back to top</a></div></div></div></footer><div class="phl-consent" data-phl-consent data-mode="opt-in" role="region" aria-label="Analytics" hidden><p><span data-phl-consent-text>Allow anonymous visit statistics?</span> <a href="/en/privacy/" data-phl-consent-policy>Details</a></p><div class="phl-consent-actions"><button type="button" data-phl-consent-choice="granted">Accept</button><button type="button" data-phl-consent-choice="denied">Decline</button></div></div><script>(function(){const TEXTS = {"ru":{"lang":"ru-RU","label":"Аналитика","text":"Разрешить обезличенную статистику посещений?","policy":"Подробнее","href":"/privacy/","granted":"Разрешить","denied":"Отказаться","seen":"Понятно"},"en":{"lang":"en","label":"Analytics","text":"Allow anonymous visit statistics?","policy":"Details","href":"/en/privacy/","granted":"Accept","denied":"Decline","seen":"OK"}};
+const PAGE = "en";
+
+      (() => {
+        const box = document.querySelector('[data-phl-consent]');
+        if (!box) return;
+        const key = 'phl-consent';
+        let saved = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        const texts = TEXTS;
+        const reader = window.__phlReaderLocale && window.__phlReaderLocale();
+        const tx = reader && reader !== PAGE && texts[reader];
+        if (tx) {
+          box.lang = tx.lang;
+          box.setAttribute('aria-label', tx.label);
+          box.querySelector('[data-phl-consent-text]').textContent = tx.text;
+          const pol = box.querySelector('[data-phl-consent-policy]');
+          if (pol && tx.href) { pol.textContent = tx.policy; pol.href = tx.href; }
+          box.querySelectorAll('[data-phl-consent-choice]').forEach((b) => { b.textContent = tx[b.dataset.phlConsentChoice] || b.textContent; });
+        }
+        const show = () => { box.hidden = false; };
+        if (!saved) show();
+        box.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-phl-consent-choice]');
+          if (!b) return;
+          const value = b.dataset.phlConsentChoice;
+          try { localStorage.setItem(key, value); } catch (e) {}
+          box.hidden = true;
+          if (value === 'granted' && window.__phlAnalytics) window.__phlAnalytics();
+          // Declining after accepting: counters already loaded on this page stop with the next page.
+        });
+        document.querySelectorAll('[data-phl-consent-open]').forEach((el) => {
+          el.hidden = false;
+          el.addEventListener('click', (e) => { e.preventDefault(); show(); box.querySelector('button')?.focus(); });
+        });
+      })();
+    })();</script></body></html>

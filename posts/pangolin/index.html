@@ -1,0 +1,722 @@
+<!DOCTYPE html><html lang="ru-RU" dir="ltr" data-scheme="prohomelab" data-theme="light" data-mode="system" data-default-mode="system" data-mode-switch="1" data-fluid="1" data-social-colors="hover" style="--phl-content-width: 48rem"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){const cur = "ru";
+const alts = {"en":"/en/posts/pangolin/"};
+
+      try {
+        const p = localStorage.getItem('phl-lang');
+        if (p && p !== cur && alts[p]) location.replace(alts[p] + location.hash);
+      } catch (e) {}
+    })();</script><title>Pangolin - простой способ открыть доступ к homelab | ProHomeLab</title><meta name="description" content="Настраиваю Pangolin для публикации сервисов без проброса портов - обратный туннель с веб-интерфейсом. Разбираю, за что придется платить и когда это того стоит."><link rel="canonical" href="https://prohomelab.com/posts/pangolin/"><link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/pangolin/"><link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/pangolin/"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32"><link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"><link rel="manifest" href="/site.webmanifest"><meta property="og:site_name" content="ProHomeLab"><meta property="og:title" content="Pangolin - простой способ открыть доступ к homelab"><meta property="og:description" content="Настраиваю Pangolin для публикации сервисов без проброса портов - обратный туннель с веб-интерфейсом. Разбираю, за что придется платить и когда это того стоит."><meta property="og:type" content="article"><meta property="og:url" content="https://prohomelab.com/posts/pangolin/"><meta property="og:locale" content="ru_RU"><meta property="og:image" content="https://prohomelab.com/_astro/featured.OopiKHNu_Z2ah0or.jpg"><meta property="og:image:alt" content="Pangolin - простой способ открыть доступ к homelab"><meta property="article:published_time" content="2026-05-13T00:00:00.000Z"><meta property="article:section" content="Self-Hosting"><meta property="article:tag" content="pangolin"><meta property="article:tag" content="Self-Hosting"><meta property="article:tag" content="reverse-proxy"><meta property="article:tag" content="Security"><meta property="article:tag" content="Homelab"><meta name="twitter:card" content="summary_large_image"><meta name="yandex-verification" content="103870927"><link rel="alternate" type="application/rss+xml" title="ProHomeLab" href="https://prohomelab.com/index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","articleSection":"Self-Hosting","name":"Pangolin - простой способ открыть доступ к homelab","headline":"Pangolin - простой способ открыть доступ к homelab","description":"Настраиваю Pangolin для публикации сервисов без проброса портов - обратный туннель с веб-интерфейсом. Разбираю, за что придется платить и когда это того стоит.","inLanguage":"ru-RU","url":"https://prohomelab.com/posts/pangolin/","author":[{"@type":"Person","name":"Stilicho2011","image":"https://prohomelab.com/avatar-stilicho2011.webp","url":"https://prohomelab.com","sameAs":["https://github.com/stilicho2011/ubuntu_rep","https://t.me/stilicho2011_videos","https://www.youtube.com/@prohomelab","https://boosty.to/stilicho2011"]}],"copyrightYear":"2026","datePublished":"2026-05-13T00:00:00.000Z","dateModified":"2026-05-13T00:00:00.000Z","image":"https://prohomelab.com/_astro/featured.OopiKHNu_Z2ah0or.jpg","keywords":["pangolin","Self-Hosting","reverse-proxy","Security","Homelab"],"mainEntityOfPage":"https://prohomelab.com/posts/pangolin/","wordCount":2514}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Главная","item":"https://prohomelab.com/"},{"@type":"ListItem","position":2,"name":"Self-Hosting","item":"https://prohomelab.com/posts/selfhosting/"},{"@type":"ListItem","position":3,"name":"Pangolin - простой способ открыть доступ к homelab","item":"https://prohomelab.com/posts/pangolin/"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoObject","name":"Pangolin - простой способ открыть доступ к homelab","description":"Настраиваю Pangolin для публикации сервисов без проброса портов - обратный туннель с веб-интерфейсом. Разбираю, за что придется платить и когда это того стоит.","thumbnailUrl":["https://i.ytimg.com/vi/EfiLQ6cWDMY/maxresdefault.jpg"],"uploadDate":"2026-05-13T00:00:00.000Z","embedUrl":"https://www.youtube.com/embed/EfiLQ6cWDMY","contentUrl":"https://www.youtube.com/watch?v=EfiLQ6cWDMY"}</script><script>
+      // Light or dark before first paint, so a dark page never flashes white.
+      // data-mode is the choice (system, light, dark), data-theme the result (light or dark).
+      (() => {
+        const d = document.documentElement;
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        let mode = d.dataset.defaultMode || 'system';
+        if (d.dataset.modeSwitch) {
+          try {
+            const saved = localStorage.getItem('phl-theme');
+            if (saved === 'system' || saved === 'light' || saved === 'dark') mode = saved;
+          } catch (e) {}
+        }
+        const apply = () => {
+          d.dataset.mode = mode;
+          d.dataset.theme = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode;
+        };
+        apply();
+        media.addEventListener('change', () => mode === 'system' && apply());
+        window.__phlSetMode = (next) => {
+          mode = next;
+          try {
+            localStorage.setItem('phl-theme', next);
+          } catch (e) {}
+          apply();
+        };
+      })();
+    </script><style>:root:root{--phl-font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-heading:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-mono:'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace}</style><script>(function(){const ym = {"id":"103870927","webvisor":true,"clickmap":true,"trackLinks":true,"accurateTrackBounce":true,"ecommerce":"dataLayer"};
+const ga = {"id":"G-VRHQGK81S9"};
+const umami = {"src":"https://stats.prohomelab.com/script.js","websiteId":"31518a04-7f00-4d16-99f3-759c057c7bf2","recorder":true,"recorderSrc":"https://stats.prohomelab.com/recorder.js"};
+const consent = "opt-in";
+
+      (() => {
+        let started = false;
+        const add = (src, attrs = {}) => {
+          const s = document.createElement('script');
+          s.async = true;
+          s.src = src;
+          for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+          document.head.appendChild(s);
+        };
+        window.__phlAnalytics = () => {
+          if (started) return;
+          started = true;
+          if (ym) {
+            window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+            window.ym.l = Date.now();
+            add(`https://mc.yandex.ru/metrika/tag.js?id=${ym.id}`);
+            const opts = { ssr: true, webvisor: ym.webvisor, clickmap: ym.clickmap, accurateTrackBounce: ym.accurateTrackBounce, trackLinks: ym.trackLinks };
+            if (ym.ecommerce) opts.ecommerce = ym.ecommerce;
+            window.ym(Number(ym.id), 'init', opts);
+          }
+          if (ga) {
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ga.id);
+            add(`https://www.googletagmanager.com/gtag/js?id=${ga.id}`);
+          }
+          if (umami) {
+            const attrs = { 'data-website-id': umami.websiteId };
+            if (umami.domains) attrs['data-domains'] = umami.domains;
+            add(umami.src, { ...attrs, defer: '' });
+            if (umami.recorder) add(umami.recorderSrc, { ...attrs, defer: '' });
+          }
+        };
+        let choice = null;
+        try { choice = localStorage.getItem('phl-consent'); } catch (e) {}
+        if (consent !== 'opt-in' || choice === 'granted') window.__phlAnalytics();
+      })();
+    })();</script><link rel="stylesheet" href="/_astro/Base.CNmgq2nC.css"></head><body id="top"><template id="phl-lang-en"><div class="phl-langbar" lang="en" role="region" aria-label="This page is available in English"><div class="phl-langbar-inner"><p>This page is available in English</p><div class="phl-langbar-actions"><a href="/en/posts/pangolin/" hreflang="en" data-phl-lang="en">Switch</a><button type="button" data-phl-lang-stay>Stay here</button></div></div></div></template><script>(function(){const data = {"cur":"ru","alts":{"en":"/en/posts/pangolin/"},"match":{"ru":["ru","uk","be","kk"],"en":["en"]},"byLang":{"ru-ru":"ru","en":"en"},"fallback":"en"};
+
+        (() => {
+          const store = (v) => { try { localStorage.setItem('phl-lang', v); } catch (e) {} };
+          // An explicit choice anywhere (language switcher, the bar) is remembered.
+          document.addEventListener('click', (e) => {
+            const go = e.target.closest('[data-phl-lang]');
+            if (go) return store(go.dataset.phlLang);
+            const link = e.target.closest('a[hreflang]');
+            const key = link && data.byLang[link.getAttribute('hreflang').toLowerCase()];
+            if (key) return store(key);
+            const stay = e.target.closest('[data-phl-lang-stay]');
+            if (stay) { store(data.cur); stay.closest('.phl-langbar')?.remove(); }
+          });
+          let saved = null;
+          try { saved = localStorage.getItem('phl-lang'); } catch (e) {}
+          const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''])
+            .map((l) => String(l).toLowerCase().split('-')[0]);
+          const fits = (key, code) => (data.match[key] || []).includes(code);
+          // The language this reader reads, for other parts of the page (the analytics banner):
+          // the stored choice, else the page language if the browser fits it, else the first
+          // locale the browser fits, else the fallback, else the page language.
+          window.__phlReaderLocale = () => {
+            if (saved && data.match[saved]) return saved;
+            if (list.some((code) => fits(data.cur, code))) return data.cur;
+            for (const code of list) {
+              const key = Object.keys(data.match).find((k) => fits(k, code));
+              if (key) return key;
+            }
+            return data.fallback || data.cur;
+          };
+          if (saved || !Object.keys(data.alts).length) return;
+          if (list.some((code) => fits(data.cur, code))) return;
+          let target = null;
+          for (const code of list) {
+            target = Object.keys(data.alts).find((key) => fits(key, code)) || null;
+            if (target) break;
+          }
+          if (!target && data.fallback && data.fallback !== data.cur && data.alts[data.fallback]) target = data.fallback;
+          const tpl = target && document.getElementById('phl-lang-' + target);
+          if (tpl) document.body.prepend(tpl.content.cloneNode(true));
+        })();
+      })();</script><a class="phl-skip" href="#phl-content">Перейти к тексту</a><header class="phl-header phl-header-sticky"><div class="phl-header-inner"><a class="phl-brand" href="/"><img class="phl-logo phl-logo-light" src="/prohomelab-mark.svg" alt><span class="phl-brand-name">ProHomeLab</span><span class="phl-brand-point" aria-hidden="true"></span></a><nav class="phl-nav" aria-label="Главное меню"><ul class="phl-nav-list"><li><a href="/blog/">Все статьи</a></li><li><details class="phl-dropdown" data-phl-dropdown><summary aria-current="true">Темы<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul class="phl-dropdown-panel"><li><a href="/posts/">Темы</a></li><li><a href="/posts/authentik/">Authentik</a></li><li><a href="/posts/backup/">Backup</a></li><li><a href="/posts/crowdsec/">Crowdsec</a></li><li><a href="/posts/docker-ui/">Docker UI</a></li><li><a href="/posts/hardware/">Hardware</a></li><li><a href="/posts/media-servers/">Media Servers</a></li><li><a href="/posts/network/">Network</a></li><li><a href="/posts/news/">Новости</a></li><li><a href="/posts/nextcloud/">Nextcloud</a></li><li><a href="/posts/opnsense/">OPNsense</a></li><li><a href="/posts/pkm/">PKM</a></li><li><a href="/posts/podman/">Podman</a></li><li><a href="/posts/proxmox/">Proxmox</a></li><li><a href="/posts/selfhosting/">Self-hosting</a></li><li><a href="/posts/single-sign-on/">Single Sign On</a></li><li><a href="/posts/terraform/">Terraform</a></li><li><a href="/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/categories/">Категории</a></li><li><a href="/tags/">Теги</a></li><li><a href="/tools/">Инструменты</a></li><li><a href="/about/">О проекте</a></li></ul></nav><div class="phl-header-tools phl-has-mobile-menu"><button type="button" class="phl-search-button" data-phl-search-open aria-label="Поиск" title="Поиск" hidden><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg></button><dialog class="phl-search" data-phl-search aria-label="Поиск"><div class="phl-search-box"><div class="phl-search-field"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg><input type="search" data-phl-search-input placeholder="Поиск по статьям" aria-label="Поиск по статьям" autocomplete="off" spellcheck="false"><button type="button" class="phl-search-close" data-phl-search-close aria-label="Закрыть"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></button></div><p class="phl-search-status" data-phl-search-status role="status" aria-live="polite"></p><ol class="phl-search-results" data-phl-search-results></ol><button type="button" class="phl-search-more" data-phl-search-more hidden>Показать еще</button></div></dialog><script>(function(){const options = {"shortcut":true,"pageSize":8,"text":{"noResults":"Ничего не найдено","loading":"Ищу","unavailable":"Поиск работает на собранном сайте (astro build)","more":"Показать еще"}};
+
+  (() => {
+    const open = document.querySelector('[data-phl-search-open]');
+    const dialog = document.querySelector('[data-phl-search]');
+    if (!open || !dialog || typeof dialog.showModal !== 'function') return;
+    const input = dialog.querySelector('[data-phl-search-input]');
+    const list = dialog.querySelector('[data-phl-search-results]');
+    const status = dialog.querySelector('[data-phl-search-status]');
+    const more = dialog.querySelector('[data-phl-search-more]');
+    const t = options.text;
+    let pagefind = null;
+    let failed = false;
+    let results = [];
+    let shown = 0;
+    let query = 0;
+    open.hidden = false;
+
+    const load = async () => {
+      if (pagefind || failed) return pagefind;
+      try {
+        pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+        await pagefind.init();
+      } catch (e) {
+        failed = true;
+        pagefind = null;
+      }
+      return pagefind;
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const render = async () => {
+      const page = results.slice(shown, shown + options.pageSize);
+      const id = query;
+      const data = await Promise.all(page.map((r) => r.data()));
+      if (id !== query) return;
+      for (const d of data) {
+        const li = document.createElement('li');
+        const sub = (d.sub_results || []).filter((x) => x.url !== d.url).slice(0, 2);
+        li.innerHTML =
+          `<a class="phl-search-hit" href="${esc(d.url)}"><span class="phl-search-title">${esc(d.meta?.title || d.url)}</span>` +
+          `<span class="phl-search-excerpt">${d.excerpt || ''}</span></a>` +
+          (sub.length
+            ? `<ul class="phl-search-sub">${sub.map((x) => `<li><a href="${esc(x.url)}">${esc(x.title)}</a></li>`).join('')}</ul>`
+            : '');
+        list.appendChild(li);
+      }
+      shown += page.length;
+      more.hidden = shown >= results.length;
+    };
+    const run = async () => {
+      const term = input.value.trim();
+      const id = ++query;
+      list.innerHTML = '';
+      more.hidden = true;
+      shown = 0;
+      if (!term) { status.textContent = ''; return; }
+      status.textContent = t.loading;
+      const pf = await load();
+      if (id !== query) return;
+      if (!pf) { status.textContent = t.unavailable; return; }
+      const res = await pf.debouncedSearch(term, {}, 200);
+      if (res === null || id !== query) return;
+      results = res.results;
+      status.textContent = results.length ? '' : t.noResults;
+      await render();
+    };
+
+    const show = () => {
+      dialog.showModal();
+      input.focus();
+      input.select();
+      load();
+    };
+    open.addEventListener('click', show);
+    dialog.querySelector('[data-phl-search-close]').addEventListener('click', () => dialog.close());
+    // A click on the backdrop (outside the box) closes the dialog.
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    input.addEventListener('input', run);
+    more.addEventListener('click', render);
+    // Enter opens the first result.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = list.querySelector('a');
+        if (first) { e.preventDefault(); location.href = first.href; }
+      }
+    });
+    if (options.shortcut) {
+      document.addEventListener('keydown', (e) => {
+        if (dialog.open) return;
+        const typing = /^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable;
+        if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          show();
+        }
+      });
+    }
+  })();
+})();</script><ul class="phl-social-links phl-header-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><a class="phl-lang-link" href="/en/posts/pangolin/" hreflang="en" lang="en" title="Язык" data-phl-lang="en">EN</a><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;Как в системе&quot;,&quot;light&quot;:&quot;Светлое&quot;,&quot;dark&quot;:&quot;Темное&quot;}" data-title="Оформление" aria-label="Оформление" title="Оформление"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script><details class="phl-mobile-menu" data-phl-dropdown><summary aria-label="Меню"><span class="phl-mobile-open"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"/></svg></span><span class="phl-mobile-close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></span></summary><nav class="phl-mobile-panel" aria-label="Главное меню"><ul class="phl-mobile-list"><li><a href="/blog/">Все статьи</a></li><li><details><summary>Темы<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul><li><a href="/posts/">Темы</a></li><li><a href="/posts/authentik/">Authentik</a></li><li><a href="/posts/backup/">Backup</a></li><li><a href="/posts/crowdsec/">Crowdsec</a></li><li><a href="/posts/docker-ui/">Docker UI</a></li><li><a href="/posts/hardware/">Hardware</a></li><li><a href="/posts/media-servers/">Media Servers</a></li><li><a href="/posts/network/">Network</a></li><li><a href="/posts/news/">Новости</a></li><li><a href="/posts/nextcloud/">Nextcloud</a></li><li><a href="/posts/opnsense/">OPNsense</a></li><li><a href="/posts/pkm/">PKM</a></li><li><a href="/posts/podman/">Podman</a></li><li><a href="/posts/proxmox/">Proxmox</a></li><li><a href="/posts/selfhosting/">Self-hosting</a></li><li><a href="/posts/single-sign-on/">Single Sign On</a></li><li><a href="/posts/terraform/">Terraform</a></li><li><a href="/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/categories/">Категории</a></li><li><a href="/tags/">Теги</a></li><li><a href="/tools/">Инструменты</a></li><li><a href="/about/">О проекте</a></li></ul><ul class="phl-social-links phl-mobile-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><p class="phl-mobile-mode"><span>Оформление</span><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;Как в системе&quot;,&quot;light&quot;:&quot;Светлое&quot;,&quot;dark&quot;:&quot;Темное&quot;}" data-title="Оформление" aria-label="Оформление" title="Оформление"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script></p></nav></details></div></div></header><script>
+  // Close open menus on outside click, on Escape, and when another one opens.
+  (() => {
+    if (window.__phlDropdowns) return;
+    window.__phlDropdowns = true;
+    const all = () => document.querySelectorAll('[data-phl-dropdown][open]');
+    document.addEventListener('click', (e) => {
+      all().forEach((d) => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      all().forEach((d) => {
+        d.removeAttribute('open');
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener(
+      'toggle',
+      (e) => {
+        const d = e.target;
+        if (!d.matches?.('[data-phl-dropdown]') || !d.open) return;
+        all().forEach((o) => o !== d && !o.contains(d) && o.removeAttribute('open'));
+      },
+      true,
+    );
+  })();
+</script><main class="phl-main" id="phl-content" tabindex="-1"><div class="phl-progress" aria-hidden="true"><span></span></div><div class="phl-article-grid phl-has-toc"><article class="phl-article" data-pagefind-body><nav class="phl-breadcrumbs" aria-label="Breadcrumbs"><ol><li><a href="/">Главная</a></li><li><a href="/posts/selfhosting/">Self-Hosting</a></li><li><span aria-current="page">Pangolin - простой способ открыть доступ к homelab</span></li></ol></nav><header class="phl-article-header"><p class="phl-eyebrow">Self-Hosting</p><h1 data-pagefind-meta="title">Pangolin - простой способ открыть доступ к homelab</h1><p class="phl-meta"><span class="phl-meta-authors"><a href="/authors/stilicho2011/">Stilicho2011</a></span><time datetime="2026-05-13T00:00:00.000Z">13 мая 2026 г.</time><span>12 мин чтения</span><span class="phl-views">84 просмотра</span></p></header><div class="phl-article-tools"><p class="phl-translations">Эта статья на других языках: <a href="/en/posts/pangolin/" hreflang="en">EN</a></p><button type="button" class="phl-zen-toggle" data-phl-zen data-on="Режим чтения" data-off="Выйти из режима чтения" aria-pressed="false">Режим чтения</button></div><div class="phl-embed phl-yt phl-article-video" data-yt-id="EfiLQ6cWDMY"><a class="phl-yt-link" href="https://www.youtube.com/watch?v=EfiLQ6cWDMY" target="_blank" rel="noopener" aria-label="Pangolin - простой способ открыть доступ к homelab"><img src="https://i.ytimg.com/vi/EfiLQ6cWDMY/hqdefault.jpg" alt="Pangolin - простой способ открыть доступ к homelab" width="480" height="360" loading="eager" decoding="async"><span class="phl-yt-play" aria-hidden="true"></span></a></div><details class="phl-series"><summary>Часть 13 из 24 в серии <a href="/series/self-hosting/">Self-Hosting</a></summary><ol><li><a href="/posts/fedora-server-42-in-proxmox/">Плюсы и минусы Fedora Server 42</a></li><li><a href="/posts/linkwarden/">Обзор Linkwarden - Современный self-hosted менеджер закладок</a></li><li><a href="/posts/postgres-p-1/">Начальная установка PostgreSQL и pgAdmin в Docker с помощью Docker Compose для новичков. Часть 1</a></li><li><a href="/posts/mealie/">Mealie - self-hosted приложение для рецептов, планирования питания и списка покупок</a></li><li><a href="/posts/vaultwarden/">Vaultwarden - установка на сервере, альтернатива Bitwarden</a></li><li><a href="/posts/diun-docker-update-notifications/">Diun - уведомления об обновлениях Docker-образов</a></li><li><a href="/posts/update-linux-server/">Как обновлять серверные варианты дистрибутивов Linux</a></li><li><a href="/posts/homelabbing/">Homelab с нуля - какое железо взять, что поставить и какой сервис поднять первым</a></li><li><a href="/posts/best-apps-2025/">Лучшие self-hosted приложения 2025 года - личная подборка</a></li><li><a href="/posts/linkwarden-vs-karakeep/">Лучший менеджер закладок - Linkwarden или Karakeep</a></li><li><a href="/posts/booklore/">BookLore - self-hosted библиотека и читалка для вашей коллекции книг</a></li><li><a href="/posts/grimmory/">Grimmory - self-hosted библиотека и читалка для вашей коллекции книг</a></li><li><span aria-current="page">Pangolin - простой способ открыть доступ к homelab</span></li><li><a href="/posts/netbird/">NetBird - публикация сервисов без белого IP и проброса портов</a></li><li><a href="/posts/postiz-youtube-vk-rutube/">Postiz - пытаюсь автоматизировать YouTube, VK и RuTube, и почему из трех работает только один</a></li><li><a href="/posts/postgres-p-2/">Подключаем приложения к общей PostgreSQL и учимся ее обслуживать. Часть 2</a></li><li><a href="/posts/dozzle/">Dozzle - удобный просмотр логов Docker-контейнеров в реальном времени</a></li><li><a href="/posts/docker-default-address-pools/">Docker уперся в лимит сетей - как я это диагностировал и починил через default-address-pools</a></li><li><a href="/posts/gotify-push-notifications/">Gotify - свой собственный сервер push-уведомлений для гипервизора и не только</a></li><li><a href="/posts/forgejo-komodo-gitops/">Forgejo + Komodo - превращаем Docker Compose в GitOps</a></li><li><a href="/posts/forgejo-komodo-gitops-tutorial/">GitOps для homelab - разворачиваем Forgejo и Komodo с нуля</a></li><li><a href="/posts/gitlab-vs-gitea-vs-forgejo/">GitLab, Gitea и Forgejo. Сравнение не для снобов - кому что подходит для homelab</a></li><li><a href="/posts/renovate-forgejo-komodo/">Автообновление Docker-контейнеров - Renovate + Forgejo + Komodo</a></li><li><a href="/posts/matrix-synapse-docker/">Matrix Synapse - разворачиваем свой сервер для децентрализованного чата</a></li></ol></details><details class="phl-toc" data-phl-toc><summary class="phl-toc-title">Содержание</summary><nav aria-label="Содержание"><ul><li class="depth-2"><a href="#предисловие" data-phl-toc-link="предисловие">Предисловие</a></li><li class="depth-2"><a href="#особенности-приложения" data-phl-toc-link="особенности-приложения">Особенности приложения</a></li><li class="depth-2"><a href="#цена-развертывания-сервиса" data-phl-toc-link="цена-развертывания-сервиса">Цена развертывания сервиса</a></li><li class="depth-2"><a href="#как-работает-pangolin" data-phl-toc-link="как-работает-pangolin">Как работает Pangolin</a></li><li class="depth-2"><a href="#основные-шаги" data-phl-toc-link="основные-шаги">Основные шаги</a></li><li class="depth-3"><a href="#ключевые-концепции" data-phl-toc-link="ключевые-концепции">Ключевые концепции</a></li><li class="depth-2"><a href="#архитектура-системы-pangolin" data-phl-toc-link="архитектура-системы-pangolin">Архитектура системы Pangolin</a></li><li class="depth-3"><a href="#control-plane" data-phl-toc-link="control-plane">Control Plane</a></li><li class="depth-3"><a href="#gerbil" data-phl-toc-link="gerbil">Gerbil</a></li><li class="depth-3"><a href="#newt" data-phl-toc-link="newt">Newt</a></li><li class="depth-3"><a href="#traefik---обратный-прокси" data-phl-toc-link="traefik---обратный-прокси">Traefik - обратный прокси</a></li><li class="depth-3"><a href="#badger" data-phl-toc-link="badger">Badger</a></li><li class="depth-2"><a href="#требования-к-установке-и-установка-pangolin" data-phl-toc-link="требования-к-установке-и-установка-pangolin">Требования к установке и установка Pangolin</a></li><li class="depth-3"><a href="#необходимые-условия" data-phl-toc-link="необходимые-условия">Необходимые условия</a></li><li class="depth-2"><a href="#процесс-подготовки-vps" data-phl-toc-link="процесс-подготовки-vps">Процесс подготовки VPS</a></li><li class="depth-3"><a href="#базовая-настройка-безопасности-vps" data-phl-toc-link="базовая-настройка-безопасности-vps">Базовая настройка безопасности VPS</a></li><li class="depth-3"><a href="#настройка-dns" data-phl-toc-link="настройка-dns">Настройка DNS</a></li><li class="depth-2"><a href="#вам-потребуется-создать-записи-типа-a-или-aaaa-для-ipv6-указывающие-на-ip-адрес-вашего-vps" data-phl-toc-link="вам-потребуется-создать-записи-типа-a-или-aaaa-для-ipv6-указывающие-на-ip-адрес-вашего-vps">Вам потребуется создать записи типа A (или AAAA для IPv6), указывающие на IP-адрес вашего VPS.</a></li><li class="depth-2"><a href="#это-позволит-любому-поддомену-например-appexamplecom-apiexamplecom-указывать-на-ваш-vps" data-phl-toc-link="это-позволит-любому-поддомену-например-appexamplecom-apiexamplecom-указывать-на-ваш-vps">Это позволит любому поддомену (например, app.example.com, api.example.com) указывать на ваш VPS.</a></li><li class="depth-2"><a href="#эта-запись-нужна-только-в-том-случае-если-вы-хотите-использовать-examplecom-а-не-только-поддомены" data-phl-toc-link="эта-запись-нужна-только-в-том-случае-если-вы-хотите-использовать-examplecom-а-не-только-поддомены">Эта запись нужна только в том случае, если вы хотите использовать example.com (а не только поддомены).</a></li><li class="depth-2"><a href="#процесс-установки" data-phl-toc-link="процесс-установки">Процесс установки</a></li><li class="depth-3"><a href="#установка-pangolin-с-помощью-официального-скрипта" data-phl-toc-link="установка-pangolin-с-помощью-официального-скрипта">Установка Pangolin с помощью официального скрипта</a></li><li class="depth-3"><a href="#настройка-базовых-параметров" data-phl-toc-link="настройка-базовых-параметров">Настройка базовых параметров</a></li><li class="depth-3"><a href="#настройка-после-установки" data-phl-toc-link="настройка-после-установки">Настройка после установки</a></li></ul></nav></details><div class="phl-prose"><!--phl-feed-start--><p><em>В случае если вам понравилась эта статья, то можете поддержать автора, став спонсором на <a href="https://boosty.to/stilicho2011">Boosty</a>.</em></p>
+<p>Если вы думали, что эта статья будет посвящена забавному млекопитающему панголину, то вы ошиблись.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Заметка</span></div>
+<div class="phl-callout-content">
+<p>Но раз уж вы спросили, то скажу, что панголин - редкое млекопитающее, покрытое твердой чешуей, напоминающей броню. Он питается муравьями и термитами, добывая их длинным липким языком. При опасности сворачивается в плотный шар, защищаясь от хищников.</p>
+</div>
+</div>
+<h2 id="предисловие">Предисловие</h2>
+<p>В homelabbing есть одна <strong>огромная</strong> болевая точка, с которой сталкивается почти каждый, кто поднимает себе домашний сервер. Сначала все работает «локально»: сервисы крутятся, веб-интерфейсы открываются, все красиво, ты всем доволен. Вроде бы. А потом хочется зайти к себе извне - и начинается цирк с конями в виде проброса портов, NAT, белых IP, динамического DNS, доменных имен и вечного ощущения, что ты где-то оставил дверь приоткрытой, куда вот-вот побежит весь интернет (кстати, если у тебя паранойя, это не значит что к весь интернет не побежит).</p>
+<p>В этот момент на сцену выходит Pangolin.</p>
+<p>По сути, это инструмент, который убирает из уравнения самую неприятную часть - открытые порты. Ты не лезешь в настройки роутера, не ковыряешь firewall и не думаешь: какой порт ты забыл закрыть; открыть; отключил ли ты доступ по SSH; что делать в случае компрометации твоих сервисов или «засвета» IP-адреса и так далее. Pangolin просто поднимает защищенный туннель наружу и дает тебе доступ к сервисам так, будто они уже «снаружи», хотя физически все остается у тебя дома.</p>
+<p>И в этом его главный кайф - он снимает когнитивную нагрузку: не нужно держать в голове сетевую топологию; не нужно вспоминать, чем отличается DNAT от SNAT; не нужно переживать, что очередной сервис торчит в интернет без аутентификации или она слабая (а может не слабая, но ты не знаешь, а посоветоваться не с кем; а если есть с кем, то возможно он тебя интеллигентно послал, в смысле промолчал); что зря ты на роутере сэкономил или повелся на рекламу и так далее. С Pangolin ты описываешь, что именно хочешь открыть - вернее, какой сервис или сервер - и Pangolin делает это аккуратно и безопасно.</p>
+<p>Отдельно хочу отметить, что наконец-то все это не выглядит как набор костылей, который постарались впихнуть во что-то бесформенное и потому отторгающее. Есть нормальный интерфейс, понятная логика и ощущение, что это не «еще один GitHub-проект энтузиаста для энтузиастов», а цельный и, что самое главное, стабильный инструмент. Он не пытается быть всем сразу - просто решает конкретную задачу: дать доступ к твоим сервисам без лишнего геморроя (простите за мой французский).</p>
+<p>Фактически, Pangolin - замена Cloudflare Tunnels, только без Cloudflare. Это твое личное приложение. Ведь суть self-hosting именно в этом, правда?</p>
+<p>Из похожих инструментов стоит присмотреться к <a href="https://prohomelab.com/posts/netbird/">NetBird</a> - прямая альтернатива, которая решает ту же задачу публикации сервисов без белого IP и проброса портов, но отталкивается от mesh-сети между устройствами, а не от туннелирования наружу, так что есть смысл сравнить оба варианта.</p>
+<p>Но, конечно, за комфорт приходится платить. И тут каждый решает сам: либо ты тратишь время и нервы, вручную настраивая сеть и безопасность; тратишь время на изучение вопроса и набивание шишек (без этого никак); либо платишь за инструмент, который это уже сделал за тебя. Pangolin как раз про второй вариант.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Заметка</span></div>
+<div class="phl-callout-content">
+<p>Отмечу, что платишь ты не за само приложение - оно для физических лиц бесплатное. Речь про инфраструктуру. Да, можно развернуть приложение у себя на домашнем сервере, но с учетом потенциальных расходов - белый айпи, требований к качеству сети, электропитанию и так далее, не исключено, что аренда VPS будет стоить в итоге столько же, как если бы ты все разворачивал у себя. Зато злоумышленник в случае компрометации сервера дальше VPS не пройдет. Так что тут решение исключительно за вами.</p>
+</div>
+</div>
+<p>В итоге это история не столько про технологии, сколько про удобство. Про тот момент, когда ты хочешь, чтобы все просто работало, без танцев с бубном и вечных проверок «а точно ли я все закрыл», открыты ли у меня только порты 80 и 443 (а в зависимости от твоего софта может быть и больше, например если речь о SIP). И если ты уже устал от этой сопутствующей нервотрепки - скорее всего, ты поймешь, зачем вообще существует Pangolin.</p>
+<h2 id="особенности-приложения">Особенности приложения</h2>
+<p>Если копнуть еще глубже, Pangolin интересен не тем, что «работает из коробки», а тем, как именно он это делает. Под капотом - понятный стек современных сетевых подходов, аккуратно собранный в одно целое.</p>
+<p>В основе лежит идея туннелирования. Вместо того чтобы принимать входящие соединения, твой сервер сам устанавливает исходящее соединение к внешней точке. Это важный момент: исходящие соединения почти всегда разрешены в обычных файрволлах, поэтому не нужно открывать порты на роутере. Дальше весь трафик к твоим сервисам просто прокидывается через этот туннель обратно внутрь.</p>
+<p>Поверх этого используется шифрование - как правило, на базе TLS. То есть трафик не просто «идет через какой-то канал», а защищен от перехвата. По сути, это похоже на то, как работают VPN или решения вроде Cloudflare Tunnel: у тебя есть доверенный канал, внутри которого уже живут твои HTTP, SSH или любые другие сервисы.</p>
+<p>Дальше включается проксирование. Pangolin выступает как обратный прокси: он принимает запросы снаружи и направляет их к нужному сервису внутри твоей сети. Это значит, что можно вешать несколько сервисов на один внешний вход, разруливать домены, пути и все остальное, не трогая саму сеть.</p>
+<p>Конечно, есть нормальная система аутентификации. Вместо того чтобы надеяться, что «никто не найдет мой порт» (когда он у тебя 2222 ), Pangolin делает ставку на контроль доступа: кто может подключаться, к чему именно и при каких условиях. Это популярный zero-trust подход.</p>
+<p>Плюс ко всему, такие решения обычно завязаны на агентную модель. У тебя есть клиент (агент), который крутится рядом с сервисами, и есть управляющая часть, которая знает, как эти сервисы опубликовать. Благодаря этому можно централизованно управлять доступом и не настраивать каждый контейнер или сервер отдельно.</p>
+<p>В итоге Pangolin - приложение, которое одновременно интегрирует обратный прокси Traefik, протокол WireGuard, CrowdSec, а также возможность интеграции с любым известным IdP и IAM-провайдером. И как вишенка на торте - удобный Geo-Blocking, что позволяет нам заблокировать сразу входящие соединения оттуда, откуда мы их не ждем (а это практически ото всюду, кроме страны проживания, ну и еще одной, наверно, может быть, ну ты понял, да?).</p>
+<p>По отдельности про все эти приложения я уже неоднократно рассказывал как в статьях, так и в видео на канале. Но ценность Pangolin в том, что тебе не нужно собирать этот конструктор самому из Traefik, WireGuard, Crowdsec, Authelia/Authentik и еще пары компонентов. Все уже собрано и работает как единая система.</p>
+<h2 id="цена-развертывания-сервиса">Цена развертывания сервиса</h2>
+<p>С Pangolin есть один нюанс, который многие пропускают на старте: он кажется «простым», пока не начинаешь разворачивать его правильно. Потому что сам по себе он работает из коробки, но чтобы он работал стабильно, безопасно и без сюрпризов - нужно соблюсти несколько базовых условий.</p>
+<ol>
+<li>
+<p>Во-первых, тебе нужен сервер, который будет постоянно доступен из интернета. Это может быть VPS или любой внешний хост с белым IP. Именно туда Pangolin будет поднимать туннели, и именно эта точка станет «входом» в твой homelab. Без этого вся магия просто не сложится. <strong>В идеале - аренда VPS.</strong></p>
+</li>
+<li>
+<p>Дальше - домен. Можно, конечно, жить и без него, но нормальная работа с HTTPS, удобные адреса сервисов и в целом адекватный UX начинаются именно с домена. Плюс тебе придется настроить DNS так, чтобы он указывал на внешний сервер.</p>
+</li>
+<li>
+<p>Следующий момент - сертификаты. Pangolin работает через защищенные соединения, поэтому TLS здесь не опция, а необходимый элемент. Хорошая новость в том, что чаще всего это автоматизируется через Let's Encrypt, и руками почти ничего делать не нужно - главное, чтобы DNS был настроен правильно.</p>
+</li>
+<li>
+<p>На стороне твоего домашнего сервера все гораздо проще. Там достаточно запустить агент Pangolin, который установит исходящее соединение. И вот здесь ключевой плюс: никаких открытых портов, никаких изменений в роутере. Главное, чтобы сервер мог выходить в интернет.</p>
+</li>
+<li>
+<p>Менее очевидная часть - сеть и DNS внутри твоей инфраструктуры. Если ты хочешь, чтобы все выглядело красиво и работало без костылей, стоит продумать, как сервисы будут резолвиться, как ты будешь разделять внутренний и внешний доступ и не возникнет ли конфликтов между ними.</p>
+</li>
+<li>
+<p>Конечно, базовая безопасность. Даже если Pangolin сам по себе закрывает много дыр, это не повод запускать все с дефолтными настройками. Пароли, доступы, ограничения - все это по-прежнему важно. Zero trust - это не только про инструмент, но и про то, как ты его используешь.</p>
+</li>
+</ol>
+<p>В итоге правильное развертывание Pangolin - это не про «запустил контейнер, пользуйся и забыл про настройки». Это про связку из внешнего сервера, домена, нормального TLS и аккуратной, точечной настройки доступа. Если это все есть, дальше он действительно начинает ощущаться как супер-приложение, которое снимает многие проблемы.</p>
+<h2 id="как-работает-pangolin">Как работает Pangolin</h2>
+<h2 id="основные-шаги">Основные шаги</h2>
+<steps>
+  <step title="Связать удаленные сети с помощью сайтов">
+    Объединяйте удаленные сети через коннекторы сайтов. Легкие коннекторы Pangolin используют умную маршрутизацию и обход NAT, чтобы любая сеть была доступна из любого места.
+  </step>
+  <step title="Определить ресурсы">
+    Создавайте ресурсы, представляющие сервисы или целые диапазоны сети, доступные для удаленного подключения. Ресурсы могут быть публичными или полностью приватными.
+  </step>
+  <step title="Пользователи получают доступ к ресурсам">
+    Авторизованные пользователи могут подключаться к ресурсам через веб-браузер или клиент Pangolin на своем устройстве.
+  </step>
+</steps>
+<h3 id="ключевые-концепции">Ключевые концепции</h3>
+<p>Pangolin использует несколько компонентов, которые работают вместе для безопасного удаленного доступа. Каждый компонент выполняет свою роль, чтобы только авторизованные пользователи могли получать доступ к разрешенным ресурсам.</p>
+<h4 id="сервер-pangolin">Сервер Pangolin</h4>
+<p>Сервер Pangolin - центральный компонент координации вашей сети. Он хранит конфигурацию, управляет политиками доступа и координирует соединения между клиентами и сайтами.</p>
+<h4 id="сайты-sites">Сайты (Sites)</h4>
+<p>Сайты подключают удаленные сети к серверу Pangolin через защищенные туннели.</p>
+<h4 id="ресурсы-resources">Ресурсы (Resources)</h4>
+<p>Ресурсы - это приложения, хосты или диапазоны сети, доступные пользователям.</p>
+<h4 id="клиенты-clients">Клиенты (Clients)</h4>
+<p>Клиенты позволяют пользователям подключаться к ресурсам через защищенный туннель.</p>
+<h4 id="удаленные-узлы-remote-nodes">Удаленные узлы (Remote Nodes)</h4>
+<p>Удаленные узлы - это ваши серверы Pangolin с полной управляемостью и контролем над данными.</p>
+<h2 id="архитектура-системы-pangolin">Архитектура системы Pangolin</h2>
+<p>Pangolin состоит из нескольких ключевых компонентов, которые взаимодействуют друг с другом, обеспечивая безопасный удаленный доступ к сервисам без необходимости открывать порты.</p>
+<p><img alt="Правило для доступа к WebGUI (порт 8006)" loading="lazy" decoding="async" width="761" height="726" src="/_astro/system-diagram.ld9kadN2_ZacHsS.webp"></p>
+<h3 id="control-plane">Control Plane</h3>
+<p>Control Plane - это мозг системы, управляющий всеми компонентами.</p>
+<h3 id="gerbil">Gerbil</h3>
+<p>Gerbil отвечает за WireGuard-туннели.</p>
+<h3 id="newt">Newt</h3>
+<p>Newt - легкий клиент для подключения удаленных узлов.</p>
+<h3 id="traefik---обратный-прокси">Traefik - обратный прокси</h3>
+<p>Маршрутизирует входящие запросы. Если хочется разобраться, как Traefik работает сам по себе, без обвязки Pangolin - у меня есть отдельная статья про <a href="https://prohomelab.com/posts/traefik-in-lxc-part-1/">установку Traefik в LXC</a>.</p>
+<h3 id="badger">Badger</h3>
+<p>Отвечает за аутентификацию и контроль доступа.</p>
+<h2 id="требования-к-установке-и-установка-pangolin">Требования к установке и установка Pangolin</h2>
+<h3 id="необходимые-условия">Необходимые условия</h3>
+<ul>
+<li>Linux-сервер с root-доступом и публичным IP</li>
+<li>Домен</li>
+<li>Email для SSL</li>
+<li>Открытые порты: 80, 443, 51820, 21820</li>
+</ul>
+<h2 id="процесс-подготовки-vps">Процесс подготовки VPS</h2>
+<h3 id="базовая-настройка-безопасности-vps">Базовая настройка безопасности VPS</h3>
+<p>После получения VPS первым шагом необходимо выполнить базовую настройку безопасности, чтобы минимизировать риски несанкционированного доступа.
+В первую очередь следует отказаться от работы под пользователем root и создать отдельного пользователя с правами sudo.</p>
+<p>Работать под пользователем root небезопасно, поэтому сначала создадим нового пользователя и добавим его в группу sudo:</p>
+<div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.otfqh.css"><script type="module" src="/_astro/ec.0vx5m.js"></script><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">adduser</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">youruser</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">usermod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-aG</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">youruser</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="adduser youruserusermod -aG sudo youruser"><div></div></button></div></figure></div>
+<p>Проверим, что все работает:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">su</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">youruser</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">whoami</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="su - yourusersudo whoami"><div></div></button></div></figure></div>
+<h4 id="настройка-ssh-смена-порта-и-отключение-root">Настройка SSH (смена порта и отключение root)</h4>
+<p>Открываем конфигурационный файл SSH:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo nano /etc/ssh/sshd_config</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo nano /etc/ssh/sshd_config"><div></div></button></div></figure></div>
+<p>Находим и изменяем следующие параметры:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Port 2222  (ставить такой порт это большая ошибка)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">PermitRootLogin no</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Port 2222  (ставить такой порт это большая ошибка)PermitRootLogin no"><div></div></button></div></figure></div>
+<p>Это:</p>
+<ul>
+<li>изменит стандартный порт SSH (22 → любой свободный нестандартный порт )</li>
+<li>полностью запретит вход под root</li>
+</ul>
+<h4 id="отключение-входа-по-паролю-крайне-рекомендуется">Отключение входа по паролю (крайне рекомендуется)</h4>
+<p>Для дополнительной защиты рекомендуется разрешить только вход по SSH-ключам:</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p>Включайте этот параметр <strong>только если у вас уже настроены SSH-ключи</strong>, иначе можно потерять доступ к серверу.</p>
+</div>
+</div>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="shell"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">PasswordAuthentication</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">no</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="PasswordAuthentication no"><div></div></button></div></figure></div>
+<h4 id="настройка-firewall-ufw">Настройка firewall (UFW)</h4>
+<p>Установим и включим UFW:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo apt update</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo apt install -y ufw</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo apt updatesudo apt install -y ufw"><div></div></button></div></figure></div>
+<p>Разрешим только необходимые порты для работы Pangolin:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo ufw allow номерпортадляssh,еслитыневключилдоступтолькопоключам/tcp</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo ufw allow 80/tcp</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo ufw allow 443/tcp</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo ufw allow 51820/udp</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo ufw allow 21820/udp</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo ufw allow номерпортадляssh,еслитыневключилдоступтолькопоключам/tcpsudo ufw allow 80/tcpsudo ufw allow 443/tcpsudo ufw allow 51820/udpsudo ufw allow 21820/udp"><div></div></button></div></figure></div>
+<p>Активируем firewall:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo ufw enable</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo ufw status</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo ufw enablesudo ufw status"><div></div></button></div></figure></div>
+<h4 id="применение-изменений-ssh">Применение изменений SSH</h4>
+<p>После внесения изменений перезапускаем SSH-сервис:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo systemctl restart ssh</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo systemctl restart ssh"><div></div></button></div></figure></div>
+<h4 id="обязательная-проверка-подключения">Обязательная проверка подключения</h4>
+<p>Перед тем как завершить текущую SSH-сессию, откройте новое подключение и убедитесь, что все работает:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">ssh youruser@your_ip -p номерпортадляssh,еслитыневключилдоступтолькопоключам</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="ssh youruser@your_ip -p номерпортадляssh,еслитыневключилдоступтолькопоключам"><div></div></button></div></figure></div>
+<p>Только после успешного подключения можно закрывать старую сессию.</p>
+<h3 id="настройка-dns">Настройка DNS</h3>
+<p>Базовые DNS-записи</p>
+<h2 id="вам-потребуется-создать-записи-типа-a-или-aaaa-для-ipv6-указывающие-на-ip-адрес-вашего-vps">Вам потребуется создать записи типа <strong>A</strong> (или <strong>AAAA для IPv6</strong>), указывающие на IP-адрес вашего VPS.</h2>
+<h4 id="1-создание-wildcard-записи">1. Создание wildcard-записи</h4>
+<p>Создайте wildcard-запись поддомена для вашего домена:</p>
+<ul>
+<li><strong>Тип:</strong> A</li>
+<li><strong>Имя:</strong> *</li>
+<li><strong>Значение:</strong> айпи адрес твоего впс</li>
+<li><strong>TTL:</strong> 300 (или по умолчанию)</li>
+</ul>
+<h2 id="это-позволит-любому-поддомену-например-appexamplecom-apiexamplecom-указывать-на-ваш-vps">Это позволит любому поддомену (например, <code>app.example.com</code>, <code>api.example.com</code>) указывать на ваш VPS.</h2>
+<h4 id="2-создание-записи-для-корневого-домена-необязательно">2. Создание записи для корневого домена (необязательно)</h4>
+<p>Если вы планируете использовать корневой домен как ресурс:</p>
+<ul>
+<li><strong>Тип:</strong> A</li>
+<li><strong>Имя:</strong> @ (или оставить пустым)</li>
+<li><strong>Значение:</strong> айпи адрес твоего впс</li>
+<li><strong>TTL:</strong> 300 (или по умолчанию)</li>
+</ul>
+<h2 id="эта-запись-нужна-только-в-том-случае-если-вы-хотите-использовать-examplecom-а-не-только-поддомены">Эта запись нужна только в том случае, если вы хотите использовать <code>example.com</code> (а не только поддомены).</h2>
+<h4 id="3-ожидание-распространения-dns">3. Ожидание распространения DNS</h4>
+<p>Изменения DNS могут распространяться от <strong>5 минут до 48 часов</strong> по всему миру.</p>
+<h2 id="процесс-установки">Процесс установки</h2>
+<h3 id="установка-pangolin-с-помощью-официального-скрипта">Установка Pangolin с помощью официального скрипта</h3>
+<ol>
+<li><strong>Скачать установщик</strong> Это самая простая процедура. Да, можно все сделать самому, но в итоге это большой ручной труд с неясным результатом, и требующим большее погружение в проблему</li>
+<li>Подключитесь к серверу через SSH и выполните команду:</li>
+</ol>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#6F42C1;--1:#B392F0">curl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-fsSL</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">https://static.pangolin.net/get-installer.sh</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">|</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">bash</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="curl -fsSL https://static.pangolin.net/get-installer.sh | bash"><div></div></button></div></figure></div>
+<ol start="3">
+<li><strong>Запустить установщик</strong></li>
+</ol>
+<p>Выполните установку с root-привилегиями:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sudo ./installer</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo ./installer"><div></div></button></div></figure></div>
+<p>Установщик помещает все файлы в текущую директорию. Перед запуском можно переместить его в желаемую папку для установки.</p>
+<h3 id="настройка-базовых-параметров">Настройка базовых параметров</h3>
+<ol>
+<li>Установщик запросит ключевые настройки:</li>
+</ol>
+<ul>
+<li>Edition: выберите Community Edition или Enterprise Edition</li>
+<li>Base Domain: укажите корневой домен без поддоменов (например, example.com)</li>
+<li>Dashboard Domain: нажмите Enter для значения по умолчанию pangolin.example.com или укажите свой домен</li>
+<li>Let’s Encrypt Email: адрес для SSL и входа администратора</li>
+<li>Tunneling: установка Gerbil для туннелей (по умолчанию: да). Можно работать без туннелей, как стандартный обратный прокси</li>
+</ul>
+<ol start="2">
+<li>
+<p>Настройка почты (опционально)
+Функционал электронной почты можно добавить позже.
+По умолчанию: Нет (рекомендуется при первичной установке)
+Если включено: укажите SMTP-сервер (host, port, username, password)</p>
+</li>
+<li>
+<p>Запуск установки
+Подтвердите запуск установки:</p>
+</li>
+</ol>
+<ul>
+<li>Установщик скачает Docker-образы (pangolin, gerbil, traefik)</li>
+<li>Контейнеры будут запущены автоматически</li>
+<li>Процесс занимает 2-3 минуты в зависимости от скорости интернета</li>
+</ul>
+<ol start="4">
+<li>Установка CrowdSec (опционально)
+Установщик предложит добавить CrowdSec для дополнительной защиты:</li>
+</ol>
+<ul>
+<li>По умолчанию: Нет (рекомендуется для начальной установки)</li>
+<li>При включении: нужно будет управлять конфигурацией CrowdSec вручную</li>
+</ul>
+<p><a href="https://prohomelab.com/posts/crowdsec-in-docker/">CrowdSec</a> можно установить позже. Базовая установка уже обеспечивает достаточный уровень безопасности.</p>
+<h3 id="настройка-после-установки">Настройка после установки</h3>
+<p>После успешной установки вы увидите сообщение:</p>
+<p><strong>Installation complete!</strong></p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Для завершения первоначальной настройки перейдите по адресу:</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">`https://pangolin.твойдомен.com/auth/initial-setup`</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Для завершения первоначальной настройки перейдите по адресу:&#x60;https://pangolin.твойдомен.com/auth/initial-setup&#x60;"><div></div></button></div></figure></div>
+<hr>
+<ol>
+<li>
+<p><strong>Доступ к панели управления</strong></p>
+<p>Перейдите по URL, указанному в выводе установщика:  <code>https://pangolin.твойдомен.com/auth/initial-setup</code></p>
+<p>SSL-сертификат будет настроен автоматически. Первичная валидация может занять несколько минут, поэтому возможны предупреждения о безопасности в браузере.</p>
+</li>
+</ol>
+<hr>
+<ol start="2">
+<li>
+<p><strong>Создание учетной записи администратора</strong></p>
+<p>Введите адрес электронной почты администратора
+Задайте надежный пароль
+Подтвердите почту (если настроена)</p>
+<p>Используйте уникальный и сложный пароль - этот аккаунт имеет полный доступ к системе.</p>
+</li>
+</ol>
+<hr>
+<ol start="3">
+<li>
+<p><strong>Создание первой организации</strong></p>
+<p>После входа:
+Укажите название и описание организации
+Нажмите «Create Organization»</p>
+</li>
+</ol>
+<p>Теперь вы готовы добавлять приложения и настраивать обратный прокси.</p>
+<p>Более подробно как устанавливается это приложение у меня в видеоролике, и это тот случай, когда лучше один раз увидеть, чем сто раз прочитать.</p><!--phl-feed-end--></div><footer class="phl-article-footer"><p class="phl-article-terms"><a class="phl-term-cat" href="/categories/self-hosting/">Self-Hosting</a><a href="/tags/pangolin/">#pangolin</a><a href="/tags/self-hosting/">#Self-Hosting</a><a href="/tags/reverse-proxy/">#reverse-proxy</a><a href="/tags/security/">#Security</a><a href="/tags/homelab/">#Homelab</a></p><p class="phl-license">Лицензия: CC BY 4.0</p><div class="phl-share"><span class="phl-share-label">Поделиться</span><a href="https://t.me/share/url?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fpangolin%2F&amp;text=Pangolin%20-%20%D0%BF%D1%80%D0%BE%D1%81%D1%82%D0%BE%D0%B9%20%D1%81%D0%BF%D0%BE%D1%81%D0%BE%D0%B1%20%D0%BE%D1%82%D0%BA%D1%80%D1%8B%D1%82%D1%8C%20%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF%20%D0%BA%20homelab" target="_blank" rel="noopener noreferrer" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://x.com/intent/post?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fpangolin%2F&amp;text=Pangolin%20-%20%D0%BF%D1%80%D0%BE%D1%81%D1%82%D0%BE%D0%B9%20%D1%81%D0%BF%D0%BE%D1%81%D0%BE%D0%B1%20%D0%BE%D1%82%D0%BA%D1%80%D1%8B%D1%82%D1%8C%20%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF%20%D0%BA%20homelab" target="_blank" rel="noopener noreferrer" aria-label="X" title="X" style="--phl-brand-l:#000000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.234 10.162L22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299l-.929-1.329L3.076 1.56h3.182l5.965 8.532l.929 1.329l7.754 11.09h-3.182z"/></svg></a><a href="https://www.reddit.com/submit?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fpangolin%2F&amp;title=Pangolin%20-%20%D0%BF%D1%80%D0%BE%D1%81%D1%82%D0%BE%D0%B9%20%D1%81%D0%BF%D0%BE%D1%81%D0%BE%D0%B1%20%D0%BE%D1%82%D0%BA%D1%80%D1%8B%D1%82%D1%8C%20%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF%20%D0%BA%20homelab" target="_blank" rel="noopener noreferrer" aria-label="Reddit" title="Reddit" style="--phl-brand-l:#ff4500;--phl-brand-d:#ff4500" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12c0 3.314 1.343 6.314 3.515 8.485l-2.286 2.286A.72.72 0 0 0 1.738 24H12c6.627 0 12-5.373 12-12S18.627 0 12 0m4.388 3.199a1.999 1.999 0 1 1-1.947 2.46v.002a2.37 2.37 0 0 0-2.032 2.341v.007c1.776.067 3.4.567 4.686 1.363a2.802 2.802 0 1 1 2.908 4.753c-.088 3.256-3.637 5.876-7.997 5.876c-4.361 0-7.905-2.617-7.998-5.87a2.8 2.8 0 0 1 1.189-5.34c.645 0 1.239.218 1.712.585c1.275-.79 2.881-1.291 4.64-1.365v-.01a3.23 3.23 0 0 1 2.88-3.207a2 2 0 0 1 1.959-1.595m-8.085 8.376c-.784 0-1.459.78-1.506 1.797s.64 1.429 1.426 1.429s1.371-.369 1.418-1.385s-.553-1.841-1.338-1.841m7.406 0c-.786 0-1.385.824-1.338 1.841s.634 1.385 1.418 1.385c.785 0 1.473-.413 1.426-1.429c-.046-1.017-.721-1.797-1.506-1.797m-3.703 4.013c-.974 0-1.907.048-2.77.135a.222.222 0 0 0-.183.305a3.2 3.2 0 0 0 2.953 1.964a3.2 3.2 0 0 0 2.953-1.964a.222.222 0 0 0-.184-.305a28 28 0 0 0-2.769-.135"/></svg></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fpangolin%2F" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn" style="--phl-brand-l:#0a66c2;--phl-brand-d:#0b73da" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037c-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85c3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.06 2.06 0 0 1-2.063-2.065a2.064 2.064 0 1 1 2.063 2.065m1.782 13.019H3.555V9h3.564zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg></a><a href="mailto:?subject=Pangolin%20-%20%D0%BF%D1%80%D0%BE%D1%81%D1%82%D0%BE%D0%B9%20%D1%81%D0%BF%D0%BE%D1%81%D0%BE%D0%B1%20%D0%BE%D1%82%D0%BA%D1%80%D1%8B%D1%82%D1%8C%20%D0%B4%D0%BE%D1%81%D1%82%D1%83%D0%BF%20%D0%BA%20homelab&amp;body=https%3A%2F%2Fprohomelab.com%2Fposts%2Fpangolin%2F" rel="noopener noreferrer" aria-label="Email" title="Email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a></div><section class="phl-author-box"><h2>Автор</h2><div class="phl-author"><img class="phl-author-image" src="/avatar-stilicho2011.webp" alt="" width="64" height="64" loading="lazy"><div class="phl-author-body"><p class="phl-author-name"><a href="/authors/stilicho2011/">Stilicho2011</a></p><p class="phl-author-bio">Пишу о homelab, self-hosting, автоматизации и open-source решениях</p><p class="phl-author-links"><a href="mailto:pavel@prohomelab.com" rel="me noopener" aria-label="email" title="email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener" target="_blank" aria-label="github" title="github" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a><a href="https://t.me/stilicho2011_videos" rel="me noopener" target="_blank" aria-label="telegram" title="telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://www.youtube.com/@prohomelab" rel="me noopener" target="_blank" aria-label="youtube" title="youtube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a><a href="https://boosty.to/stilicho2011" rel="me noopener" target="_blank" aria-label="boosty" title="boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></p></div></div></section></footer><nav class="phl-prevnext" aria-label="Предыдущая / Следующая"><a class="phl-prevnext-prev" href="/posts/grimmory/" rel="prev"><span class="phl-prevnext-label">Предыдущая</span><span class="phl-prevnext-title">Grimmory - self-hosted библиотека и читалка для вашей коллекции книг</span></a><a class="phl-prevnext-next" href="/posts/netbird/" rel="next"><span class="phl-prevnext-label">Следующая</span><span class="phl-prevnext-title">NetBird - публикация сервисов без белого IP и проброса портов</span></a></nav><section class="phl-related"><h2>Похожие статьи</h2><div class="phl-cards"><article class="phl-card"><a class="phl-card-cover" href="/posts/netbird/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.CxaSLNmQ_2hzErx.webp" srcset="/_astro/featured.CxaSLNmQ_ZRgYWC.webp 320w, /_astro/featured.CxaSLNmQ_Z2bm9fs.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Self-Hosting</span><time datetime="2026-05-22T00:00:00.000Z">22 мая 2026 г.</time><span class="phl-card-video">▶ видео</span><span class="phl-views">373 просмотра</span></p><h3 class="phl-card-title"><a href="/posts/netbird/">NetBird - публикация сервисов без белого IP и проброса портов</a></h3><p class="phl-card-summary">Netbird позволяет публиковать локальные сервисы в интернет без открытия портов, используя безопасные туннели и удобный веб-интерфейс - идеальное решение для домашнего сервера и homelab.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/posts/homelabbing/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.CqDETyGV_25S1dJ.webp" srcset="/_astro/featured.CqDETyGV_UphDk.webp 320w, /_astro/featured.CqDETyGV_ZnEQDv.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Self-Hosting</span><time datetime="2025-12-22T00:00:00.000Z">22 декабря 2025 г.</time><span class="phl-views">79 просмотров</span></p><h3 class="phl-card-title"><a href="/posts/homelabbing/">Homelab с нуля - какое железо взять, что поставить и какой сервис поднять первым</a></h3><p class="phl-card-summary">Homelab - это домашняя инфраструктура для экспериментов и собственных сервисов. Чек-лист первых шагов: железо, гипервизор, первый сервис, бэкапы и безопасность, плюс как выглядит мой homelab и куда двигаться дальше.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/posts/fedora-server-nas/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.cgGLnmu8_2ujWxo.webp" srcset="/_astro/featured.cgGLnmu8_Z1H7NSU.webp 320w, /_astro/featured.cgGLnmu8_1BfgXT.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1672" height="941"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Self-Hosting</span><time datetime="2026-07-15T00:00:00.000Z">15 июля 2026 г.</time><span class="phl-views">100 просмотров</span></p><h3 class="phl-card-title"><a href="/posts/fedora-server-nas/">Настройка домашнего NAS на Fedora Server 44 с OpenZFS, Cockpit и Samba</a></h3><p class="phl-card-summary">Собираем современный домашний NAS на Fedora Server 44 с файловой системой OpenZFS, веб-интерфейсом Cockpit и файловым сервером Samba. Полная пошаговая инструкция по установке, настройке ZFS, SELinux и публикации SMB-шары.</p></div></article></div></section></article></div><script type="module" src="/_astro/MermaidLoader.astro_astro_type_script_index_0_lang.D0cD853-.js"></script><script type="module">document.querySelectorAll(`.phl-yt`).forEach(e=>{let t=e.querySelector(`.phl-yt-link`);t?.addEventListener(`click`,n=>{n.preventDefault();let r=e.dataset.ytId,i=e.dataset.ytParams?`&${e.dataset.ytParams}`:``,a=document.createElement(`iframe`);a.src=`https://www.youtube-nocookie.com/embed/${r}?autoplay=1${i}`,a.title=t.getAttribute(`aria-label`)??`YouTube video`,a.allow=`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share`,a.allowFullscreen=!0,e.replaceChildren(a)})});var e=matchMedia(`(prefers-reduced-motion: reduce)`).matches;document.querySelectorAll(`.phl-carousel`).forEach(t=>{let n=t.querySelector(`.phl-carousel-track`),r=n?[...n.children]:[];if(!n||r.length<2)return;let i=t=>{let i=(t+r.length)%r.length;n.scrollTo({left:r[i].offsetLeft-n.offsetLeft,behavior:e?`auto`:`smooth`})},a=()=>Math.round(n.scrollLeft/n.clientWidth),o=document.createElement(`div`);o.className=`phl-carousel-nav`,o.innerHTML=`<button type="button" class="phl-carousel-prev" aria-label="Previous">‹</button><span class="phl-carousel-dots"></span><button type="button" class="phl-carousel-next" aria-label="Next">›</button>`;let s=o.querySelector(`.phl-carousel-dots`);r.forEach((e,t)=>{let n=document.createElement(`button`);n.type=`button`,n.setAttribute(`aria-label`,`${t+1} / ${r.length}`),n.addEventListener(`click`,()=>i(t)),s.appendChild(n)});let c=()=>[...s.children].forEach((e,t)=>e.toggleAttribute(`aria-current`,t===a()));n.addEventListener(`scroll`,()=>requestAnimationFrame(c),{passive:!0}),o.querySelector(`.phl-carousel-prev`).addEventListener(`click`,()=>i(a()-1)),o.querySelector(`.phl-carousel-next`).addEventListener(`click`,()=>i(a()+1)),t.appendChild(o),c();let l=Number(t.dataset.interval);if(l>0&&!e){let e=!1;t.addEventListener(`mouseenter`,()=>e=!0),t.addEventListener(`mouseleave`,()=>e=!1),t.addEventListener(`focusin`,()=>e=!0),setInterval(()=>!e&&i(a()+1),Math.max(l,1500))}});var t=e=>`phl-tabs:${e}`,n=[...document.querySelectorAll(`.phl-tabs`)],r=(e,i,a=!0)=>{let o=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!o.some(e=>e.dataset.label===i))return;o.forEach(e=>e.hidden=e.dataset.label!==i),e.querySelectorAll(`:scope > .phl-tablist button`).forEach(e=>e.setAttribute(`aria-selected`,String(e.dataset.label===i)));let s=e.dataset.group;if(a&&s){try{localStorage.setItem(t(s),i)}catch{}n.filter(t=>t!==e&&t.dataset.group===s).forEach(e=>r(e,i,!1))}};n.forEach((e,n)=>{let i=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!i.length)return;let a=document.createElement(`div`);a.className=`phl-tablist`,a.setAttribute(`role`,`tablist`),i.forEach((t,o)=>{let s=document.createElement(`button`);s.type=`button`,s.setAttribute(`role`,`tab`),s.id=`phl-tab-${n}-${o}`,s.dataset.label=t.dataset.label,s.innerHTML=t.querySelector(`.phl-tab-label`)?.innerHTML??t.dataset.label??``,t.setAttribute(`role`,`tabpanel`),t.setAttribute(`aria-labelledby`,s.id),s.addEventListener(`click`,()=>r(e,t.dataset.label)),s.addEventListener(`keydown`,e=>{let t=e.key===`ArrowRight`?1:e.key===`ArrowLeft`?-1:0;if(!t)return;let n=a.children[(o+t+i.length)%i.length];n.focus(),n.click()}),a.appendChild(s)}),e.prepend(a),e.classList.add(`phl-tabs-ready`);let o=null;try{o=e.dataset.group?localStorage.getItem(t(e.dataset.group)):null}catch{}r(e,o??e.dataset.default??i[0].dataset.label,!1)}),document.querySelectorAll(`.phl-accordion[data-mode="collapse"]`).forEach(e=>{let t=[...e.querySelectorAll(`:scope > .phl-accordion-item`)];t.forEach(e=>e.addEventListener(`toggle`,()=>e.open&&t.forEach(t=>t!==e&&(t.open=!1))))});var i=document.querySelectorAll(`.phl-prose img:not(.nozoom)`);if(i.length){let e=document.createElement(`dialog`);e.className=`phl-lightbox`,e.innerHTML=`<img alt=""><button type="button" class="phl-lightbox-close" aria-label="Close">×</button>`,document.body.appendChild(e);let t=e.querySelector(`img`);e.addEventListener(`click`,()=>e.close()),i.forEach(n=>{n.closest(`a, .phl-yt, .phl-repo`)||(n.classList.add(`phl-zoomable`),n.addEventListener(`click`,()=>{t.src=n.currentSrc||n.src,t.alt=n.alt,e.showModal()}))})}</script><script type="module" src="/_astro/ChartTypeitClient.astro_astro_type_script_index_0_lang.CjHU9QBU.js"></script><script>(function(){const smartToc = true;
+const tableHint = "Таблицу можно прокрутить вбок";
+const wideBlocks = true;
+const wideCode = false;
+
+  // TOC: collapsed on phones, open from 768 px (decision 0007).
+  // Follows width changes too (rotating a tablet, resizing the window).
+  const toc = document.querySelector('[data-phl-toc]');
+  const wide = matchMedia('(min-width: 768px)');
+  const syncToc = () => toc && toc.toggleAttribute('open', wide.matches);
+  syncToc();
+  wide.addEventListener('change', syncToc);
+
+  // Current section in the TOC.
+  if (toc && smartToc && 'IntersectionObserver' in window) {
+    const links = new Map([...toc.querySelectorAll('[data-phl-toc-link]')].map((a) => [a.dataset.phlTocLink, a]));
+    const heads = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+    const visible = new Set();
+    const mark = () => {
+      const current = heads.find((h) => visible.has(h.id)) ?? [...heads].reverse().find((h) => h.getBoundingClientRect().top < 120);
+      links.forEach((a, id) => a.toggleAttribute('aria-current', current?.id === id));
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id)));
+        mark();
+      },
+      { rootMargin: '0px 0px -70% 0px' },
+    );
+    heads.forEach((h) => io.observe(h));
+  }
+
+  // Wide blocks: tables and screenshots (and code, with wideCode) wider than the text column get data-phl-wide.
+  // Measured against the column width itself, not the window, so the result is the same on a
+  // phone and a desktop. The CSS lets them grow only on large screens (styles/layout.css).
+  if (wideBlocks) {
+    const root = document.documentElement;
+    const raw = getComputedStyle(root).getPropertyValue('--phl-content-width').trim();
+    const rem = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const column = raw.endsWith('rem') ? parseFloat(raw) * rem : parseFloat(raw) || 736;
+    // With the info column (from 1680 px) a block next to it must not grow over it:
+    // such blocks get data-phl-wide="beside-info" and stay in the text column.
+    const info = document.querySelector('.phl-article-info');
+    const large = matchMedia('(min-width: 1680px)');
+    const wideEls = new Set();
+    const classify = () => {
+      const bottom = info && large.matches ? info.getBoundingClientRect().bottom + 24 : -Infinity;
+      // Top to bottom: a block that does not grow keeps the ones below in place, a growing one
+      // only pushes them further down, so one pass is stable.
+      [...wideEls].sort((x, y) => (x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)).forEach((el) => {
+        const value = el.getBoundingClientRect().top < bottom ? 'beside-info' : '';
+        if (el.getAttribute('data-phl-wide') !== value) el.setAttribute('data-phl-wide', value);
+      });
+    };
+    let queued = false;
+    const queue = () => {
+      if (queued) return;
+      queued = true;
+      // A timer, not requestAnimationFrame: that one never fires in hidden tabs and some previews.
+      setTimeout(() => { queued = false; classify(); }, 50);
+    };
+    const mark = (el) => {
+      if (!el || wideEls.has(el)) return;
+      el.setAttribute('data-phl-wide', 'beside-info');
+      wideEls.add(el);
+      queue();
+    };
+    if (info) {
+      // Image loads, an opened series list, a resized window all move blocks.
+      if ('ResizeObserver' in window) new ResizeObserver(queue).observe(document.querySelector('.phl-article') ?? document.body);
+      addEventListener('resize', queue);
+    }
+    if (wideCode) document.querySelectorAll('.phl-prose .expressive-code').forEach((ec) => {
+      const pre = ec.querySelector('pre');
+      if (pre && pre.scrollWidth > column + 1) mark(ec);
+    });
+    document.querySelectorAll('.phl-prose table').forEach((t) => {
+      if (t.scrollWidth > column + 1) mark(t);
+    });
+    // A screenshot: an image clearly larger than the column, alone in its paragraph or figure.
+    const block = (img) => {
+      const fig = img.closest('.phl-prose figure');
+      if (fig) return fig;
+      const p = img.closest('.phl-prose > p');
+      return p && p.querySelectorAll('img').length === 1 && !p.textContent.trim() ? p : null;
+    };
+    const check = (img) => {
+      const w = Number(img.getAttribute('width')) || img.naturalWidth;
+      if (w >= column * 1.25 && !img.closest('.phl-gallery, .phl-carousel, .phl-card, .phl-repo')) mark(block(img));
+    };
+    document.querySelectorAll('.phl-prose img').forEach((img) => {
+      if (img.getAttribute('width') || img.complete) check(img);
+      else img.addEventListener('load', () => check(img), { once: true });
+    });
+  }
+
+  // Wide tables: say that they scroll, and mark the side where columns are hidden.
+  document.querySelectorAll('.phl-prose table').forEach((table) => {
+    const hint = document.createElement('p');
+    hint.className = 'phl-table-hint';
+    hint.textContent = tableHint;
+    hint.hidden = true;
+    table.before(hint);
+    table.tabIndex = 0;
+    const update = () => {
+      const hidden = table.scrollWidth - table.clientWidth > 1;
+      const pos = Math.abs(table.scrollLeft);
+      const atStart = pos < 2;
+      const atEnd = pos >= table.scrollWidth - table.clientWidth - 2;
+      const sides = [];
+      if (hidden && !atStart) sides.push('start');
+      if (hidden && !atEnd) sides.push('end');
+      table.dataset.phlScroll = sides.join(' ');
+      hint.hidden = !hidden;
+    };
+    table.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  });
+
+  // Reading progress.
+  const bar = document.querySelector('.phl-progress span');
+  const article = document.querySelector('.phl-article');
+  if (bar && article) {
+    const update = () => {
+      const r = article.getBoundingClientRect();
+      const total = r.height - innerHeight;
+      const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 1;
+      bar.style.transform = `scaleX(${p})`;
+    };
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+
+  // Reading mode: hides everything but the text; remembered; Escape exits.
+  const zen = document.querySelector('[data-phl-zen]');
+  if (zen) {
+    const set = (on) => {
+      document.documentElement.classList.toggle('phl-zen', on);
+      zen.setAttribute('aria-pressed', String(on));
+      zen.textContent = on ? zen.dataset.off : zen.dataset.on;
+      try { localStorage.setItem('phl-zen', on ? '1' : ''); } catch (e) {}
+    };
+    let saved = false;
+    try { saved = localStorage.getItem('phl-zen') === '1'; } catch (e) {}
+    if (saved) set(true);
+    zen.addEventListener('click', () => set(!document.documentElement.classList.contains('phl-zen')));
+    addEventListener('keydown', (e) => e.key === 'Escape' && document.documentElement.classList.contains('phl-zen') && set(false));
+  }
+})();</script></main><footer class="phl-footer"><div class="phl-footer-inner"><nav class="phl-footer-nav" aria-label="Меню в подвале"><ul><li><a href="/tools/traefik-compose/">Генератор docker-compose</a></li><li><a href="/tools/compose-quadlet/">Compose в Podman Quadlet</a></li><li><a href="/tools/proxmox-quorum/">Кворум Proxmox</a></li><li><a href="/tools/opnsense-vlan-planner/">Планировщик VLAN</a></li><li><a href="/tools/rackplan/">Планировщик стойки</a></li><li><a href="/privacy/">Политика конфиденциальности</a></li></ul></nav><ul class="phl-social-links phl-footer-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><div class="phl-footer-meta"><p><span>© 2025-2026 Stilicho2011. All Rights Reserved.</span><span class="phl-footer-credit">Тема: <a href="https://prohomelab.com">ProHomeLab</a></span><button type="button" class="phl-consent-open" data-phl-consent-open hidden>Настройки аналитики</button></p><div class="phl-footer-tools"><a class="phl-to-top" href="#top"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l7-7l7 7m-7 7V5"/></svg>Наверх</a></div></div></div></footer><div class="phl-consent" data-phl-consent data-mode="opt-in" role="region" aria-label="Аналитика" hidden><p><span data-phl-consent-text>Разрешить обезличенную статистику посещений?</span> <a href="/privacy/" data-phl-consent-policy>Подробнее</a></p><div class="phl-consent-actions"><button type="button" data-phl-consent-choice="granted">Разрешить</button><button type="button" data-phl-consent-choice="denied">Отказаться</button></div></div><script>(function(){const TEXTS = {"ru":{"lang":"ru-RU","label":"Аналитика","text":"Разрешить обезличенную статистику посещений?","policy":"Подробнее","href":"/privacy/","granted":"Разрешить","denied":"Отказаться","seen":"Понятно"},"en":{"lang":"en","label":"Analytics","text":"Allow anonymous visit statistics?","policy":"Details","href":"/en/privacy/","granted":"Accept","denied":"Decline","seen":"OK"}};
+const PAGE = "ru";
+
+      (() => {
+        const box = document.querySelector('[data-phl-consent]');
+        if (!box) return;
+        const key = 'phl-consent';
+        let saved = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        const texts = TEXTS;
+        const reader = window.__phlReaderLocale && window.__phlReaderLocale();
+        const tx = reader && reader !== PAGE && texts[reader];
+        if (tx) {
+          box.lang = tx.lang;
+          box.setAttribute('aria-label', tx.label);
+          box.querySelector('[data-phl-consent-text]').textContent = tx.text;
+          const pol = box.querySelector('[data-phl-consent-policy]');
+          if (pol && tx.href) { pol.textContent = tx.policy; pol.href = tx.href; }
+          box.querySelectorAll('[data-phl-consent-choice]').forEach((b) => { b.textContent = tx[b.dataset.phlConsentChoice] || b.textContent; });
+        }
+        const show = () => { box.hidden = false; };
+        if (!saved) show();
+        box.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-phl-consent-choice]');
+          if (!b) return;
+          const value = b.dataset.phlConsentChoice;
+          try { localStorage.setItem(key, value); } catch (e) {}
+          box.hidden = true;
+          if (value === 'granted' && window.__phlAnalytics) window.__phlAnalytics();
+          // Declining after accepting: counters already loaded on this page stop with the next page.
+        });
+        document.querySelectorAll('[data-phl-consent-open]').forEach((el) => {
+          el.hidden = false;
+          el.addEventListener('click', (e) => { e.preventDefault(); show(); box.querySelector('button')?.focus(); });
+        });
+      })();
+    })();</script></body></html>

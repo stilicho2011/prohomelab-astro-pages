@@ -1,0 +1,929 @@
+<!DOCTYPE html><html lang="ru-RU" dir="ltr" data-scheme="prohomelab" data-theme="light" data-mode="system" data-default-mode="system" data-mode-switch="1" data-fluid="1" data-social-colors="hover" style="--phl-content-width: 48rem"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){const cur = "ru";
+const alts = {"en":"/en/posts/zerobyte/"};
+
+      try {
+        const p = localStorage.getItem('phl-lang');
+        if (p && p !== cur && alts[p]) location.replace(alts[p] + location.hash);
+      } catch (e) {}
+    })();</script><title>Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры | ProHomeLab</title><meta name="description" content="Пошаговая инструкция по установке и настройке Zerobyte - системы автоматизации резервного копирования с web-интерфейсом, построенной на Restic."><link rel="canonical" href="https://prohomelab.com/posts/zerobyte/"><link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/zerobyte/"><link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/zerobyte/"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32"><link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"><link rel="manifest" href="/site.webmanifest"><meta property="og:site_name" content="ProHomeLab"><meta property="og:title" content="Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры"><meta property="og:description" content="Пошаговая инструкция по установке и настройке Zerobyte - системы автоматизации резервного копирования с web-интерфейсом, построенной на Restic."><meta property="og:type" content="article"><meta property="og:url" content="https://prohomelab.com/posts/zerobyte/"><meta property="og:locale" content="ru_RU"><meta property="og:image" content="https://prohomelab.com/_astro/featured.Bi9ICYOF_JXeTg.jpg"><meta property="og:image:alt" content="Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры"><meta property="article:published_time" content="2026-04-24T00:00:00.000Z"><meta property="article:modified_time" content="2026-10-09T00:00:00.000Z"><meta property="article:section" content="Backup"><meta property="article:tag" content="Backup"><meta property="article:tag" content="Docker"><meta property="article:tag" content="Zerobyte"><meta property="article:tag" content="Self-Hosting"><meta name="twitter:card" content="summary_large_image"><meta name="yandex-verification" content="103870927"><link rel="alternate" type="application/rss+xml" title="ProHomeLab" href="https://prohomelab.com/index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","articleSection":"Backup","name":"Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры","headline":"Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры","description":"Пошаговая инструкция по установке и настройке Zerobyte - системы автоматизации резервного копирования с web-интерфейсом, построенной на Restic.","inLanguage":"ru-RU","url":"https://prohomelab.com/posts/zerobyte/","author":[{"@type":"Person","name":"Stilicho2011","image":"https://prohomelab.com/avatar-stilicho2011.webp","url":"https://prohomelab.com","sameAs":["https://github.com/stilicho2011/ubuntu_rep","https://t.me/stilicho2011_videos","https://www.youtube.com/@prohomelab","https://boosty.to/stilicho2011"]}],"copyrightYear":"2026","datePublished":"2026-04-24T00:00:00.000Z","dateModified":"2026-10-09T00:00:00.000Z","image":"https://prohomelab.com/_astro/featured.Bi9ICYOF_JXeTg.jpg","keywords":["Backup","Docker","Zerobyte","Self-Hosting"],"mainEntityOfPage":"https://prohomelab.com/posts/zerobyte/","wordCount":2571}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Главная","item":"https://prohomelab.com/"},{"@type":"ListItem","position":2,"name":"Backup","item":"https://prohomelab.com/posts/backup/"},{"@type":"ListItem","position":3,"name":"Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры","item":"https://prohomelab.com/posts/zerobyte/"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoObject","name":"Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры","description":"Пошаговая инструкция по установке и настройке Zerobyte - системы автоматизации резервного копирования с web-интерфейсом, построенной на Restic.","thumbnailUrl":["https://i.ytimg.com/vi/Gdf5pcWhlpQ/maxresdefault.jpg"],"uploadDate":"2026-04-24T00:00:00.000Z","embedUrl":"https://www.youtube.com/embed/Gdf5pcWhlpQ","contentUrl":"https://www.youtube.com/watch?v=Gdf5pcWhlpQ"}</script><script>
+      // Light or dark before first paint, so a dark page never flashes white.
+      // data-mode is the choice (system, light, dark), data-theme the result (light or dark).
+      (() => {
+        const d = document.documentElement;
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        let mode = d.dataset.defaultMode || 'system';
+        if (d.dataset.modeSwitch) {
+          try {
+            const saved = localStorage.getItem('phl-theme');
+            if (saved === 'system' || saved === 'light' || saved === 'dark') mode = saved;
+          } catch (e) {}
+        }
+        const apply = () => {
+          d.dataset.mode = mode;
+          d.dataset.theme = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode;
+        };
+        apply();
+        media.addEventListener('change', () => mode === 'system' && apply());
+        window.__phlSetMode = (next) => {
+          mode = next;
+          try {
+            localStorage.setItem('phl-theme', next);
+          } catch (e) {}
+          apply();
+        };
+      })();
+    </script><style>:root:root{--phl-font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-heading:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-mono:'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace}</style><script>(function(){const ym = {"id":"103870927","webvisor":true,"clickmap":true,"trackLinks":true,"accurateTrackBounce":true,"ecommerce":"dataLayer"};
+const ga = {"id":"G-VRHQGK81S9"};
+const umami = {"src":"https://stats.prohomelab.com/script.js","websiteId":"31518a04-7f00-4d16-99f3-759c057c7bf2","recorder":true,"recorderSrc":"https://stats.prohomelab.com/recorder.js"};
+const consent = "opt-in";
+
+      (() => {
+        let started = false;
+        const add = (src, attrs = {}) => {
+          const s = document.createElement('script');
+          s.async = true;
+          s.src = src;
+          for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+          document.head.appendChild(s);
+        };
+        window.__phlAnalytics = () => {
+          if (started) return;
+          started = true;
+          if (ym) {
+            window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+            window.ym.l = Date.now();
+            add(`https://mc.yandex.ru/metrika/tag.js?id=${ym.id}`);
+            const opts = { ssr: true, webvisor: ym.webvisor, clickmap: ym.clickmap, accurateTrackBounce: ym.accurateTrackBounce, trackLinks: ym.trackLinks };
+            if (ym.ecommerce) opts.ecommerce = ym.ecommerce;
+            window.ym(Number(ym.id), 'init', opts);
+          }
+          if (ga) {
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ga.id);
+            add(`https://www.googletagmanager.com/gtag/js?id=${ga.id}`);
+          }
+          if (umami) {
+            const attrs = { 'data-website-id': umami.websiteId };
+            if (umami.domains) attrs['data-domains'] = umami.domains;
+            add(umami.src, { ...attrs, defer: '' });
+            if (umami.recorder) add(umami.recorderSrc, { ...attrs, defer: '' });
+          }
+        };
+        let choice = null;
+        try { choice = localStorage.getItem('phl-consent'); } catch (e) {}
+        if (consent !== 'opt-in' || choice === 'granted') window.__phlAnalytics();
+      })();
+    })();</script><link rel="stylesheet" href="/_astro/Base.CNmgq2nC.css"></head><body id="top"><template id="phl-lang-en"><div class="phl-langbar" lang="en" role="region" aria-label="This page is available in English"><div class="phl-langbar-inner"><p>This page is available in English</p><div class="phl-langbar-actions"><a href="/en/posts/zerobyte/" hreflang="en" data-phl-lang="en">Switch</a><button type="button" data-phl-lang-stay>Stay here</button></div></div></div></template><script>(function(){const data = {"cur":"ru","alts":{"en":"/en/posts/zerobyte/"},"match":{"ru":["ru","uk","be","kk"],"en":["en"]},"byLang":{"ru-ru":"ru","en":"en"},"fallback":"en"};
+
+        (() => {
+          const store = (v) => { try { localStorage.setItem('phl-lang', v); } catch (e) {} };
+          // An explicit choice anywhere (language switcher, the bar) is remembered.
+          document.addEventListener('click', (e) => {
+            const go = e.target.closest('[data-phl-lang]');
+            if (go) return store(go.dataset.phlLang);
+            const link = e.target.closest('a[hreflang]');
+            const key = link && data.byLang[link.getAttribute('hreflang').toLowerCase()];
+            if (key) return store(key);
+            const stay = e.target.closest('[data-phl-lang-stay]');
+            if (stay) { store(data.cur); stay.closest('.phl-langbar')?.remove(); }
+          });
+          let saved = null;
+          try { saved = localStorage.getItem('phl-lang'); } catch (e) {}
+          const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''])
+            .map((l) => String(l).toLowerCase().split('-')[0]);
+          const fits = (key, code) => (data.match[key] || []).includes(code);
+          // The language this reader reads, for other parts of the page (the analytics banner):
+          // the stored choice, else the page language if the browser fits it, else the first
+          // locale the browser fits, else the fallback, else the page language.
+          window.__phlReaderLocale = () => {
+            if (saved && data.match[saved]) return saved;
+            if (list.some((code) => fits(data.cur, code))) return data.cur;
+            for (const code of list) {
+              const key = Object.keys(data.match).find((k) => fits(k, code));
+              if (key) return key;
+            }
+            return data.fallback || data.cur;
+          };
+          if (saved || !Object.keys(data.alts).length) return;
+          if (list.some((code) => fits(data.cur, code))) return;
+          let target = null;
+          for (const code of list) {
+            target = Object.keys(data.alts).find((key) => fits(key, code)) || null;
+            if (target) break;
+          }
+          if (!target && data.fallback && data.fallback !== data.cur && data.alts[data.fallback]) target = data.fallback;
+          const tpl = target && document.getElementById('phl-lang-' + target);
+          if (tpl) document.body.prepend(tpl.content.cloneNode(true));
+        })();
+      })();</script><a class="phl-skip" href="#phl-content">Перейти к тексту</a><header class="phl-header phl-header-sticky"><div class="phl-header-inner"><a class="phl-brand" href="/"><img class="phl-logo phl-logo-light" src="/prohomelab-mark.svg" alt><span class="phl-brand-name">ProHomeLab</span><span class="phl-brand-point" aria-hidden="true"></span></a><nav class="phl-nav" aria-label="Главное меню"><ul class="phl-nav-list"><li><a href="/blog/">Все статьи</a></li><li><details class="phl-dropdown" data-phl-dropdown><summary aria-current="true">Темы<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul class="phl-dropdown-panel"><li><a href="/posts/">Темы</a></li><li><a href="/posts/authentik/">Authentik</a></li><li><a href="/posts/backup/">Backup</a></li><li><a href="/posts/crowdsec/">Crowdsec</a></li><li><a href="/posts/docker-ui/">Docker UI</a></li><li><a href="/posts/hardware/">Hardware</a></li><li><a href="/posts/media-servers/">Media Servers</a></li><li><a href="/posts/network/">Network</a></li><li><a href="/posts/news/">Новости</a></li><li><a href="/posts/nextcloud/">Nextcloud</a></li><li><a href="/posts/opnsense/">OPNsense</a></li><li><a href="/posts/pkm/">PKM</a></li><li><a href="/posts/podman/">Podman</a></li><li><a href="/posts/proxmox/">Proxmox</a></li><li><a href="/posts/selfhosting/">Self-hosting</a></li><li><a href="/posts/single-sign-on/">Single Sign On</a></li><li><a href="/posts/terraform/">Terraform</a></li><li><a href="/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/categories/">Категории</a></li><li><a href="/tags/">Теги</a></li><li><a href="/tools/">Инструменты</a></li><li><a href="/about/">О проекте</a></li></ul></nav><div class="phl-header-tools phl-has-mobile-menu"><button type="button" class="phl-search-button" data-phl-search-open aria-label="Поиск" title="Поиск" hidden><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg></button><dialog class="phl-search" data-phl-search aria-label="Поиск"><div class="phl-search-box"><div class="phl-search-field"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg><input type="search" data-phl-search-input placeholder="Поиск по статьям" aria-label="Поиск по статьям" autocomplete="off" spellcheck="false"><button type="button" class="phl-search-close" data-phl-search-close aria-label="Закрыть"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></button></div><p class="phl-search-status" data-phl-search-status role="status" aria-live="polite"></p><ol class="phl-search-results" data-phl-search-results></ol><button type="button" class="phl-search-more" data-phl-search-more hidden>Показать еще</button></div></dialog><script>(function(){const options = {"shortcut":true,"pageSize":8,"text":{"noResults":"Ничего не найдено","loading":"Ищу","unavailable":"Поиск работает на собранном сайте (astro build)","more":"Показать еще"}};
+
+  (() => {
+    const open = document.querySelector('[data-phl-search-open]');
+    const dialog = document.querySelector('[data-phl-search]');
+    if (!open || !dialog || typeof dialog.showModal !== 'function') return;
+    const input = dialog.querySelector('[data-phl-search-input]');
+    const list = dialog.querySelector('[data-phl-search-results]');
+    const status = dialog.querySelector('[data-phl-search-status]');
+    const more = dialog.querySelector('[data-phl-search-more]');
+    const t = options.text;
+    let pagefind = null;
+    let failed = false;
+    let results = [];
+    let shown = 0;
+    let query = 0;
+    open.hidden = false;
+
+    const load = async () => {
+      if (pagefind || failed) return pagefind;
+      try {
+        pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+        await pagefind.init();
+      } catch (e) {
+        failed = true;
+        pagefind = null;
+      }
+      return pagefind;
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const render = async () => {
+      const page = results.slice(shown, shown + options.pageSize);
+      const id = query;
+      const data = await Promise.all(page.map((r) => r.data()));
+      if (id !== query) return;
+      for (const d of data) {
+        const li = document.createElement('li');
+        const sub = (d.sub_results || []).filter((x) => x.url !== d.url).slice(0, 2);
+        li.innerHTML =
+          `<a class="phl-search-hit" href="${esc(d.url)}"><span class="phl-search-title">${esc(d.meta?.title || d.url)}</span>` +
+          `<span class="phl-search-excerpt">${d.excerpt || ''}</span></a>` +
+          (sub.length
+            ? `<ul class="phl-search-sub">${sub.map((x) => `<li><a href="${esc(x.url)}">${esc(x.title)}</a></li>`).join('')}</ul>`
+            : '');
+        list.appendChild(li);
+      }
+      shown += page.length;
+      more.hidden = shown >= results.length;
+    };
+    const run = async () => {
+      const term = input.value.trim();
+      const id = ++query;
+      list.innerHTML = '';
+      more.hidden = true;
+      shown = 0;
+      if (!term) { status.textContent = ''; return; }
+      status.textContent = t.loading;
+      const pf = await load();
+      if (id !== query) return;
+      if (!pf) { status.textContent = t.unavailable; return; }
+      const res = await pf.debouncedSearch(term, {}, 200);
+      if (res === null || id !== query) return;
+      results = res.results;
+      status.textContent = results.length ? '' : t.noResults;
+      await render();
+    };
+
+    const show = () => {
+      dialog.showModal();
+      input.focus();
+      input.select();
+      load();
+    };
+    open.addEventListener('click', show);
+    dialog.querySelector('[data-phl-search-close]').addEventListener('click', () => dialog.close());
+    // A click on the backdrop (outside the box) closes the dialog.
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    input.addEventListener('input', run);
+    more.addEventListener('click', render);
+    // Enter opens the first result.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = list.querySelector('a');
+        if (first) { e.preventDefault(); location.href = first.href; }
+      }
+    });
+    if (options.shortcut) {
+      document.addEventListener('keydown', (e) => {
+        if (dialog.open) return;
+        const typing = /^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable;
+        if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          show();
+        }
+      });
+    }
+  })();
+})();</script><ul class="phl-social-links phl-header-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><a class="phl-lang-link" href="/en/posts/zerobyte/" hreflang="en" lang="en" title="Язык" data-phl-lang="en">EN</a><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;Как в системе&quot;,&quot;light&quot;:&quot;Светлое&quot;,&quot;dark&quot;:&quot;Темное&quot;}" data-title="Оформление" aria-label="Оформление" title="Оформление"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script><details class="phl-mobile-menu" data-phl-dropdown><summary aria-label="Меню"><span class="phl-mobile-open"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"/></svg></span><span class="phl-mobile-close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></span></summary><nav class="phl-mobile-panel" aria-label="Главное меню"><ul class="phl-mobile-list"><li><a href="/blog/">Все статьи</a></li><li><details><summary>Темы<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul><li><a href="/posts/">Темы</a></li><li><a href="/posts/authentik/">Authentik</a></li><li><a href="/posts/backup/">Backup</a></li><li><a href="/posts/crowdsec/">Crowdsec</a></li><li><a href="/posts/docker-ui/">Docker UI</a></li><li><a href="/posts/hardware/">Hardware</a></li><li><a href="/posts/media-servers/">Media Servers</a></li><li><a href="/posts/network/">Network</a></li><li><a href="/posts/news/">Новости</a></li><li><a href="/posts/nextcloud/">Nextcloud</a></li><li><a href="/posts/opnsense/">OPNsense</a></li><li><a href="/posts/pkm/">PKM</a></li><li><a href="/posts/podman/">Podman</a></li><li><a href="/posts/proxmox/">Proxmox</a></li><li><a href="/posts/selfhosting/">Self-hosting</a></li><li><a href="/posts/single-sign-on/">Single Sign On</a></li><li><a href="/posts/terraform/">Terraform</a></li><li><a href="/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/categories/">Категории</a></li><li><a href="/tags/">Теги</a></li><li><a href="/tools/">Инструменты</a></li><li><a href="/about/">О проекте</a></li></ul><ul class="phl-social-links phl-mobile-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><p class="phl-mobile-mode"><span>Оформление</span><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;Как в системе&quot;,&quot;light&quot;:&quot;Светлое&quot;,&quot;dark&quot;:&quot;Темное&quot;}" data-title="Оформление" aria-label="Оформление" title="Оформление"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script></p></nav></details></div></div></header><script>
+  // Close open menus on outside click, on Escape, and when another one opens.
+  (() => {
+    if (window.__phlDropdowns) return;
+    window.__phlDropdowns = true;
+    const all = () => document.querySelectorAll('[data-phl-dropdown][open]');
+    document.addEventListener('click', (e) => {
+      all().forEach((d) => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      all().forEach((d) => {
+        d.removeAttribute('open');
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener(
+      'toggle',
+      (e) => {
+        const d = e.target;
+        if (!d.matches?.('[data-phl-dropdown]') || !d.open) return;
+        all().forEach((o) => o !== d && !o.contains(d) && o.removeAttribute('open'));
+      },
+      true,
+    );
+  })();
+</script><main class="phl-main" id="phl-content" tabindex="-1"><div class="phl-progress" aria-hidden="true"><span></span></div><div class="phl-article-grid phl-has-toc"><article class="phl-article" data-pagefind-body><nav class="phl-breadcrumbs" aria-label="Breadcrumbs"><ol><li><a href="/">Главная</a></li><li><a href="/posts/backup/">Backup</a></li><li><span aria-current="page">Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры</span></li></ol></nav><header class="phl-article-header"><p class="phl-eyebrow">Backup</p><h1 data-pagefind-meta="title">Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры</h1><p class="phl-meta"><span class="phl-meta-authors"><a href="/authors/stilicho2011/">Stilicho2011</a></span><time datetime="2026-04-24T00:00:00.000Z">24 апреля 2026 г.</time><span>Обновлено <time datetime="2026-10-09T00:00:00.000Z">9 октября 2026 г.</time></span><span>11 мин чтения</span><span class="phl-views">61 просмотр</span></p></header><div class="phl-article-tools"><p class="phl-translations">Эта статья на других языках: <a href="/en/posts/zerobyte/" hreflang="en">EN</a></p><button type="button" class="phl-zen-toggle" data-phl-zen data-on="Режим чтения" data-off="Выйти из режима чтения" aria-pressed="false">Режим чтения</button></div><div class="phl-embed phl-yt phl-article-video" data-yt-id="Gdf5pcWhlpQ"><a class="phl-yt-link" href="https://www.youtube.com/watch?v=Gdf5pcWhlpQ" target="_blank" rel="noopener" aria-label="Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры"><img src="https://i.ytimg.com/vi/Gdf5pcWhlpQ/hqdefault.jpg" alt="Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры" width="480" height="360" loading="eager" decoding="async"><span class="phl-yt-play" aria-hidden="true"></span></a></div><details class="phl-series"><summary>Часть 2 из 4 в серии <a href="/series/backup/">Backup</a></summary><ol><li><a href="/posts/duplicati/">Duplicati - резервное копирование с шифрованием для домашнего сервера</a></li><li><span aria-current="page">Zerobyte - автоматизация резервного копирования для self-hosted инфраструктуры</span></li><li><a href="/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server 4.2.0 - установка, настройка и резервное копирование Proxmox VE</a></li><li><a href="/posts/vinchin-backup-proxmox/">Vinchin Backup &amp; Recovery V9.0 SP3 - обзор и практика на Proxmox VE</a></li></ol></details><details class="phl-toc" data-phl-toc><summary class="phl-toc-title">Содержание</summary><nav aria-label="Содержание"><ul><li class="depth-2"><a href="#zerobyte---автоматизация-резервного-копирования-для-homelab" data-phl-toc-link="zerobyte---автоматизация-резервного-копирования-для-homelab">Zerobyte - автоматизация резервного копирования для Homelab</a></li><li class="depth-2"><a href="#что-такое-zerobyte" data-phl-toc-link="что-такое-zerobyte">Что такое Zerobyte</a></li><li class="depth-3"><a href="#сравнение-популярных-решений-для-резервного-копирования" data-phl-toc-link="сравнение-популярных-решений-для-резервного-копирования">Сравнение популярных решений для резервного копирования</a></li><li class="depth-2"><a href="#duplicati-vs-zerobyte---сравнение-систем-резервного-копирования" data-phl-toc-link="duplicati-vs-zerobyte---сравнение-систем-резервного-копирования">Duplicati vs Zerobyte - сравнение систем резервного копирования</a></li><li class="depth-2"><a href="#краткая-таблица-сравнения" data-phl-toc-link="краткая-таблица-сравнения">Краткая таблица сравнения</a></li><li class="depth-2"><a href="#архитектура-решений" data-phl-toc-link="архитектура-решений">Архитектура решений</a></li><li class="depth-3"><a href="#duplicati" data-phl-toc-link="duplicati">Duplicati</a></li><li class="depth-3"><a href="#zerobyte" data-phl-toc-link="zerobyte">Zerobyte</a></li><li class="depth-2"><a href="#поддерживаемые-хранилища" data-phl-toc-link="поддерживаемые-хранилища">Поддерживаемые хранилища</a></li><li class="depth-3"><a href="#duplicati-1" data-phl-toc-link="duplicati-1">Duplicati</a></li><li class="depth-3"><a href="#zerobyte-1" data-phl-toc-link="zerobyte-1">Zerobyte</a></li><li class="depth-2"><a href="#основные-преимущества" data-phl-toc-link="основные-преимущества">Основные преимущества</a></li><li class="depth-3"><a href="#преимущества-duplicati" data-phl-toc-link="преимущества-duplicati">Преимущества Duplicati</a></li><li class="depth-3"><a href="#преимущества-zerobyte" data-phl-toc-link="преимущества-zerobyte">Преимущества Zerobyte</a></li><li class="depth-2"><a href="#когда-выбрать-duplicati" data-phl-toc-link="когда-выбрать-duplicati">Когда выбрать Duplicati</a></li><li class="depth-2"><a href="#когда-выбрать-zerobyte" data-phl-toc-link="когда-выбрать-zerobyte">Когда выбрать Zerobyte</a></li><li class="depth-2"><a href="#итог-сравнения-duplicati-и-zerobyte" data-phl-toc-link="итог-сравнения-duplicati-и-zerobyte">Итог сравнения Duplicati и Zerobyte</a></li><li class="depth-2"><a href="#основные-возможности-web-интерфейса-zerobyte" data-phl-toc-link="основные-возможности-web-интерфейса-zerobyte">Основные возможности Web интерфейса Zerobyte</a></li><li class="depth-3"><a href="#web-интерфейс" data-phl-toc-link="web-интерфейс">Web-интерфейс</a></li><li class="depth-3"><a href="#использование-restic" data-phl-toc-link="использование-restic">Использование Restic</a></li><li class="depth-2"><a href="#docker-compose-файл-из-видео" data-phl-toc-link="docker-compose-файл-из-видео">Docker Compose файл из видео</a></li><li class="depth-2"><a href="#работа-с-приложением" data-phl-toc-link="работа-с-приложением">Работа с приложением</a></li><li class="depth-2"><a href="#восстановление-данных" data-phl-toc-link="восстановление-данных">Восстановление данных</a></li><li class="depth-3"><a href="#восстановление-через-интерфейс" data-phl-toc-link="восстановление-через-интерфейс">Восстановление через интерфейс</a></li><li class="depth-3"><a href="#если-zerobyte-недоступен" data-phl-toc-link="если-zerobyte-недоступен">Если Zerobyte недоступен</a></li><li class="depth-3"><a href="#проверка-бэкапов" data-phl-toc-link="проверка-бэкапов">Проверка бэкапов</a></li></ul></nav></details><div class="phl-prose"><!--phl-feed-start--><div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Совет</span></div>
+<div class="phl-callout-content">
+<p>Если вам понравилась эта статья, вы можете стать спонсором на <a href="https://boosty.to/stilicho2011">Boosty</a>.</p>
+</div>
+</div>
+<h2 id="zerobyte---автоматизация-резервного-копирования-для-homelab">Zerobyte - автоматизация резервного копирования для Homelab</h2>
+<p>Резервное копирование - одна из ключевых задач любой инфраструктуры.<br>
+В домашнем <strong><a href="https://prohomelab.com/posts/homelabbing/">Homelab</a></strong> или self-hosted окружении важно иметь систему, которая:</p>
+<ul>
+<li>автоматически выполняет бэкапы</li>
+<li>поддерживает шифрование</li>
+<li>умеет работать с облачными хранилищами</li>
+<li>имеет удобный интерфейс управления</li>
+</ul>
+<p>Именно такую задачу решает <strong><a href="https://github.com/nicotsx/zerobyte">Zerobyte</a></strong>.</p>
+<p>В этой статье разберем:</p>
+<ul>
+<li>что такое Zerobyte</li>
+<li>как установить его через Docker</li>
+<li>как настроить первое резервное копирование</li>
+<li>как восстанавливать данные</li>
+</ul>
+<hr>
+<h2 id="что-такое-zerobyte">Что такое Zerobyte</h2>
+<p><strong>Zerobyte</strong> - это инструмент для автоматизации резервного копирования, который помогает сохранять данные на различных хранилищах. Построенный на основе <strong><a href="https://restic.net/">Restic</a></strong>, он предоставляет современный веб-интерфейс для планирования, управления и мониторинга зашифрованных резервных копий вашего удаленного хранилища.</p>
+<p>Сайт проекта с документацией: <a href="https://zerobyte.app">zerobyte.app</a><br>
+Исходный код: <a href="https://github.com/nicotsx/zerobyte">github.com/nicotsx/zerobyte</a></p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p>Zerobyte все еще находится на версии <strong>0.x.x</strong> и может существенно меняться от версии к версии. Проект в стадии активной разработки.</p>
+</div>
+</div>
+<p>После того, как я выпустил ролик про <a href="https://prohomelab.com/posts/best-apps-2025/">приложения-открытия 2025 года</a>, в числе которых я рассказывал про Zerobyte, мне часто пишут с вопросом, почему я не рассказал о том или ином решении. По мнению задающего вопросы, именно то приложение, которым он пользуется, самое лучшее :)
+Ниже я постарался свести в некую табличку особенности самых популярных решений.</p>
+<p><strong>Особенности Zerobyte:</strong></p>
+<ul>
+<li>Автоматическое резервное копирование с шифрованием, сжатием и политиками хранения, реализованное с помощью <strong>Restic</strong></li>
+<li>Гибкое расписание для автоматических заданий резервного копирования с тонкой настройкой политики хранения</li>
+<li>Сквозное шифрование (end-to-end), обеспечивающее защиту данных на всех этапах</li>
+<li>Поддержка нескольких протоколов: резервное копирование с NFS, SMB, WebDAV, SFTP или локальных директорий</li>
+</ul>
+<p>Это делает Zerobyte удобной альтернативой таким решениям как:</p>
+<ul>
+<li><a href="https://prohomelab.com/posts/duplicati/">Duplicati</a></li>
+<li><a href="https://kopia.io/">Kopia</a></li>
+<li><a href="https://borgbackup.readthedocs.io/">BorgBackup</a></li>
+</ul>
+<p>Если же вы работаете в экосистеме Proxmox, обратите внимание также на специализированное решение <a href="https://prohomelab.com/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server</a>.</p>
+<hr>
+<h3 id="сравнение-популярных-решений-для-резервного-копирования">Сравнение популярных решений для резервного копирования</h3>
+<table>
+<thead>
+<tr>
+<th>Backup tool</th>
+<th>Web UI</th>
+<th>Encryption</th>
+<th>Deduplication</th>
+<th>Docker</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Duplicati</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+</tr>
+<tr>
+<td>Kopia</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+</tr>
+<tr>
+<td>BorgBackup</td>
+<td>✖</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+</tr>
+<tr>
+<td>Zerobyte</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+<td>✔</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="duplicati-vs-zerobyte---сравнение-систем-резервного-копирования">Duplicati vs Zerobyte - сравнение систем резервного копирования</h2>
+<p>Так как в предыдущей статье я рассказывал про приложение <a href="https://prohomelab.com/posts/duplicati/">Duplicati</a>, то давайте сравним Duplicati и героя сегодняшней статьи более подробно.</p>
+<p>Duplicati и Zerobyte - это решения для резервного копирования данных, ориентированные на self-hosted инфраструктуру и домашние лаборатории. Оба инструмента предоставляют веб-интерфейс, автоматизацию и поддержку удаленных хранилищ, однако они используют разные архитектурные подходы.</p>
+<p><strong>Duplicati</strong> - это самостоятельная система резервного копирования со своим движком.</p>
+<p><strong>Zerobyte</strong> - это веб-интерфейс и менеджер задач резервного копирования, построенный поверх backup-движка <strong>restic</strong>.</p>
+<hr>
+<h2 id="краткая-таблица-сравнения">Краткая таблица сравнения</h2>
+<table>
+<thead>
+<tr>
+<th>Критерий</th>
+<th>Duplicati</th>
+<th>Zerobyte</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Тип решения</td>
+<td>Самостоятельная система резервного копирования</td>
+<td>Менеджер резервных копий</td>
+</tr>
+<tr>
+<td>Backup-движок</td>
+<td>Собственный</td>
+<td>Restic</td>
+</tr>
+<tr>
+<td>Архитектура</td>
+<td>Монолитное приложение</td>
+<td>Web UI + restic backend</td>
+</tr>
+<tr>
+<td>Интерфейс</td>
+<td>Web UI + CLI</td>
+<td>Web UI (репозитории можно открыть restic CLI)</td>
+</tr>
+<tr>
+<td>Шифрование</td>
+<td>AES-256</td>
+<td>Встроенное шифрование restic</td>
+</tr>
+<tr>
+<td>Дедупликация</td>
+<td>Блочная дедупликация</td>
+<td>Дедупликация restic</td>
+</tr>
+<tr>
+<td>Инкрементальные бэкапы</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Сжатие</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Версионирование файлов</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Восстановление файлов</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Планировщик задач</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Поддержка облачных хранилищ</td>
+<td>Да</td>
+<td>Через restic или с помощью rclone</td>
+</tr>
+<tr>
+<td>Локальные хранилища</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Поддержка S3</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Поддержка WebDAV</td>
+<td>Да</td>
+<td>Как источник, как хранилище - через rclone</td>
+</tr>
+<tr>
+<td>Поддержка SFTP</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Поддержка rclone</td>
+<td>Да (нужен бинарник rclone)</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Управление несколькими задачами</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Контроль snapshot-ов</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Логи и мониторинг</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Открытый исходный код</td>
+<td>Да</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Зрелость проекта</td>
+<td>Высокая</td>
+<td>Новый проект</td>
+</tr>
+<tr>
+<td>Простота установки</td>
+<td>Очень простая</td>
+<td>Простая</td>
+</tr>
+<tr>
+<td>Гибкость конфигурации</td>
+<td>Средняя</td>
+<td>Высокая</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="архитектура-решений">Архитектура решений</h2>
+<h3 id="duplicati">Duplicati</h3>
+<p>Duplicati представляет собой полностью автономную систему резервного копирования.<br>
+Приложение включает:</p>
+<ul>
+<li>backup-движок</li>
+<li>веб-интерфейс</li>
+<li>систему планирования</li>
+<li>поддержку облачных хранилищ</li>
+<li>механизм дедупликации</li>
+<li>шифрование</li>
+</ul>
+<p>Благодаря этому Duplicati можно установить как единое приложение и сразу использовать для создания резервных копий.</p>
+<hr>
+<h3 id="zerobyte">Zerobyte</h3>
+<p>Zerobyte работает иначе. Это интерфейс управления для <strong>restic</strong>, популярного backup-движка.</p>
+<p>Zerobyte добавляет:</p>
+<ul>
+<li>веб-панель управления</li>
+<li>создание backup-задач</li>
+<li>управление расписанием</li>
+<li>просмотр snapshot-ов</li>
+<li>восстановление файлов</li>
+<li>централизованное управление несколькими репозиториями</li>
+</ul>
+<p>Фактически Zerobyte выполняет роль <strong>панели управления для restic-инфраструктуры</strong>. И у этого есть приятный бонус: репозитории, которые он создает, - это обычные репозитории restic. Если с самим Zerobyte что-то случится, данные можно достать штатным <code>restic</code> из консоли (об этом ниже, в разделе про восстановление).</p>
+<hr>
+<h2 id="поддерживаемые-хранилища">Поддерживаемые хранилища</h2>
+<h3 id="duplicati-1">Duplicati</h3>
+<p>Duplicati поддерживает большое количество облачных сервисов:</p>
+<ul>
+<li>Amazon S3</li>
+<li>Backblaze B2</li>
+<li>Google Drive</li>
+<li>OneDrive</li>
+<li>Dropbox</li>
+<li>WebDAV</li>
+<li>SFTP</li>
+<li>rclone (нужен установленный бинарник rclone)</li>
+<li>локальные диски</li>
+<li>NAS</li>
+</ul>
+<hr>
+<h3 id="zerobyte-1">Zerobyte</h3>
+<p>У Zerobyte два разных понятия, и списки у них разные.</p>
+<p><strong>Источники (Volumes)</strong> - откуда берем данные:</p>
+<ul>
+<li>локальные директории (примонтированные в контейнер)</li>
+<li>NFS</li>
+<li>SMB</li>
+<li>WebDAV</li>
+<li>SFTP</li>
+<li>rclone</li>
+</ul>
+<p><strong>Репозитории (Repositories)</strong> - куда складываем бэкапы:</p>
+<ul>
+<li>локальные директории</li>
+<li>S3-совместимые хранилища (Amazon S3, MinIO, Wasabi и т.п.) и Cloudflare R2</li>
+<li>Google Cloud Storage</li>
+<li>Azure Blob Storage</li>
+<li>REST Server (restic)</li>
+<li>SFTP</li>
+<li>rclone - а через него еще 40+ облачных провайдеров, включая Google Drive, Dropbox и OneDrive</li>
+</ul>
+<p>По набору хранилищ инструменты в итоге примерно равны: оба умеют работать через rclone, просто у Zerobyte это штатный тип репозитория прямо в интерфейсе.</p>
+<hr>
+<h2 id="основные-преимущества">Основные преимущества</h2>
+<h3 id="преимущества-duplicati">Преимущества Duplicati</h3>
+<ul>
+<li>очень простая установка</li>
+<li>готовая система резервного копирования</li>
+<li>поддерживает самые распространенные облачные хранилища</li>
+<li>зрелый и хорошо известный проект</li>
+<li>удобный web-интерфейс</li>
+</ul>
+<p>Duplicati отлично подходит для:</p>
+<ul>
+<li>домашних серверов</li>
+<li>NAS</li>
+<li>персональных бэкапов</li>
+<li>небольших homelab-инфраструктур</li>
+</ul>
+<hr>
+<h3 id="преимущества-zerobyte">Преимущества Zerobyte</h3>
+<ul>
+<li>современная архитектура</li>
+<li>использование надежного backup-движка restic</li>
+<li>поддержка rclone-хранилищ</li>
+<li>гибкая работа с репозиториями</li>
+<li>удобное управление snapshot-ами</li>
+<li>бэкапы хранятся в обычном формате restic и не привязаны к самому Zerobyte</li>
+</ul>
+<p>Zerobyte лучше подходит для:</p>
+<ul>
+<li>продвинутых homelab</li>
+<li>инфраструктур с несколькими backup-задачами</li>
+<li>пользователей restic</li>
+</ul>
+<hr>
+<h2 id="когда-выбрать-duplicati">Когда выбрать Duplicati</h2>
+<p>Duplicati стоит выбрать, если:</p>
+<ul>
+<li>нужна простая система резервного копирования</li>
+<li>важна быстрая установка</li>
+<li>требуется поддержка популярных облачных сервисов</li>
+<li>инфраструктура небольшая</li>
+</ul>
+<p>Duplicati - хороший выбор для большинства домашних серверов.</p>
+<hr>
+<h2 id="когда-выбрать-zerobyte">Когда выбрать Zerobyte</h2>
+<p>Zerobyte лучше выбрать, если:</p>
+<ul>
+<li>вы уже используете restic</li>
+<li>нужна более гибкая архитектура backup-системы</li>
+<li>важно, чтобы бэкапы можно было открыть и без самого приложения - обычным restic</li>
+<li>есть несколько backup-репозиториев</li>
+</ul>
+<hr>
+<h2 id="итог-сравнения-duplicati-и-zerobyte">Итог сравнения Duplicati и Zerobyte</h2>
+<table>
+<thead>
+<tr>
+<th>Инструмент</th>
+<th>Лучше всего подходит для</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Duplicati</td>
+<td>Простые и быстрые бэкапы для домашнего сервера</td>
+</tr>
+<tr>
+<td>Zerobyte</td>
+<td>Управление restic-бэкапами и более гибкие инфраструктуры</td>
+</tr>
+</tbody>
+</table>
+<p>Оба инструмента являются open-source и могут использоваться в self-hosted среде. Выбор зависит от того, нужен ли вам <strong>готовый backup-клиент (Duplicati)</strong> или <strong>менеджер инфраструктуры бэкапов на базе restic (Zerobyte)</strong>.</p>
+<h2 id="основные-возможности-web-интерфейса-zerobyte">Основные возможности Web интерфейса Zerobyte</h2>
+<h3 id="web-интерфейс">Web-интерфейс</h3>
+<p>Zerobyte предоставляет современную web-панель управления, через которую можно:</p>
+<ul>
+<li>создавать backup-задачи</li>
+<li>запускать бэкапы вручную</li>
+<li>отслеживать статус</li>
+<li>восстанавливать файлы</li>
+</ul>
+<hr>
+<h3 id="использование-restic">Использование Restic</h3>
+<p>В основе Zerobyte используется <strong>Restic</strong>, что дает:</p>
+<ul>
+<li>дедупликацию</li>
+<li>шифрование</li>
+<li>инкрементальные бэкапы</li>
+<li>поддержку множества backend-хранилищ</li>
+</ul>
+<hr>
+<h2 id="docker-compose-файл-из-видео">Docker Compose файл из видео</h2>
+<div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.otfqh.css"><script type="module" src="/_astro/ec.0vx5m.js"></script><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Объявление всех сервисов (контейнеров), которыми управляет Docker Compose</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">zerobyte</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Имя сервиса (логическое имя контейнера)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">ghcr.io/nicotsx/zerobyte:latest</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Образ контейнера. Для проекта версии 0.x надежнее закрепить версию (например :v0.43), а не использовать latest</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">zerobyte</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Явное имя контейнера для удобства управления (docker ps, логи и т.д.)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Автоматический рестарт контейнера при падении (кроме ручной остановки)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">cap_add</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SYS_ADMIN</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Добавляет расширенные привилегии (нужно для FUSE и работы с удаленными шарами). Если бекапите локальные данные, закомментируйте строку</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SYS_PTRACE</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Позволяет отслеживать процессы. В актуальном официальном примере этой строки нет</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#ports:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "4096:4096" # Проброс порта наружу (не нужен, если используется Traefik)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">devices</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/dev/fuse:/dev/fuse</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Проброс FUSE-устройства для работы с rclone/монтированием. Если бекапите локальные данные, закомментируйте строку</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Переменные окружения для настройки приложения</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">TZ=Europe/Moscow</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Таймзона контейнера (важно для расписаний и логов)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">BASE_URL=https://zerobyte.stilicho.ru</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Адрес, по которому вы открываете Zerobyte (от https:// зависят secure-cookies)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">APP_SECRET=&#x3C;сгенерируйте_openssl_rand_-hex_32></span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Секрет для шифрования чувствительных данных в базе (32+ символов, обязательно свой)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">security_opt</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Ослабление механизмов безопасности контейнера</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">seccomp:unconfined</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Отключает seccomp профиль (разрешает больше системных вызовов). В актуальном официальном примере этой строки нет</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">apparmor:unconfined</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Отключает AppArmor профиль (снимает ограничения доступа). В актуальном официальном примере этой строки нет</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Монтирование директорий (данные и доступ к файлам)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/etc/localtime:/etc/localtime:ro</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Синхронизация времени с хостом (read-only)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/stilicho/docker/zerobyte:/var/lib/zerobyte</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Данные Zerobyte (конфиги, база, состояние)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/stilicho/docker:/mydata</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Директория с данными для бэкапа (источник volumes)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Подключение к сети proxy (для работы с Traefik)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Метки для автоматической конфигурации Traefik</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Включает обработку контейнера Traefik</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte.entrypoints=web"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># HTTP вход (порт 80)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte.rule=Host(`zerobyte.stilicho.ru`)"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Маршрутизация по домену</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.zerobyte-https-redirect.redirectscheme.scheme=https"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Редирект HTTP → HTTPS</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte.middlewares=zerobyte-https-redirect"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Применение редиректа</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte-secure.entrypoints=websecure"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># HTTPS вход (порт 443)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte-secure.rule=Host(`zerobyte.stilicho.ru`)"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># HTTPS правило маршрутизации</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte-secure.tls=true"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Включение TLS (HTTPS)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte-secure.tls.certresolver=cloudflare"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Выпуск сертификата через Cloudflare</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zerobyte-secure.service=zerobyte"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Привязка к сервису</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.zerobyte.loadbalancer.server.port=4096"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Внутренний порт приложения в контейнере</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Указание сети для Traefik</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Объявление сетей</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6"># Имя сети</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Сеть уже создана (Docker Compose не будет ее создавать)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services: # Объявление всех сервисов (контейнеров), которыми управляет Docker Compose  zerobyte: # Имя сервиса (логическое имя контейнера)    image: ghcr.io/nicotsx/zerobyte:latest # Образ контейнера. Для проекта версии 0.x надежнее закрепить версию (например :v0.43), а не использовать latest    container_name: zerobyte # Явное имя контейнера для удобства управления (docker ps, логи и т.д.)    restart: unless-stopped # Автоматический рестарт контейнера при падении (кроме ручной остановки)    cap_add:      - SYS_ADMIN # Добавляет расширенные привилегии (нужно для FUSE и работы с удаленными шарами). Если бекапите локальные данные, закомментируйте строку      - SYS_PTRACE # Позволяет отслеживать процессы. В актуальном официальном примере этой строки нет    #ports:    #  - &#x22;4096:4096&#x22; # Проброс порта наружу (не нужен, если используется Traefik)    devices:      - /dev/fuse:/dev/fuse # Проброс FUSE-устройства для работы с rclone/монтированием. Если бекапите локальные данные, закомментируйте строку    environment: # Переменные окружения для настройки приложения      - TZ=Europe/Moscow # Таймзона контейнера (важно для расписаний и логов)      - BASE_URL=https://zerobyte.stilicho.ru # Адрес, по которому вы открываете Zerobyte (от https:// зависят secure-cookies)      - APP_SECRET=<сгенерируйте_openssl_rand_-hex_32> # Секрет для шифрования чувствительных данных в базе (32+ символов, обязательно свой)    security_opt: # Ослабление механизмов безопасности контейнера      - seccomp:unconfined # Отключает seccomp профиль (разрешает больше системных вызовов). В актуальном официальном примере этой строки нет      - apparmor:unconfined # Отключает AppArmor профиль (снимает ограничения доступа). В актуальном официальном примере этой строки нет    volumes: # Монтирование директорий (данные и доступ к файлам)      - /etc/localtime:/etc/localtime:ro # Синхронизация времени с хостом (read-only)      - /home/stilicho/docker/zerobyte:/var/lib/zerobyte # Данные Zerobyte (конфиги, база, состояние)      - /home/stilicho/docker:/mydata # Директория с данными для бэкапа (источник volumes)    networks:      proxy: # Подключение к сети proxy (для работы с Traefik)    labels: # Метки для автоматической конфигурации Traefik      - &#x22;traefik.enable=true&#x22; # Включает обработку контейнера Traefik      - &#x22;traefik.http.routers.zerobyte.entrypoints=web&#x22; # HTTP вход (порт 80)      - &#x22;traefik.http.routers.zerobyte.rule=Host(&#x60;zerobyte.stilicho.ru&#x60;)&#x22; # Маршрутизация по домену      - &#x22;traefik.http.middlewares.zerobyte-https-redirect.redirectscheme.scheme=https&#x22; # Редирект HTTP → HTTPS      - &#x22;traefik.http.routers.zerobyte.middlewares=zerobyte-https-redirect&#x22; # Применение редиректа      - &#x22;traefik.http.routers.zerobyte-secure.entrypoints=websecure&#x22; # HTTPS вход (порт 443)      - &#x22;traefik.http.routers.zerobyte-secure.rule=Host(&#x60;zerobyte.stilicho.ru&#x60;)&#x22; # HTTPS правило маршрутизации      - &#x22;traefik.http.routers.zerobyte-secure.tls=true&#x22; # Включение TLS (HTTPS)      - &#x22;traefik.http.routers.zerobyte-secure.tls.certresolver=cloudflare&#x22; # Выпуск сертификата через Cloudflare      - &#x22;traefik.http.routers.zerobyte-secure.service=zerobyte&#x22; # Привязка к сервису      - &#x22;traefik.http.services.zerobyte.loadbalancer.server.port=4096&#x22; # Внутренний порт приложения в контейнере      - &#x22;traefik.docker.network=proxy&#x22; # Указание сети для Traefiknetworks: # Объявление сетей  proxy: # Имя сети    external: true # Сеть уже создана (Docker Compose не будет ее создавать)"><div></div></button></div></figure></div>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p>Раздел cap_add и devices дают излишние права. Используйте их только в случае, если понимаете возможные последствия. Например, в моем случае без указанных параметров не было возможности подключиться к SMB-шаре на TrueNAS.</p>
+</div>
+</div>
+<p>Несколько важных моментов по этому файлу (сверено с официальной документацией):</p>
+<ul>
+<li><strong>APP_SECRET</strong> шифрует хранящиеся в базе Zerobyte секреты - доступы к хранилищам, пароли и т.п. Нужна случайная строка от 32 символов, сгенерировать ее можно командой <code>openssl rand -hex 32</code>. Не копируйте значение из чужих примеров и держите его в <code>.env</code>, а не прямо в compose.</li>
+<li><strong>Права контейнера.</strong> В актуальном официальном примере для работы с удаленными шарами нужны только <code>cap_add: SYS_ADMIN</code> и <code>/dev/fuse</code>. <code>SYS_PTRACE</code> и отключение seccomp/AppArmor там не используются - если у вас все монтируется и без них, лучше их убрать. А если бэкапите только локальные папки, можно убрать и <code>SYS_ADMIN</code> с <code>/dev/fuse</code>: документация описывает такой упрощенный вариант отдельно.</li>
+<li><strong>Не бэкапьте Zerobyte самим собой.</strong> В примере в <code>/mydata</code> монтируется вся папка <code>/home/stilicho/docker</code>, а внутри нее лежит и <code>/home/stilicho/docker/zerobyte</code> - база самого Zerobyte и локальные репозитории (<code>/var/lib/zerobyte/repositories</code>). Если выбрать <code>/mydata</code> целиком, бэкап начнет копировать сам себя. Папку <code>zerobyte</code> стоит исключить или выбирать в задании конкретные подпапки.</li>
+<li><strong><code>/var/lib/zerobyte</code> должен лежать на локальном диске.</strong> Документация прямо предупреждает: не указывайте для него сетевую шару - будут проблемы с правами и сильно упадет производительность.</li>
+<li><strong>Не выставляйте Zerobyte в интернет.</strong> Авторы проекта настоятельно не рекомендуют делать его доступным снаружи. Traefik здесь нужен для HTTPS и доступа по поддомену внутри своей сети, а не для публикации наружу.</li>
+</ul>
+<hr>
+<h2 id="работа-с-приложением">Работа с приложением</h2>
+<p>Приложение достаточно легковесное, образ быстро скачивается и так же быстро разворачивается.
+После этого переходим по поддоменному имени, которое мы присвоили нашему приложению, в моем случае - это <code>zerobyte.stilicho.ru</code>.</p>
+<p>Нас приветствует окно первичной регистрации, где мы должны задать значения логина и пароля администратора, указать адрес электронной почты и скачать recovery key для восстановления из резервной копии (в случае если такое потребуется).</p>
+<p>Окно первоначальной регистрации</p>
+<p><img alt="Окно регистрации администратора Zerobyte" loading="lazy" decoding="async" width="2549" height="1275" src="/_astro/0.S1rF9h12_2rMuMc.webp"></p>
+<p>Окно для введения данных регистрации и опции для скачивания ключа восстановления</p>
+<p><img alt="Окно скачивания ключа восстановления (Recovery Key) с подтверждением пароля" loading="lazy" decoding="async" width="2553" height="1292" src="/_astro/1.DR3_YEsw_fc7Fp.webp"></p>
+<div class="phl-callout" data-callout="important">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Важно</span></div>
+<div class="phl-callout-content">
+<p>Recovery key - это файл <code>restic.pass</code>, то есть пароль restic, которым шифруются все репозитории, созданные в Zerobyte. Без него зашифрованные бэкапы не открыть. Храните его вне сервера, который бэкапите, например в менеджере паролей вроде <a href="https://prohomelab.com/posts/vaultwarden/">Vaultwarden</a>. Иначе ключ от сейфа окажется заперт в самом сейфе.</p>
+</div>
+</div>
+<p>Нас приветствует приятный ретро интерфейс (угловатый, как мой Мерседес W124) в красно-черных тонах. Если вы ситх, а вдобавок еще и любитель ретро, то этот интерфейс вам очень понравится.</p>
+<p><img alt="Главный экран Zerobyte: раздел Volumes, пока без единого тома" loading="lazy" decoding="async" width="2467" height="1244" src="/_astro/2.C8BIfIy4_1nfqRv.webp"></p>
+<p>Так как в начале статьи есть ссылка на мой видеообзор, то с вашего позволения ниже я ограничусь кратким описанием меню.</p>
+<p>Как я рассказывал в видео, пользователь должен настроить местоположение источника для бекапирования и целевой ресурс, куда будет осуществляться бекапирование.</p>
+<p>Соответственно, раздел <code>Volumes</code> - это «что мы будем бекапировать и местоположение файлов».</p>
+<p><img alt="Создание тома с выбором backend: Directory, NFS, SMB, WebDAV, SFTP, rclone" loading="lazy" decoding="async" width="2554" height="1251" src="/_astro/3.DlcKBMS4_Z170DSn.webp"></p>
+<p>Раздел <code>Repositories</code> отвечает за настройку целевого ресурса, куда мы все бекапируем.</p>
+<p><img alt="Создание репозитория с выбором backend: Local, S3, Cloudflare R2, Google Cloud Storage, Azure Blob Storage, REST Server, SFTP, rclone" loading="lazy" decoding="async" width="2544" height="1270" src="/_astro/4.B90OaUpo_1WTYu0.webp"></p>
+<p>Раздел <code>Backups</code> позволяет нам тонко настраивать работы по резервному копированию, в том числе, но не ограничиваясь: когда, во сколько начинать процедуру резервного копирования, сколько копий хранить и т.д.</p>
+<p><img alt="Создание задачи резервного копирования: имя, репозиторий, частота, время выполнения, пути для бекапа" loading="lazy" decoding="async" width="2526" height="1291" src="/_astro/5.DNhbhOWN_Zt9P30.webp"></p>
+<p>В разделе <code>Notifications</code> мы с вами настраиваем, каким образом и с помощью чего мы хотим получать уведомления.</p>
+<p><img alt="Создание уведомления с выбором типа: Email, Slack, Discord, Gotify, Ntfy, Pushover, Telegram, Webhook, Shoutrrr" loading="lazy" decoding="async" width="2541" height="1262" src="/_astro/6.u4jVetMF_t4Axi.webp"></p>
+<p>Ну и в самом низу настройки администрирования.</p>
+<p><img alt="Раздел Settings → Account: профиль пользователя, смена пароля, recovery key" loading="lazy" decoding="async" width="2471" height="1250" src="/_astro/7.BwTfgvla_1MLCHw.webp"></p>
+<hr>
+<h2 id="восстановление-данных">Восстановление данных</h2>
+<p>Бэкап, из которого ни разу не пробовали восстановиться, - это не бэкап, а надежда. Поэтому коротко о том, как достать данные обратно.</p>
+<h3 id="восстановление-через-интерфейс">Восстановление через интерфейс</h3>
+<p>Восстановление запускается из раздела <code>Backups</code>:</p>
+<ol>
+<li>Открываем задание, в котором лежат нужные данные.</li>
+<li>Выбираем snapshot за нужную дату.</li>
+<li>В файловом браузере отмечаем нужные файлы или папки. Если ничего не отмечать, восстановится весь просматриваемый snapshot.</li>
+<li>Выбираем, куда восстанавливать: <strong>Original location</strong> (на исходное место) или <strong>Custom location</strong> (в другую папку).</li>
+<li>Указываем, что делать с уже существующими файлами, и нажимаем <code>Restore</code>.</li>
+</ol>
+<p>Помимо восстановления на сервер, есть кнопка <strong>Download</strong> - она скачивает выбранный файл или папку прямо в браузер. Удобно, когда нужно быстро вытащить один-два файла себе на компьютер.</p>
+<p>Для Docker-сервисов надежнее восстанавливать не поверх рабочих файлов, а в отдельную папку (Custom location), проверить содержимое и уже потом переносить нужное. Это советует и сама документация Zerobyte. А если все-таки восстанавливаете на исходное место - сначала остановите контейнер, чьи файлы возвращаете, и убедитесь, что папка смонтирована в Zerobyte <strong>без</strong> <code>:ro</code>: бэкапить из read-only папки можно, а восстанавливать в нее - нет.</p>
+<h3 id="если-zerobyte-недоступен">Если Zerobyte недоступен</h3>
+<p>Здесь как раз выручает то, что Zerobyte - это надстройка над restic. Его репозитории - обычные репозитории restic, поэтому если сервер с Zerobyte умер, данные можно достать штатной утилитой <code>restic</code> с любой машины. Понадобятся только доступ к хранилищу и recovery key (<code>restic.pass</code>):</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># список snapshot-ов в репозитории</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">restic</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-r</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/path/to/repository</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--password-file</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">restic.pass</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">snapshots</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># восстановить последний snapshot в отдельную папку</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">restic</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-r</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/path/to/repository</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--password-file</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">restic.pass</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">restore</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">latest</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--target</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/tmp/restore</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="restic -r /path/to/repository --password-file restic.pass snapshotsrestic -r /path/to/repository --password-file restic.pass restore latest --target /tmp/restore"><div></div></button></div></figure></div>
+<p>Для S3, SFTP и других хранилищ вместо локального пути указывается адрес репозитория в формате restic (например, <code>s3:...</code> или <code>sftp:...</code>) и соответствующие доступы.</p>
+<h3 id="проверка-бэкапов">Проверка бэкапов</h3>
+<p>Раз в какое-то время стоит делать <strong>пробное восстановление</strong>: взять пару папок, восстановить их в отдельное место и убедиться, что внутри то, что нужно. Это пара минут, которые однажды сэкономят очень много нервов.</p><!--phl-feed-end--></div><footer class="phl-article-footer"><p class="phl-article-terms"><a class="phl-term-cat" href="/categories/backup/">Backup</a><a href="/tags/backup/">#Backup</a><a href="/tags/docker/">#Docker</a><a href="/tags/zerobyte/">#Zerobyte</a><a href="/tags/self-hosting/">#Self-Hosting</a></p><p class="phl-license">Лицензия: CC BY 4.0</p><div class="phl-share"><span class="phl-share-label">Поделиться</span><a href="https://t.me/share/url?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fzerobyte%2F&amp;text=Zerobyte%20-%20%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%B0%D1%82%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F%20%D1%80%D0%B5%D0%B7%D0%B5%D1%80%D0%B2%D0%BD%D0%BE%D0%B3%D0%BE%20%D0%BA%D0%BE%D0%BF%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F%20%D0%B4%D0%BB%D1%8F%20self-hosted%20%D0%B8%D0%BD%D1%84%D1%80%D0%B0%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%82%D1%83%D1%80%D1%8B" target="_blank" rel="noopener noreferrer" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://x.com/intent/post?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fzerobyte%2F&amp;text=Zerobyte%20-%20%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%B0%D1%82%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F%20%D1%80%D0%B5%D0%B7%D0%B5%D1%80%D0%B2%D0%BD%D0%BE%D0%B3%D0%BE%20%D0%BA%D0%BE%D0%BF%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F%20%D0%B4%D0%BB%D1%8F%20self-hosted%20%D0%B8%D0%BD%D1%84%D1%80%D0%B0%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%82%D1%83%D1%80%D1%8B" target="_blank" rel="noopener noreferrer" aria-label="X" title="X" style="--phl-brand-l:#000000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.234 10.162L22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299l-.929-1.329L3.076 1.56h3.182l5.965 8.532l.929 1.329l7.754 11.09h-3.182z"/></svg></a><a href="https://www.reddit.com/submit?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fzerobyte%2F&amp;title=Zerobyte%20-%20%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%B0%D1%82%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F%20%D1%80%D0%B5%D0%B7%D0%B5%D1%80%D0%B2%D0%BD%D0%BE%D0%B3%D0%BE%20%D0%BA%D0%BE%D0%BF%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F%20%D0%B4%D0%BB%D1%8F%20self-hosted%20%D0%B8%D0%BD%D1%84%D1%80%D0%B0%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%82%D1%83%D1%80%D1%8B" target="_blank" rel="noopener noreferrer" aria-label="Reddit" title="Reddit" style="--phl-brand-l:#ff4500;--phl-brand-d:#ff4500" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12c0 3.314 1.343 6.314 3.515 8.485l-2.286 2.286A.72.72 0 0 0 1.738 24H12c6.627 0 12-5.373 12-12S18.627 0 12 0m4.388 3.199a1.999 1.999 0 1 1-1.947 2.46v.002a2.37 2.37 0 0 0-2.032 2.341v.007c1.776.067 3.4.567 4.686 1.363a2.802 2.802 0 1 1 2.908 4.753c-.088 3.256-3.637 5.876-7.997 5.876c-4.361 0-7.905-2.617-7.998-5.87a2.8 2.8 0 0 1 1.189-5.34c.645 0 1.239.218 1.712.585c1.275-.79 2.881-1.291 4.64-1.365v-.01a3.23 3.23 0 0 1 2.88-3.207a2 2 0 0 1 1.959-1.595m-8.085 8.376c-.784 0-1.459.78-1.506 1.797s.64 1.429 1.426 1.429s1.371-.369 1.418-1.385s-.553-1.841-1.338-1.841m7.406 0c-.786 0-1.385.824-1.338 1.841s.634 1.385 1.418 1.385c.785 0 1.473-.413 1.426-1.429c-.046-1.017-.721-1.797-1.506-1.797m-3.703 4.013c-.974 0-1.907.048-2.77.135a.222.222 0 0 0-.183.305a3.2 3.2 0 0 0 2.953 1.964a3.2 3.2 0 0 0 2.953-1.964a.222.222 0 0 0-.184-.305a28 28 0 0 0-2.769-.135"/></svg></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fzerobyte%2F" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn" style="--phl-brand-l:#0a66c2;--phl-brand-d:#0b73da" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037c-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85c3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.06 2.06 0 0 1-2.063-2.065a2.064 2.064 0 1 1 2.063 2.065m1.782 13.019H3.555V9h3.564zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg></a><a href="mailto:?subject=Zerobyte%20-%20%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%B0%D1%82%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F%20%D1%80%D0%B5%D0%B7%D0%B5%D1%80%D0%B2%D0%BD%D0%BE%D0%B3%D0%BE%20%D0%BA%D0%BE%D0%BF%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F%20%D0%B4%D0%BB%D1%8F%20self-hosted%20%D0%B8%D0%BD%D1%84%D1%80%D0%B0%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%82%D1%83%D1%80%D1%8B&amp;body=https%3A%2F%2Fprohomelab.com%2Fposts%2Fzerobyte%2F" rel="noopener noreferrer" aria-label="Email" title="Email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a></div><section class="phl-author-box"><h2>Автор</h2><div class="phl-author"><img class="phl-author-image" src="/avatar-stilicho2011.webp" alt="" width="64" height="64" loading="lazy"><div class="phl-author-body"><p class="phl-author-name"><a href="/authors/stilicho2011/">Stilicho2011</a></p><p class="phl-author-bio">Пишу о homelab, self-hosting, автоматизации и open-source решениях</p><p class="phl-author-links"><a href="mailto:pavel@prohomelab.com" rel="me noopener" aria-label="email" title="email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener" target="_blank" aria-label="github" title="github" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a><a href="https://t.me/stilicho2011_videos" rel="me noopener" target="_blank" aria-label="telegram" title="telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://www.youtube.com/@prohomelab" rel="me noopener" target="_blank" aria-label="youtube" title="youtube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a><a href="https://boosty.to/stilicho2011" rel="me noopener" target="_blank" aria-label="boosty" title="boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></p></div></div></section></footer><nav class="phl-prevnext" aria-label="Предыдущая / Следующая"><a class="phl-prevnext-prev" href="/posts/duplicati/" rel="prev"><span class="phl-prevnext-label">Предыдущая</span><span class="phl-prevnext-title">Duplicati - резервное копирование с шифрованием для домашнего сервера</span></a><a class="phl-prevnext-next" href="/posts/proxmox-backup-server-4-2-installation-guide/" rel="next"><span class="phl-prevnext-label">Следующая</span><span class="phl-prevnext-title">Proxmox Backup Server 4.2.0 - установка, настройка и резервное копирование Proxmox VE</span></a></nav><section class="phl-related"><h2>Похожие статьи</h2><div class="phl-cards"><article class="phl-card"><a class="phl-card-cover" href="/posts/duplicati/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.7QzjGUHm_1PEu5X.webp" srcset="/_astro/featured.7QzjGUHm_1oVveo.webp 320w, /_astro/featured.7QzjGUHm_5QlVy.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Backup</span><time datetime="2026-04-17T00:00:00.000Z">17 апреля 2026 г.</time><span class="phl-card-video">▶ видео</span><span class="phl-views">34 просмотра</span></p><h3 class="phl-card-title"><a href="/posts/duplicati/">Duplicati - резервное копирование с шифрованием для домашнего сервера</a></h3><p class="phl-card-summary">Пошаговая инструкция по установке и настройке Duplicati для автоматических зашифрованных бэкапов на домашнем сервере или в облако</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/posts/proxmox-backup-server-4-2-installation-guide/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.39sdxuF4_1RStyK.webp" srcset="/_astro/featured.39sdxuF4_2o3fdb.webp 320w, /_astro/featured.39sdxuF4_14X5Ul.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Backup</span><time datetime="2026-05-31T00:00:00.000Z">31 мая 2026 г.</time><span class="phl-card-video">▶ видео</span><span class="phl-views">186 просмотров</span></p><h3 class="phl-card-title"><a href="/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server 4.2.0 - установка, настройка и резервное копирование Proxmox VE</a></h3><p class="phl-card-summary">Полная инструкция по установке и настройке Proxmox Backup Server 4.2.0 для создания надежной системы резервного копирования виртуальных машин и контейнеров Proxmox VE.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/posts/vinchin-backup-proxmox/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.BVSCczXn_Z1KrNL2.webp" srcset="/_astro/featured.BVSCczXn_1qBOFB.webp 320w, /_astro/featured.BVSCczXn_Zkcdfv.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1672" height="941"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Backup</span><time datetime="2026-10-05T00:00:00.000Z">5 октября 2026 г.</time><span class="phl-views">181 просмотр</span></p><h3 class="phl-card-title"><a href="/posts/vinchin-backup-proxmox/">Vinchin Backup &amp; Recovery V9.0 SP3 - обзор и практика на Proxmox VE</a></h3><p class="phl-card-summary">Разбираю Vinchin Backup &amp; Recovery V9.0 SP3 - платформонезависимое резервное копирование и миграцию для смешанной и импортонезависимой инфраструктуры: архитектуру, установку на голое железо, поддержку Proxmox VE и российских платформ виртуализации (zVirt, РЕД, ROSA, HOSTVM), а также подробное сравнение с Proxmox Backup Server.</p></div></article></div></section></article></div><script type="module" src="/_astro/MermaidLoader.astro_astro_type_script_index_0_lang.D0cD853-.js"></script><script type="module">document.querySelectorAll(`.phl-yt`).forEach(e=>{let t=e.querySelector(`.phl-yt-link`);t?.addEventListener(`click`,n=>{n.preventDefault();let r=e.dataset.ytId,i=e.dataset.ytParams?`&${e.dataset.ytParams}`:``,a=document.createElement(`iframe`);a.src=`https://www.youtube-nocookie.com/embed/${r}?autoplay=1${i}`,a.title=t.getAttribute(`aria-label`)??`YouTube video`,a.allow=`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share`,a.allowFullscreen=!0,e.replaceChildren(a)})});var e=matchMedia(`(prefers-reduced-motion: reduce)`).matches;document.querySelectorAll(`.phl-carousel`).forEach(t=>{let n=t.querySelector(`.phl-carousel-track`),r=n?[...n.children]:[];if(!n||r.length<2)return;let i=t=>{let i=(t+r.length)%r.length;n.scrollTo({left:r[i].offsetLeft-n.offsetLeft,behavior:e?`auto`:`smooth`})},a=()=>Math.round(n.scrollLeft/n.clientWidth),o=document.createElement(`div`);o.className=`phl-carousel-nav`,o.innerHTML=`<button type="button" class="phl-carousel-prev" aria-label="Previous">‹</button><span class="phl-carousel-dots"></span><button type="button" class="phl-carousel-next" aria-label="Next">›</button>`;let s=o.querySelector(`.phl-carousel-dots`);r.forEach((e,t)=>{let n=document.createElement(`button`);n.type=`button`,n.setAttribute(`aria-label`,`${t+1} / ${r.length}`),n.addEventListener(`click`,()=>i(t)),s.appendChild(n)});let c=()=>[...s.children].forEach((e,t)=>e.toggleAttribute(`aria-current`,t===a()));n.addEventListener(`scroll`,()=>requestAnimationFrame(c),{passive:!0}),o.querySelector(`.phl-carousel-prev`).addEventListener(`click`,()=>i(a()-1)),o.querySelector(`.phl-carousel-next`).addEventListener(`click`,()=>i(a()+1)),t.appendChild(o),c();let l=Number(t.dataset.interval);if(l>0&&!e){let e=!1;t.addEventListener(`mouseenter`,()=>e=!0),t.addEventListener(`mouseleave`,()=>e=!1),t.addEventListener(`focusin`,()=>e=!0),setInterval(()=>!e&&i(a()+1),Math.max(l,1500))}});var t=e=>`phl-tabs:${e}`,n=[...document.querySelectorAll(`.phl-tabs`)],r=(e,i,a=!0)=>{let o=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!o.some(e=>e.dataset.label===i))return;o.forEach(e=>e.hidden=e.dataset.label!==i),e.querySelectorAll(`:scope > .phl-tablist button`).forEach(e=>e.setAttribute(`aria-selected`,String(e.dataset.label===i)));let s=e.dataset.group;if(a&&s){try{localStorage.setItem(t(s),i)}catch{}n.filter(t=>t!==e&&t.dataset.group===s).forEach(e=>r(e,i,!1))}};n.forEach((e,n)=>{let i=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!i.length)return;let a=document.createElement(`div`);a.className=`phl-tablist`,a.setAttribute(`role`,`tablist`),i.forEach((t,o)=>{let s=document.createElement(`button`);s.type=`button`,s.setAttribute(`role`,`tab`),s.id=`phl-tab-${n}-${o}`,s.dataset.label=t.dataset.label,s.innerHTML=t.querySelector(`.phl-tab-label`)?.innerHTML??t.dataset.label??``,t.setAttribute(`role`,`tabpanel`),t.setAttribute(`aria-labelledby`,s.id),s.addEventListener(`click`,()=>r(e,t.dataset.label)),s.addEventListener(`keydown`,e=>{let t=e.key===`ArrowRight`?1:e.key===`ArrowLeft`?-1:0;if(!t)return;let n=a.children[(o+t+i.length)%i.length];n.focus(),n.click()}),a.appendChild(s)}),e.prepend(a),e.classList.add(`phl-tabs-ready`);let o=null;try{o=e.dataset.group?localStorage.getItem(t(e.dataset.group)):null}catch{}r(e,o??e.dataset.default??i[0].dataset.label,!1)}),document.querySelectorAll(`.phl-accordion[data-mode="collapse"]`).forEach(e=>{let t=[...e.querySelectorAll(`:scope > .phl-accordion-item`)];t.forEach(e=>e.addEventListener(`toggle`,()=>e.open&&t.forEach(t=>t!==e&&(t.open=!1))))});var i=document.querySelectorAll(`.phl-prose img:not(.nozoom)`);if(i.length){let e=document.createElement(`dialog`);e.className=`phl-lightbox`,e.innerHTML=`<img alt=""><button type="button" class="phl-lightbox-close" aria-label="Close">×</button>`,document.body.appendChild(e);let t=e.querySelector(`img`);e.addEventListener(`click`,()=>e.close()),i.forEach(n=>{n.closest(`a, .phl-yt, .phl-repo`)||(n.classList.add(`phl-zoomable`),n.addEventListener(`click`,()=>{t.src=n.currentSrc||n.src,t.alt=n.alt,e.showModal()}))})}</script><script type="module" src="/_astro/ChartTypeitClient.astro_astro_type_script_index_0_lang.CjHU9QBU.js"></script><script>(function(){const smartToc = true;
+const tableHint = "Таблицу можно прокрутить вбок";
+const wideBlocks = true;
+const wideCode = false;
+
+  // TOC: collapsed on phones, open from 768 px (decision 0007).
+  // Follows width changes too (rotating a tablet, resizing the window).
+  const toc = document.querySelector('[data-phl-toc]');
+  const wide = matchMedia('(min-width: 768px)');
+  const syncToc = () => toc && toc.toggleAttribute('open', wide.matches);
+  syncToc();
+  wide.addEventListener('change', syncToc);
+
+  // Current section in the TOC.
+  if (toc && smartToc && 'IntersectionObserver' in window) {
+    const links = new Map([...toc.querySelectorAll('[data-phl-toc-link]')].map((a) => [a.dataset.phlTocLink, a]));
+    const heads = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+    const visible = new Set();
+    const mark = () => {
+      const current = heads.find((h) => visible.has(h.id)) ?? [...heads].reverse().find((h) => h.getBoundingClientRect().top < 120);
+      links.forEach((a, id) => a.toggleAttribute('aria-current', current?.id === id));
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id)));
+        mark();
+      },
+      { rootMargin: '0px 0px -70% 0px' },
+    );
+    heads.forEach((h) => io.observe(h));
+  }
+
+  // Wide blocks: tables and screenshots (and code, with wideCode) wider than the text column get data-phl-wide.
+  // Measured against the column width itself, not the window, so the result is the same on a
+  // phone and a desktop. The CSS lets them grow only on large screens (styles/layout.css).
+  if (wideBlocks) {
+    const root = document.documentElement;
+    const raw = getComputedStyle(root).getPropertyValue('--phl-content-width').trim();
+    const rem = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const column = raw.endsWith('rem') ? parseFloat(raw) * rem : parseFloat(raw) || 736;
+    // With the info column (from 1680 px) a block next to it must not grow over it:
+    // such blocks get data-phl-wide="beside-info" and stay in the text column.
+    const info = document.querySelector('.phl-article-info');
+    const large = matchMedia('(min-width: 1680px)');
+    const wideEls = new Set();
+    const classify = () => {
+      const bottom = info && large.matches ? info.getBoundingClientRect().bottom + 24 : -Infinity;
+      // Top to bottom: a block that does not grow keeps the ones below in place, a growing one
+      // only pushes them further down, so one pass is stable.
+      [...wideEls].sort((x, y) => (x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)).forEach((el) => {
+        const value = el.getBoundingClientRect().top < bottom ? 'beside-info' : '';
+        if (el.getAttribute('data-phl-wide') !== value) el.setAttribute('data-phl-wide', value);
+      });
+    };
+    let queued = false;
+    const queue = () => {
+      if (queued) return;
+      queued = true;
+      // A timer, not requestAnimationFrame: that one never fires in hidden tabs and some previews.
+      setTimeout(() => { queued = false; classify(); }, 50);
+    };
+    const mark = (el) => {
+      if (!el || wideEls.has(el)) return;
+      el.setAttribute('data-phl-wide', 'beside-info');
+      wideEls.add(el);
+      queue();
+    };
+    if (info) {
+      // Image loads, an opened series list, a resized window all move blocks.
+      if ('ResizeObserver' in window) new ResizeObserver(queue).observe(document.querySelector('.phl-article') ?? document.body);
+      addEventListener('resize', queue);
+    }
+    if (wideCode) document.querySelectorAll('.phl-prose .expressive-code').forEach((ec) => {
+      const pre = ec.querySelector('pre');
+      if (pre && pre.scrollWidth > column + 1) mark(ec);
+    });
+    document.querySelectorAll('.phl-prose table').forEach((t) => {
+      if (t.scrollWidth > column + 1) mark(t);
+    });
+    // A screenshot: an image clearly larger than the column, alone in its paragraph or figure.
+    const block = (img) => {
+      const fig = img.closest('.phl-prose figure');
+      if (fig) return fig;
+      const p = img.closest('.phl-prose > p');
+      return p && p.querySelectorAll('img').length === 1 && !p.textContent.trim() ? p : null;
+    };
+    const check = (img) => {
+      const w = Number(img.getAttribute('width')) || img.naturalWidth;
+      if (w >= column * 1.25 && !img.closest('.phl-gallery, .phl-carousel, .phl-card, .phl-repo')) mark(block(img));
+    };
+    document.querySelectorAll('.phl-prose img').forEach((img) => {
+      if (img.getAttribute('width') || img.complete) check(img);
+      else img.addEventListener('load', () => check(img), { once: true });
+    });
+  }
+
+  // Wide tables: say that they scroll, and mark the side where columns are hidden.
+  document.querySelectorAll('.phl-prose table').forEach((table) => {
+    const hint = document.createElement('p');
+    hint.className = 'phl-table-hint';
+    hint.textContent = tableHint;
+    hint.hidden = true;
+    table.before(hint);
+    table.tabIndex = 0;
+    const update = () => {
+      const hidden = table.scrollWidth - table.clientWidth > 1;
+      const pos = Math.abs(table.scrollLeft);
+      const atStart = pos < 2;
+      const atEnd = pos >= table.scrollWidth - table.clientWidth - 2;
+      const sides = [];
+      if (hidden && !atStart) sides.push('start');
+      if (hidden && !atEnd) sides.push('end');
+      table.dataset.phlScroll = sides.join(' ');
+      hint.hidden = !hidden;
+    };
+    table.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  });
+
+  // Reading progress.
+  const bar = document.querySelector('.phl-progress span');
+  const article = document.querySelector('.phl-article');
+  if (bar && article) {
+    const update = () => {
+      const r = article.getBoundingClientRect();
+      const total = r.height - innerHeight;
+      const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 1;
+      bar.style.transform = `scaleX(${p})`;
+    };
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+
+  // Reading mode: hides everything but the text; remembered; Escape exits.
+  const zen = document.querySelector('[data-phl-zen]');
+  if (zen) {
+    const set = (on) => {
+      document.documentElement.classList.toggle('phl-zen', on);
+      zen.setAttribute('aria-pressed', String(on));
+      zen.textContent = on ? zen.dataset.off : zen.dataset.on;
+      try { localStorage.setItem('phl-zen', on ? '1' : ''); } catch (e) {}
+    };
+    let saved = false;
+    try { saved = localStorage.getItem('phl-zen') === '1'; } catch (e) {}
+    if (saved) set(true);
+    zen.addEventListener('click', () => set(!document.documentElement.classList.contains('phl-zen')));
+    addEventListener('keydown', (e) => e.key === 'Escape' && document.documentElement.classList.contains('phl-zen') && set(false));
+  }
+})();</script></main><footer class="phl-footer"><div class="phl-footer-inner"><nav class="phl-footer-nav" aria-label="Меню в подвале"><ul><li><a href="/tools/traefik-compose/">Генератор docker-compose</a></li><li><a href="/tools/compose-quadlet/">Compose в Podman Quadlet</a></li><li><a href="/tools/proxmox-quorum/">Кворум Proxmox</a></li><li><a href="/tools/opnsense-vlan-planner/">Планировщик VLAN</a></li><li><a href="/tools/rackplan/">Планировщик стойки</a></li><li><a href="/privacy/">Политика конфиденциальности</a></li></ul></nav><ul class="phl-social-links phl-footer-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><div class="phl-footer-meta"><p><span>© 2025-2026 Stilicho2011. All Rights Reserved.</span><span class="phl-footer-credit">Тема: <a href="https://prohomelab.com">ProHomeLab</a></span><button type="button" class="phl-consent-open" data-phl-consent-open hidden>Настройки аналитики</button></p><div class="phl-footer-tools"><a class="phl-to-top" href="#top"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l7-7l7 7m-7 7V5"/></svg>Наверх</a></div></div></div></footer><div class="phl-consent" data-phl-consent data-mode="opt-in" role="region" aria-label="Аналитика" hidden><p><span data-phl-consent-text>Разрешить обезличенную статистику посещений?</span> <a href="/privacy/" data-phl-consent-policy>Подробнее</a></p><div class="phl-consent-actions"><button type="button" data-phl-consent-choice="granted">Разрешить</button><button type="button" data-phl-consent-choice="denied">Отказаться</button></div></div><script>(function(){const TEXTS = {"ru":{"lang":"ru-RU","label":"Аналитика","text":"Разрешить обезличенную статистику посещений?","policy":"Подробнее","href":"/privacy/","granted":"Разрешить","denied":"Отказаться","seen":"Понятно"},"en":{"lang":"en","label":"Analytics","text":"Allow anonymous visit statistics?","policy":"Details","href":"/en/privacy/","granted":"Accept","denied":"Decline","seen":"OK"}};
+const PAGE = "ru";
+
+      (() => {
+        const box = document.querySelector('[data-phl-consent]');
+        if (!box) return;
+        const key = 'phl-consent';
+        let saved = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        const texts = TEXTS;
+        const reader = window.__phlReaderLocale && window.__phlReaderLocale();
+        const tx = reader && reader !== PAGE && texts[reader];
+        if (tx) {
+          box.lang = tx.lang;
+          box.setAttribute('aria-label', tx.label);
+          box.querySelector('[data-phl-consent-text]').textContent = tx.text;
+          const pol = box.querySelector('[data-phl-consent-policy]');
+          if (pol && tx.href) { pol.textContent = tx.policy; pol.href = tx.href; }
+          box.querySelectorAll('[data-phl-consent-choice]').forEach((b) => { b.textContent = tx[b.dataset.phlConsentChoice] || b.textContent; });
+        }
+        const show = () => { box.hidden = false; };
+        if (!saved) show();
+        box.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-phl-consent-choice]');
+          if (!b) return;
+          const value = b.dataset.phlConsentChoice;
+          try { localStorage.setItem(key, value); } catch (e) {}
+          box.hidden = true;
+          if (value === 'granted' && window.__phlAnalytics) window.__phlAnalytics();
+          // Declining after accepting: counters already loaded on this page stop with the next page.
+        });
+        document.querySelectorAll('[data-phl-consent-open]').forEach((el) => {
+          el.hidden = false;
+          el.addEventListener('click', (e) => { e.preventDefault(); show(); box.querySelector('button')?.focus(); });
+        });
+      })();
+    })();</script></body></html>

@@ -1,0 +1,648 @@
+<!DOCTYPE html><html lang="ru-RU" dir="ltr" data-scheme="prohomelab" data-theme="light" data-mode="system" data-default-mode="system" data-mode-switch="1" data-fluid="1" data-social-colors="hover" style="--phl-content-width: 48rem"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){const cur = "ru";
+const alts = {"en":"/en/posts/smartape-to-github-pages-migration/"};
+
+      try {
+        const p = localStorage.getItem('phl-lang');
+        if (p && p !== cur && alts[p]) location.replace(alts[p] + location.hash);
+      } catch (e) {}
+    })();</script><title>Переезд с shared-хостинга на GitHub Pages - как перенести сайт на Hugo, не сломав ни одной ссылки и не вылетев из индекса Google и Яндекса | ProHomeLab</title><meta name="description" content="Пошаговая инструкция для новичков: переносим ProHomeLab со smartape на GitHub Pages поверх уже настроенного пайплайна Obsidian → Forgejo → Hugo, сохраняя все URL и позиции в поисковых системах."><link rel="canonical" href="https://prohomelab.com/posts/smartape-to-github-pages-migration/"><link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/smartape-to-github-pages-migration/"><link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/smartape-to-github-pages-migration/"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32"><link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"><link rel="manifest" href="/site.webmanifest"><meta property="og:site_name" content="ProHomeLab"><meta property="og:title" content="Переезд с shared-хостинга на GitHub Pages - как перенести сайт на Hugo, не сломав ни одной ссылки и не вылетев из индекса Google и Яндекса"><meta property="og:description" content="Пошаговая инструкция для новичков: переносим ProHomeLab со smartape на GitHub Pages поверх уже настроенного пайплайна Obsidian → Forgejo → Hugo, сохраняя все URL и позиции в поисковых системах."><meta property="og:type" content="article"><meta property="og:url" content="https://prohomelab.com/posts/smartape-to-github-pages-migration/"><meta property="og:locale" content="ru_RU"><meta property="og:image" content="https://prohomelab.com/_astro/featured.DsqyseSe_Z2exnCu.jpg"><meta property="og:image:alt" content="Переезд с shared-хостинга на GitHub Pages - как перенести сайт на Hugo, не сломав ни одной ссылки и не вылетев из индекса Google и Яндекса"><meta property="article:published_time" content="2026-10-01T00:00:00.000Z"><meta property="article:modified_time" content="2026-11-08T00:00:00.000Z"><meta property="article:section" content="Self-Hosting"><meta property="article:tag" content="Hugo"><meta property="article:tag" content="github-pages"><meta property="article:tag" content="cloudflare"><meta property="article:tag" content="seo"><meta property="article:tag" content="forgejo"><meta property="article:tag" content="Self-Hosting"><meta name="twitter:card" content="summary_large_image"><meta name="yandex-verification" content="103870927"><link rel="alternate" type="application/rss+xml" title="ProHomeLab" href="https://prohomelab.com/index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","articleSection":"Self-Hosting","name":"Переезд с shared-хостинга на GitHub Pages - как перенести сайт на Hugo, не сломав ни одной ссылки и не вылетев из индекса Google и Яндекса","headline":"Переезд с shared-хостинга на GitHub Pages - как перенести сайт на Hugo, не сломав ни одной ссылки и не вылетев из индекса Google и Яндекса","description":"Пошаговая инструкция для новичков: переносим ProHomeLab со smartape на GitHub Pages поверх уже настроенного пайплайна Obsidian → Forgejo → Hugo, сохраняя все URL и позиции в поисковых системах.","inLanguage":"ru-RU","url":"https://prohomelab.com/posts/smartape-to-github-pages-migration/","author":[{"@type":"Person","name":"Stilicho2011","image":"https://prohomelab.com/avatar-stilicho2011.webp","url":"https://prohomelab.com","sameAs":["https://github.com/stilicho2011/ubuntu_rep","https://t.me/stilicho2011_videos","https://www.youtube.com/@prohomelab","https://boosty.to/stilicho2011"]}],"copyrightYear":"2026","datePublished":"2026-10-01T00:00:00.000Z","dateModified":"2026-11-08T00:00:00.000Z","image":"https://prohomelab.com/_astro/featured.DsqyseSe_Z2exnCu.jpg","keywords":["Hugo","github-pages","cloudflare","seo","forgejo","Self-Hosting"],"mainEntityOfPage":"https://prohomelab.com/posts/smartape-to-github-pages-migration/","wordCount":2416}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Главная","item":"https://prohomelab.com/"},{"@type":"ListItem","position":2,"name":"Self-Hosting","item":"https://prohomelab.com/posts/selfhosting/"},{"@type":"ListItem","position":3,"name":"Переезд с shared-хостинга на GitHub Pages - как перенести сайт на Hugo, не сломав ни одной ссылки и не вылетев из индекса Google и Яндекса","item":"https://prohomelab.com/posts/smartape-to-github-pages-migration/"}]}</script><script>
+      // Light or dark before first paint, so a dark page never flashes white.
+      // data-mode is the choice (system, light, dark), data-theme the result (light or dark).
+      (() => {
+        const d = document.documentElement;
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        let mode = d.dataset.defaultMode || 'system';
+        if (d.dataset.modeSwitch) {
+          try {
+            const saved = localStorage.getItem('phl-theme');
+            if (saved === 'system' || saved === 'light' || saved === 'dark') mode = saved;
+          } catch (e) {}
+        }
+        const apply = () => {
+          d.dataset.mode = mode;
+          d.dataset.theme = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode;
+        };
+        apply();
+        media.addEventListener('change', () => mode === 'system' && apply());
+        window.__phlSetMode = (next) => {
+          mode = next;
+          try {
+            localStorage.setItem('phl-theme', next);
+          } catch (e) {}
+          apply();
+        };
+      })();
+    </script><style>:root:root{--phl-font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-heading:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-mono:'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace}</style><script>(function(){const ym = {"id":"103870927","webvisor":true,"clickmap":true,"trackLinks":true,"accurateTrackBounce":true,"ecommerce":"dataLayer"};
+const ga = {"id":"G-VRHQGK81S9"};
+const umami = {"src":"https://stats.prohomelab.com/script.js","websiteId":"31518a04-7f00-4d16-99f3-759c057c7bf2","recorder":true,"recorderSrc":"https://stats.prohomelab.com/recorder.js"};
+const consent = "opt-in";
+
+      (() => {
+        let started = false;
+        const add = (src, attrs = {}) => {
+          const s = document.createElement('script');
+          s.async = true;
+          s.src = src;
+          for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+          document.head.appendChild(s);
+        };
+        window.__phlAnalytics = () => {
+          if (started) return;
+          started = true;
+          if (ym) {
+            window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+            window.ym.l = Date.now();
+            add(`https://mc.yandex.ru/metrika/tag.js?id=${ym.id}`);
+            const opts = { ssr: true, webvisor: ym.webvisor, clickmap: ym.clickmap, accurateTrackBounce: ym.accurateTrackBounce, trackLinks: ym.trackLinks };
+            if (ym.ecommerce) opts.ecommerce = ym.ecommerce;
+            window.ym(Number(ym.id), 'init', opts);
+          }
+          if (ga) {
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ga.id);
+            add(`https://www.googletagmanager.com/gtag/js?id=${ga.id}`);
+          }
+          if (umami) {
+            const attrs = { 'data-website-id': umami.websiteId };
+            if (umami.domains) attrs['data-domains'] = umami.domains;
+            add(umami.src, { ...attrs, defer: '' });
+            if (umami.recorder) add(umami.recorderSrc, { ...attrs, defer: '' });
+          }
+        };
+        let choice = null;
+        try { choice = localStorage.getItem('phl-consent'); } catch (e) {}
+        if (consent !== 'opt-in' || choice === 'granted') window.__phlAnalytics();
+      })();
+    })();</script><link rel="stylesheet" href="/_astro/Base.CNmgq2nC.css"></head><body id="top"><template id="phl-lang-en"><div class="phl-langbar" lang="en" role="region" aria-label="This page is available in English"><div class="phl-langbar-inner"><p>This page is available in English</p><div class="phl-langbar-actions"><a href="/en/posts/smartape-to-github-pages-migration/" hreflang="en" data-phl-lang="en">Switch</a><button type="button" data-phl-lang-stay>Stay here</button></div></div></div></template><script>(function(){const data = {"cur":"ru","alts":{"en":"/en/posts/smartape-to-github-pages-migration/"},"match":{"ru":["ru","uk","be","kk"],"en":["en"]},"byLang":{"ru-ru":"ru","en":"en"},"fallback":"en"};
+
+        (() => {
+          const store = (v) => { try { localStorage.setItem('phl-lang', v); } catch (e) {} };
+          // An explicit choice anywhere (language switcher, the bar) is remembered.
+          document.addEventListener('click', (e) => {
+            const go = e.target.closest('[data-phl-lang]');
+            if (go) return store(go.dataset.phlLang);
+            const link = e.target.closest('a[hreflang]');
+            const key = link && data.byLang[link.getAttribute('hreflang').toLowerCase()];
+            if (key) return store(key);
+            const stay = e.target.closest('[data-phl-lang-stay]');
+            if (stay) { store(data.cur); stay.closest('.phl-langbar')?.remove(); }
+          });
+          let saved = null;
+          try { saved = localStorage.getItem('phl-lang'); } catch (e) {}
+          const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''])
+            .map((l) => String(l).toLowerCase().split('-')[0]);
+          const fits = (key, code) => (data.match[key] || []).includes(code);
+          // The language this reader reads, for other parts of the page (the analytics banner):
+          // the stored choice, else the page language if the browser fits it, else the first
+          // locale the browser fits, else the fallback, else the page language.
+          window.__phlReaderLocale = () => {
+            if (saved && data.match[saved]) return saved;
+            if (list.some((code) => fits(data.cur, code))) return data.cur;
+            for (const code of list) {
+              const key = Object.keys(data.match).find((k) => fits(k, code));
+              if (key) return key;
+            }
+            return data.fallback || data.cur;
+          };
+          if (saved || !Object.keys(data.alts).length) return;
+          if (list.some((code) => fits(data.cur, code))) return;
+          let target = null;
+          for (const code of list) {
+            target = Object.keys(data.alts).find((key) => fits(key, code)) || null;
+            if (target) break;
+          }
+          if (!target && data.fallback && data.fallback !== data.cur && data.alts[data.fallback]) target = data.fallback;
+          const tpl = target && document.getElementById('phl-lang-' + target);
+          if (tpl) document.body.prepend(tpl.content.cloneNode(true));
+        })();
+      })();</script><a class="phl-skip" href="#phl-content">Перейти к тексту</a><header class="phl-header phl-header-sticky"><div class="phl-header-inner"><a class="phl-brand" href="/"><img class="phl-logo phl-logo-light" src="/prohomelab-mark.svg" alt><span class="phl-brand-name">ProHomeLab</span><span class="phl-brand-point" aria-hidden="true"></span></a><nav class="phl-nav" aria-label="Главное меню"><ul class="phl-nav-list"><li><a href="/blog/">Все статьи</a></li><li><details class="phl-dropdown" data-phl-dropdown><summary aria-current="true">Темы<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul class="phl-dropdown-panel"><li><a href="/posts/">Темы</a></li><li><a href="/posts/authentik/">Authentik</a></li><li><a href="/posts/backup/">Backup</a></li><li><a href="/posts/crowdsec/">Crowdsec</a></li><li><a href="/posts/docker-ui/">Docker UI</a></li><li><a href="/posts/hardware/">Hardware</a></li><li><a href="/posts/media-servers/">Media Servers</a></li><li><a href="/posts/network/">Network</a></li><li><a href="/posts/news/">Новости</a></li><li><a href="/posts/nextcloud/">Nextcloud</a></li><li><a href="/posts/opnsense/">OPNsense</a></li><li><a href="/posts/pkm/">PKM</a></li><li><a href="/posts/podman/">Podman</a></li><li><a href="/posts/proxmox/">Proxmox</a></li><li><a href="/posts/selfhosting/">Self-hosting</a></li><li><a href="/posts/single-sign-on/">Single Sign On</a></li><li><a href="/posts/terraform/">Terraform</a></li><li><a href="/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/categories/">Категории</a></li><li><a href="/tags/">Теги</a></li><li><a href="/tools/">Инструменты</a></li><li><a href="/about/">О проекте</a></li></ul></nav><div class="phl-header-tools phl-has-mobile-menu"><button type="button" class="phl-search-button" data-phl-search-open aria-label="Поиск" title="Поиск" hidden><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg></button><dialog class="phl-search" data-phl-search aria-label="Поиск"><div class="phl-search-box"><div class="phl-search-field"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg><input type="search" data-phl-search-input placeholder="Поиск по статьям" aria-label="Поиск по статьям" autocomplete="off" spellcheck="false"><button type="button" class="phl-search-close" data-phl-search-close aria-label="Закрыть"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></button></div><p class="phl-search-status" data-phl-search-status role="status" aria-live="polite"></p><ol class="phl-search-results" data-phl-search-results></ol><button type="button" class="phl-search-more" data-phl-search-more hidden>Показать еще</button></div></dialog><script>(function(){const options = {"shortcut":true,"pageSize":8,"text":{"noResults":"Ничего не найдено","loading":"Ищу","unavailable":"Поиск работает на собранном сайте (astro build)","more":"Показать еще"}};
+
+  (() => {
+    const open = document.querySelector('[data-phl-search-open]');
+    const dialog = document.querySelector('[data-phl-search]');
+    if (!open || !dialog || typeof dialog.showModal !== 'function') return;
+    const input = dialog.querySelector('[data-phl-search-input]');
+    const list = dialog.querySelector('[data-phl-search-results]');
+    const status = dialog.querySelector('[data-phl-search-status]');
+    const more = dialog.querySelector('[data-phl-search-more]');
+    const t = options.text;
+    let pagefind = null;
+    let failed = false;
+    let results = [];
+    let shown = 0;
+    let query = 0;
+    open.hidden = false;
+
+    const load = async () => {
+      if (pagefind || failed) return pagefind;
+      try {
+        pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+        await pagefind.init();
+      } catch (e) {
+        failed = true;
+        pagefind = null;
+      }
+      return pagefind;
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const render = async () => {
+      const page = results.slice(shown, shown + options.pageSize);
+      const id = query;
+      const data = await Promise.all(page.map((r) => r.data()));
+      if (id !== query) return;
+      for (const d of data) {
+        const li = document.createElement('li');
+        const sub = (d.sub_results || []).filter((x) => x.url !== d.url).slice(0, 2);
+        li.innerHTML =
+          `<a class="phl-search-hit" href="${esc(d.url)}"><span class="phl-search-title">${esc(d.meta?.title || d.url)}</span>` +
+          `<span class="phl-search-excerpt">${d.excerpt || ''}</span></a>` +
+          (sub.length
+            ? `<ul class="phl-search-sub">${sub.map((x) => `<li><a href="${esc(x.url)}">${esc(x.title)}</a></li>`).join('')}</ul>`
+            : '');
+        list.appendChild(li);
+      }
+      shown += page.length;
+      more.hidden = shown >= results.length;
+    };
+    const run = async () => {
+      const term = input.value.trim();
+      const id = ++query;
+      list.innerHTML = '';
+      more.hidden = true;
+      shown = 0;
+      if (!term) { status.textContent = ''; return; }
+      status.textContent = t.loading;
+      const pf = await load();
+      if (id !== query) return;
+      if (!pf) { status.textContent = t.unavailable; return; }
+      const res = await pf.debouncedSearch(term, {}, 200);
+      if (res === null || id !== query) return;
+      results = res.results;
+      status.textContent = results.length ? '' : t.noResults;
+      await render();
+    };
+
+    const show = () => {
+      dialog.showModal();
+      input.focus();
+      input.select();
+      load();
+    };
+    open.addEventListener('click', show);
+    dialog.querySelector('[data-phl-search-close]').addEventListener('click', () => dialog.close());
+    // A click on the backdrop (outside the box) closes the dialog.
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    input.addEventListener('input', run);
+    more.addEventListener('click', render);
+    // Enter opens the first result.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = list.querySelector('a');
+        if (first) { e.preventDefault(); location.href = first.href; }
+      }
+    });
+    if (options.shortcut) {
+      document.addEventListener('keydown', (e) => {
+        if (dialog.open) return;
+        const typing = /^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable;
+        if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          show();
+        }
+      });
+    }
+  })();
+})();</script><ul class="phl-social-links phl-header-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><a class="phl-lang-link" href="/en/posts/smartape-to-github-pages-migration/" hreflang="en" lang="en" title="Язык" data-phl-lang="en">EN</a><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;Как в системе&quot;,&quot;light&quot;:&quot;Светлое&quot;,&quot;dark&quot;:&quot;Темное&quot;}" data-title="Оформление" aria-label="Оформление" title="Оформление"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script><details class="phl-mobile-menu" data-phl-dropdown><summary aria-label="Меню"><span class="phl-mobile-open"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"/></svg></span><span class="phl-mobile-close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></span></summary><nav class="phl-mobile-panel" aria-label="Главное меню"><ul class="phl-mobile-list"><li><a href="/blog/">Все статьи</a></li><li><details><summary>Темы<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul><li><a href="/posts/">Темы</a></li><li><a href="/posts/authentik/">Authentik</a></li><li><a href="/posts/backup/">Backup</a></li><li><a href="/posts/crowdsec/">Crowdsec</a></li><li><a href="/posts/docker-ui/">Docker UI</a></li><li><a href="/posts/hardware/">Hardware</a></li><li><a href="/posts/media-servers/">Media Servers</a></li><li><a href="/posts/network/">Network</a></li><li><a href="/posts/news/">Новости</a></li><li><a href="/posts/nextcloud/">Nextcloud</a></li><li><a href="/posts/opnsense/">OPNsense</a></li><li><a href="/posts/pkm/">PKM</a></li><li><a href="/posts/podman/">Podman</a></li><li><a href="/posts/proxmox/">Proxmox</a></li><li><a href="/posts/selfhosting/">Self-hosting</a></li><li><a href="/posts/single-sign-on/">Single Sign On</a></li><li><a href="/posts/terraform/">Terraform</a></li><li><a href="/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/categories/">Категории</a></li><li><a href="/tags/">Теги</a></li><li><a href="/tools/">Инструменты</a></li><li><a href="/about/">О проекте</a></li></ul><ul class="phl-social-links phl-mobile-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><p class="phl-mobile-mode"><span>Оформление</span><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;Как в системе&quot;,&quot;light&quot;:&quot;Светлое&quot;,&quot;dark&quot;:&quot;Темное&quot;}" data-title="Оформление" aria-label="Оформление" title="Оформление"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script></p></nav></details></div></div></header><script>
+  // Close open menus on outside click, on Escape, and when another one opens.
+  (() => {
+    if (window.__phlDropdowns) return;
+    window.__phlDropdowns = true;
+    const all = () => document.querySelectorAll('[data-phl-dropdown][open]');
+    document.addEventListener('click', (e) => {
+      all().forEach((d) => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      all().forEach((d) => {
+        d.removeAttribute('open');
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener(
+      'toggle',
+      (e) => {
+        const d = e.target;
+        if (!d.matches?.('[data-phl-dropdown]') || !d.open) return;
+        all().forEach((o) => o !== d && !o.contains(d) && o.removeAttribute('open'));
+      },
+      true,
+    );
+  })();
+</script><main class="phl-main" id="phl-content" tabindex="-1"><div class="phl-progress" aria-hidden="true"><span></span></div><div class="phl-article-grid phl-has-toc"><article class="phl-article" data-pagefind-body><nav class="phl-breadcrumbs" aria-label="Breadcrumbs"><ol><li><a href="/">Главная</a></li><li><a href="/posts/selfhosting/">Self-Hosting</a></li><li><span aria-current="page">Переезд с shared-хостинга на GitHub Pages - как перенести сайт на Hugo, не сломав ни одной ссылки и не вылетев из индекса Google и Яндекса</span></li></ol></nav><header class="phl-article-header"><p class="phl-eyebrow">Self-Hosting</p><h1 data-pagefind-meta="title">Переезд с shared-хостинга на GitHub Pages - как перенести сайт на Hugo, не сломав ни одной ссылки и не вылетев из индекса Google и Яндекса</h1><p class="phl-meta"><span class="phl-meta-authors"><a href="/authors/stilicho2011/">Stilicho2011</a></span><time datetime="2026-10-01T00:00:00.000Z">1 октября 2026 г.</time><span>Обновлено <time datetime="2026-11-08T00:00:00.000Z">8 ноября 2026 г.</time></span><span>12 мин чтения</span><span class="phl-views">43 просмотра</span></p></header><div class="phl-article-tools"><p class="phl-translations">Эта статья на других языках: <a href="/en/posts/smartape-to-github-pages-migration/" hreflang="en">EN</a></p><button type="button" class="phl-zen-toggle" data-phl-zen data-on="Режим чтения" data-off="Выйти из режима чтения" aria-pressed="false">Режим чтения</button></div><figure class="phl-article-cover"><img src="/_astro/featured.DsqyseSe_Zb8v26.webp" srcset="/_astro/featured.DsqyseSe_mV0qd.webp 640w, /_astro/featured.DsqyseSe_ZG1kpq.webp 960w, /_astro/featured.DsqyseSe_1TRryS.webp 1280w" alt sizes="(min-width: 768px) 46rem, 100vw" loading="eager" data-pagefind-meta="image[src]" decoding="async" width="1671" height="941"></figure><details class="phl-series"><summary>Часть 4 из 5 в серии <a href="/series/автоматизация-публикации-prohomelab/">Автоматизация публикации ProHomelab</a></summary><ol><li><a href="/posts/install-hugo-blowfish/">Установка Hugo + тема Blowfish с нуля - подробная инструкция</a></li><li><a href="/posts/automation-publishing/">ProHomelab - автоматизация публикации статей через Forgejo</a></li><li><a href="/posts/github-actions-self-hosted-runner/">Убираем лишнее звено - переезжаем со своего Forgejo-раннера на self-hosted GitHub Actions</a></li><li><span aria-current="page">Переезд с shared-хостинга на GitHub Pages - как перенести сайт на Hugo, не сломав ни одной ссылки и не вылетев из индекса Google и Яндекса</span></li><li><a href="/posts/forgejo-two-repos-revert/">Когда проще - не значит лучше. Возвращаюсь на два репозитория Forgejo</a></li></ol></details><details class="phl-toc" data-phl-toc><summary class="phl-toc-title">Содержание</summary><nav aria-label="Содержание"><ul><li class="depth-2"><a href="#что-у-нас-есть-на-старте" data-phl-toc-link="что-у-нас-есть-на-старте">Что у нас есть на старте</a></li><li class="depth-2"><a href="#почему-это-вообще-может-не-сломать-seo" data-phl-toc-link="почему-это-вообще-может-не-сломать-seo">Почему это вообще может не сломать SEO</a></li><li class="depth-2"><a href="#шаг-1-создай-репозиторий-на-github" data-phl-toc-link="шаг-1-создай-репозиторий-на-github">Шаг 1. Создай репозиторий на GitHub</a></li><li class="depth-2"><a href="#шаг-2-проверь-что-hugo-не-поменяет-структуру-ссылок" data-phl-toc-link="шаг-2-проверь-что-hugo-не-поменяет-структуру-ссылок">Шаг 2. Проверь, что Hugo не поменяет структуру ссылок</a></li><li class="depth-2"><a href="#шаг-3-сделай-токен-для-пуша-из-forgejo-в-github" data-phl-toc-link="шаг-3-сделай-токен-для-пуша-из-forgejo-в-github">Шаг 3. Сделай токен для пуша из Forgejo в GitHub</a></li><li class="depth-2"><a href="#шаг-4-добавь-файл-cname-чтобы-домен-не-терялся-при-каждой-сборке" data-phl-toc-link="шаг-4-добавь-файл-cname-чтобы-домен-не-терялся-при-каждой-сборке">Шаг 4. Добавь файл CNAME, чтобы домен не терялся при каждой сборке</a></li><li class="depth-2"><a href="#шаг-5-поменяй-последний-шаг-в-deployyml" data-phl-toc-link="шаг-5-поменяй-последний-шаг-в-deployyml">Шаг 5. Поменяй последний шаг в deploy.yml</a></li><li class="depth-2"><a href="#шаг-6-включи-github-pages-и-проверь-сборку-без-переключения-домена" data-phl-toc-link="шаг-6-включи-github-pages-и-проверь-сборку-без-переключения-домена">Шаг 6. Включи GitHub Pages и проверь сборку БЕЗ переключения домена</a></li><li class="depth-2"><a href="#шаг-7-проверь-что-не-потеряешь-верификацию-в-search-console-и-яндексвебмастере" data-phl-toc-link="шаг-7-проверь-что-не-потеряешь-верификацию-в-search-console-и-яндексвебмастере">Шаг 7. Проверь, что не потеряешь верификацию в Search Console и Яндекс.Вебмастере</a></li><li class="depth-2"><a href="#шаг-8-само-переключение---dns-и-домен" data-phl-toc-link="шаг-8-само-переключение---dns-и-домен">Шаг 8. Само переключение - DNS и домен</a></li><li class="depth-2"><a href="#шаг-9-дождись-сертификата-и-включи-https" data-phl-toc-link="шаг-9-дождись-сертификата-и-включи-https">Шаг 9. Дождись сертификата и включи HTTPS</a></li><li class="depth-2"><a href="#шаг-10-финальная-проверка-перед-отключением-smartape" data-phl-toc-link="шаг-10-финальная-проверка-перед-отключением-smartape">Шаг 10. Финальная проверка перед отключением smartape</a></li><li class="depth-2"><a href="#что-дальше-мониторить" data-phl-toc-link="что-дальше-мониторить">Что дальше мониторить</a></li><li class="depth-2"><a href="#чек-лист-который-я-использовал-чтобы-ничего-не-забыть" data-phl-toc-link="чек-лист-который-я-использовал-чтобы-ничего-не-забыть">Чек-лист который я использовал, чтобы ничего не забыть</a></li></ul></nav></details><div class="phl-prose"><!--phl-feed-start--><blockquote>
+<p>Это продолжение <a href="https://prohomelab.com/posts/automation-publishing/">статьи про автоматизацию публикации ProHomeLab</a> (Obsidian → <a href="https://prohomelab.com/posts/forgejo-komodo-gitops/">Forgejo</a> → Hugo). Если ты еще не настроил этот пайплайн - сначала прочитай ту статью, здесь я буду опираться на нее как на готовую базу.</p>
+</blockquote>
+<p>Если у тебя уже работает автоматическая публикация через Forgejo Actions, следующий логичный шаг - задуматься о том, где сайт физически лежит. Я держал ProHomeLab на shared-хостинге smartape, но решил переехать на GitHub Pages: это бесплатно, надежно и снимает с меня заботу о сервере как таковом.</p>
+<p>Проблема в том, что "просто взять и переехать" - плохая идея для сайта, который уже проиндексирован. Один неверный шаг с DNS или доменом - и можно на несколько недель потерять позиции в Google и Яндексе, пока поисковики заново разбираются, что случилось с сайтом. В этой статье я подробно, шаг за шагом, покажу, как перенести хостинг так, чтобы для читателей и поисковиков ничего не изменилось - кроме того, что сайт теперь отдается с серверов GitHub.</p>
+<h2 id="что-у-нас-есть-на-старте">Что у нас есть на старте</h2>
+<ul>
+<li>Домен <code>prohomelab.com</code>, DNS уже переведен на Cloudflare, режим - <strong>DNS only</strong> (серое облако, без проксирования Cloudflare). Это важно: если бы прокси Cloudflare был включен, GitHub не смог бы провалидировать домен и выпустить сертификат.</li>
+<li>Рабочий пайплайн: пишешь статью в Obsidian → Obsidian Git коммитит и пушит в Forgejo (<code>prohomelab-content</code>) → срабатывает <code>workflow_dispatch</code> → на самосборном раннере (LXC-контейнер в Proxmox, Hugo с темой <a href="https://prohomelab.com/posts/install-hugo-blowfish/">Blowfish</a>) выполняется <code>hugo -D</code> → готовый <code>public/</code> заливается по FTP на smartape.</li>
+<li>Мы меняем <strong>только последний шаг</strong> - вместо заливки по FTP собранный сайт будет пушиться в репозиторий на GitHub, откуда его раздает GitHub Pages. Все остальное - Obsidian, Forgejo, раннер, сборка Hugo - остается как есть.</li>
+</ul>
+<p>Почему так, а не сразу "по уму" (сборка через GitHub Actions, Forgejo - просто зеркало)? Потому что это отдельная, более крупная перестройка архитектуры, и делать ее одновременно с переездом хостинга - лишний риск. Сначала стабилизируем хостинг, потом, без спешки, упростим сборку.</p>
+<h2 id="почему-это-вообще-может-не-сломать-seo">Почему это вообще может не сломать SEO</h2>
+<p>Самое важное, что нужно понять: <strong>мы не меняем домен и не меняем структуру URL</strong>. Для Google и Яндекса это не "переезд сайта" в том смысле, в котором они боятся редиректов, потери ссылочной массы и просадки трафика на недели. С точки зрения поисковика сайт <code>prohomelab.com</code> как отдавал одни и те же адреса статей, так и будет отдавать - просто теперь запрос до сервера идет до серверов GitHub вместо smartape. Это невидимо для краулера, если мы не наломаем дров руками. А наломать дров можно так:</p>
+<ol>
+<li><strong>Поменять структуру ссылок.</strong> Если permalinks в Hugo вдруг станут другими (например, добавится или пропадет слэш, изменится формат <code>/posts/slug/</code> на <code>/slug/</code>) - старые проиндексированные страницы превратятся в 404, и вот тогда действительно начнутся проблемы.</li>
+<li><strong>Оставить сайт без HTTPS на долгое время или с "битым" сертификатом.</strong> Google понижает в выдаче сайты с проблемами безопасности, а браузеры пугают пользователей.</li>
+<li><strong>Долгий простой во время переключения DNS.</strong> Если сайт "лежит" сутки - это не катастрофа, но лучше свести окно недоступности к минимуму.</li>
+<li><strong>Молча потерять верификацию Google Search Console / Яндекс.Вебмастер.</strong> Об этом ниже - отдельный важный пункт, который легко упустить именно потому, что он никак не связан напрямую с GitHub.</li>
+</ol>
+<p>Дальше - конкретные шаги, которые все это учитывают.</p>
+<h2 id="шаг-1-создай-репозиторий-на-github">Шаг 1. Создай репозиторий на GitHub</h2>
+<p>Зайди на GitHub и создай новый <strong>публичный</strong> репозиторий - например, <code>prohomelab-pages</code>. Публичный он должен быть потому, что бесплатный GitHub Pages на личном аккаунте раздает сайты именно из публичных репозиториев (либо нужен приватный репозиторий и специальный workflow с <code>actions/deploy-pages</code>, но это уже про Фазу 2 с GitHub Actions, не сейчас).</p>
+<p>Название репозитория не обязано совпадать с <code>твой-юзер.github.io</code> - раз у нас будет свой домен, это ограничение не действует.</p>
+<h2 id="шаг-2-проверь-что-hugo-не-поменяет-структуру-ссылок">Шаг 2. Проверь, что Hugo не поменяет структуру ссылок</h2>
+<p>Это самый критичный для SEO шаг во всей статье, поэтому не пропускай его.</p>
+<p>Открой конфиг Hugo (<code>hugo.toml</code> или <code>config.yaml</code> в корне проекта Blowfish) и найди там:</p>
+<ul>
+<li><code>baseURL</code> - должен остаться <code>https://prohomelab.com/</code>, без изменений;</li>
+<li><code>permalinks</code> (если задан для секции posts) - должен быть точно таким же, каким собирался сайт для smartape;</li>
+<li><code>uglyURLs</code> - должен остаться в том же положении (<code>false</code>, скорее всего, раз у тебя адреса вида <code>/posts/slug/</code>, а не <code>/posts/slug.html</code>).</li>
+</ul>
+<p>Раз мы используем тот же самый Hugo-проект, что и раньше, и просто меняем точку деплоя - по умолчанию тут ничего не должно измениться. Но проверить нужно руками, потому что если это единственное, что пойдет не так, - именно это ударит по позициям в поиске больнее всего.</p>
+<h2 id="шаг-3-сделай-токен-для-пуша-из-forgejo-в-github">Шаг 3. Сделай токен для пуша из Forgejo в GitHub</h2>
+<p>Forgejo Actions должен уметь пушить в твой новый репозиторий на GitHub - для этого нужен токен.</p>
+<ol>
+<li>На GitHub: <strong>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</strong>.</li>
+<li>Repository access - выбери <strong>Only select repositories</strong> и укажи только что созданный <code>prohomelab-pages</code>.</li>
+<li>Permissions → Repository permissions → <strong>Contents: Read and write</strong>. Больше ничего не давай - токен должен уметь ровно то, что нужно, и не больше.</li>
+<li>Сгенерируй токен и сразу скопируй его - второй раз GitHub его не покажет.</li>
+</ol>
+<p>Дальше иди в Forgejo, в репозиторий <code>prohomelab-site</code> → <strong>Settings → Actions → Secrets</strong> и добавь новый секрет, например <code>GH_PAGES_TOKEN</code>, со значением токена.</p>
+<h2 id="шаг-4-добавь-файл-cname-чтобы-домен-не-терялся-при-каждой-сборке">Шаг 4. Добавь файл CNAME, чтобы домен не терялся при каждой сборке</h2>
+<p>GitHub Pages узнает, какой у сайта кастомный домен, по файлу <code>CNAME</code> в корне репозитория. Если мы будем каждый раз пушить свежую сборку <code>public/</code> целиком (перезаписывая репозиторий), этот файл нужно генерировать вместе с остальным сайтом - иначе он будет теряться после первого же деплоя.</p>
+<p>Создай в проекте Hugo (там, где Blowfish) файл <code>static/CNAME</code> с единственной строкой:</p>
+<div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.otfqh.css"><script type="module" src="/_astro/ec.0vx5m.js"></script><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">prohomelab.com</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="prohomelab.com"><div></div></button></div></figure></div>
+<p>Hugo автоматически копирует все из <code>static/</code> в <code>public/</code> при каждой сборке, так что файл будет попадать в деплой сам, без дополнительных действий.</p>
+<h2 id="шаг-5-поменяй-последний-шаг-в-deployyml">Шаг 5. Поменяй последний шаг в deploy.yml</h2>
+<p>Открой <code>deploy.yml</code> в репозитории <code>prohomelab-site</code> в Forgejo. Найди шаг, который заливает <code>public/</code> по FTP на smartape, и замени его на пуш в GitHub. Логика шага:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">  </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#1E7734;--1:#85E89D">name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">Deploy to GitHub Pages</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">run</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#BF3441;--1:#F97583">|</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#032F62;--1:#9ECBFF">      </span></span><span style="--0:#032F62;--1:#9ECBFF">cd public</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#032F62;--1:#9ECBFF">      </span></span><span style="--0:#032F62;--1:#9ECBFF">git init</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#032F62;--1:#9ECBFF">      </span></span><span style="--0:#032F62;--1:#9ECBFF">git checkout -b main</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#032F62;--1:#9ECBFF">      </span></span><span style="--0:#032F62;--1:#9ECBFF">git add -A</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#032F62;--1:#9ECBFF">      </span></span><span style="--0:#032F62;--1:#9ECBFF">git -c user.name="prohomelab-bot" -c user.email="bot@prohomelab.com" commit -m "Deploy: ${{ gitea.sha }}"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#032F62;--1:#9ECBFF">      </span></span><span style="--0:#032F62;--1:#9ECBFF">git push --force https://x-access-token:${{ secrets.GH_PAGES_TOKEN }}@github.com/твой-юзер/prohomelab-pages.git main</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="  - name: Deploy to GitHub Pages    run: |      cd public      git init      git checkout -b main      git add -A      git -c user.name=&#x22;prohomelab-bot&#x22; -c user.email=&#x22;bot@prohomelab.com&#x22; commit -m &#x22;Deploy: ${{ gitea.sha }}&#x22;      git push --force https://x-access-token:${{ secrets.GH_PAGES_TOKEN }}@github.com/твой-юзер/prohomelab-pages.git main"><div></div></button></div></figure></div>
+<p>Замени <code>твой-юзер</code> на свой логин GitHub. Шаги <code>Sync content</code> и <code>Build with Hugo</code> перед этим шагом не трогаешь - они как работали, так и работают, меняется только пункт назначения готовой сборки.</p>
+<p>Сохрани, закоммить изменения в <code>prohomelab-site</code>. Пока не запускай - сначала нужно включить Pages на стороне GitHub (следующий шаг), иначе пушить будет некуда для проверки результата.</p>
+<h2 id="шаг-6-включи-github-pages-и-проверь-сборку-без-переключения-домена">Шаг 6. Включи GitHub Pages и проверь сборку БЕЗ переключения домена</h2>
+<p>Это ключевой прием для безопасного переезда: мы полностью проверяем, что сайт корректно собирается и работает на GitHub, <strong>до того</strong>, как трогаем DNS. Так у нас в любой момент есть рабочий откат на smartape, если что-то пошло не так.</p>
+<ol>
+<li>В репозитории <code>prohomelab-pages</code> → <strong>Settings → Pages</strong>.</li>
+<li>Source: <strong>Deploy from a branch</strong>.</li>
+<li>Branch: <code>main</code>, папка <code>/ (root)</code>.</li>
+<li>Custom domain <strong>пока не трогай</strong> - оставь пустым.</li>
+<li>Сохрани.</li>
+</ol>
+<p>Теперь вручную запусти workflow <code>deploy.yml</code> в Forgejo (через кнопку в интерфейсе или через <code>workflow_dispatch</code> API, которым ты уже пользуешься). Через минуту-другую после первого пуша GitHub соберет Pages, и сайт станет доступен по адресу вида:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">https://твой-юзер.github.io/prohomelab-pages/</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="https://твой-юзер.github.io/prohomelab-pages/"><div></div></button></div></figure></div>
+<p>Открой этот адрес. Пройдись по нескольким статьям, проверь, что картинки, стили и внутренние ссылки на месте. Не пугайся, если что-то будет выглядеть немного не так, как ожидаешь (например, из-за <code>baseURL</code>, "зашитого" на <code>prohomelab.com</code>, некоторые абсолютные ссылки могут вести не туда) - это ожидаемо на этом промежуточном адресе и не значит, что после переключения домена будет так же. Главное на этом шаге - убедиться, что сама сборка происходит без ошибок и контент на месте.</p>
+<h2 id="шаг-7-проверь-что-не-потеряешь-верификацию-в-search-console-и-яндексвебмастере">Шаг 7. Проверь, что не потеряешь верификацию в Search Console и Яндекс.Вебмастере</h2>
+<p>Вот тот самый пункт, который часто упускают, потому что он формально не связан с GitHub - но связан с тем, что домен недавно переехал на Cloudflare.</p>
+<p>Верификация сайта в Google Search Console и Яндекс.Вебмастере чаще всего делается одним из способов:</p>
+<ul>
+<li>через <strong>TXT-запись</strong> в DNS домена (самый частый и самый "хрупкий" при переезде DNS способ);</li>
+<li>через мета-тег на главной странице;</li>
+<li>через файл на сервере.</li>
+</ul>
+<p>Если верификация у тебя была через TXT-запись в DNS, а ты недавно переносил DNS-зону на Cloudflare - есть шанс, что эта запись не переехала вместе с остальными. Проверь:</p>
+<ol>
+<li>Зайди в Cloudflare → DNS → Records для <code>prohomelab.com</code> и поищи TXT-записи вида <code>google-site-verification=...</code> или похожие для Яндекса.</li>
+<li>Если их нет - зайди в Google Search Console и Яндекс.Вебмастер, посмотри статус верификации сайта. Если он "слетел" - просто добавь актуальную TXT-запись заново в Cloudflare (сервисы покажут тебе точное значение в интерфейсе верификации).</li>
+</ol>
+<p>Сделать это стоит <strong>сейчас, до переключения на GitHub</strong>, а не после - чтобы к моменту, когда начнется реальный мониторинг после переезда, доступ к данным в обеих панелях точно работал.</p>
+<p>Заодно проверь <code>robots.txt</code> (<code>https://prohomelab.com/robots.txt</code>) - что там нет случайного <code>Disallow: /</code>, и <code>sitemap.xml</code> (<code>https://prohomelab.com/sitemap.xml</code>) - Hugo генерирует его автоматически, он должен собираться и на GitHub Pages точно так же, как собирался на smartape.</p>
+<h2 id="шаг-8-само-переключение---dns-и-домен">Шаг 8. Само переключение - DNS и домен</h2>
+<p>Теперь, когда сборка проверена и верификация в поисковиках подтверждена - можно переключать сам домен. Лучше делать это в спокойное время (не пиковые часы трафика на сайт, если такие конечно у тебя бывают), чтобы минимизировать заметность так называемого окна недоступности.</p>
+<p>Перед переключением стоит сделать две проверки.</p>
+<ul>
+<li>
+<p><strong>TTL записей, которые будешь менять.</strong> Чем он больше, тем дольше резолверы будут отдавать старый IP. В Cloudflare по умолчанию стоит TTL "Auto", а это 300 секунд, так что с ним ничего делать не нужно. Если у тебя другой DNS-провайдер или TTL выставлен вручную на часы, снизь его до 300 секунд хотя бы за сутки до переключения, чтобы старое значение успело истечь из кешей.</p>
+</li>
+<li>
+<p><strong>CAA-записи домена.</strong> GitHub Pages выпускает сертификат через Let's Encrypt, и если у домена есть CAA-записи, среди них обязательно должна быть запись со значением <code>letsencrypt.org</code>. Иначе сертификат не выпустится никогда, и шаг 9 превратится в бесконечное ожидание. Проверить можно так:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">dig</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">CAA</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">prohomelab.com</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">+short</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="dig CAA prohomelab.com +short"><div></div></button></div></figure></div>
+<p>Пустой вывод означает, что CAA-записей нет и выпускать сертификаты может любой центр сертификации - это нормально. Если записи есть, но <code>letsencrypt.org</code> среди них нет, добавь в Cloudflare запись типа CAA с тегом <code>issue</code> и значением <code>letsencrypt.org</code>.</p>
+</li>
+</ul>
+<ol>
+<li>
+<p>В GitHub, в <code>Settings → Pages</code> репозитория <code>prohomelab-pages</code>, впиши <strong>Custom domain</strong>: <code>prohomelab.com</code>. GitHub попробует сразу проверить DNS и, скорее всего, покажет ошибку - это нормально, DNS еще не переключен.</p>
+</li>
+<li>
+<p>Сразу после этого - в Cloudflare, в DNS-записях <code>prohomelab.com</code>, замени текущие A-записи (которые указывают на smartape) на четыре A-записи, указывающие на GitHub Pages:</p>
+<table>
+<thead>
+<tr>
+<th>Тип</th>
+<th>Имя</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>@</td>
+<td>185.199.108.153</td>
+</tr>
+<tr>
+<td>A</td>
+<td>@</td>
+<td>185.199.109.153</td>
+</tr>
+<tr>
+<td>A</td>
+<td>@</td>
+<td>185.199.110.153</td>
+</tr>
+<tr>
+<td>A</td>
+<td>@</td>
+<td>185.199.111.153</td>
+</tr>
+</tbody>
+</table>
+<p>Режим оставь <strong>DNS only</strong> (серое облако) - не включай проксирование Cloudflare, пока GitHub не выпустит сертификат (следующий шаг).</p>
+<p>Если используешь поддомен <code>www</code> - добавь <code>CNAME www → твой-юзер.github.io</code>.</p>
+</li>
+<li>
+<p>DNS обновляется не мгновенно - обычно от нескольких минут до часа, иногда дольше. Проверить распространение можно на <a href="https://www.whatsmydns.net">whatsmydns.net</a> по домену <code>prohomelab.com</code>, тип записи A.</p>
+</li>
+</ol>
+<h2 id="шаг-9-дождись-сертификата-и-включи-https">Шаг 9. Дождись сертификата и включи HTTPS</h2>
+<p>Как только GitHub увидит, что домен резолвится на его IP-адреса, он автоматически запросит сертификат Let's Encrypt. Обычно это занимает от нескольких минут до пары часов. Пока сертификат не выпущен, сайт может быть доступен только по HTTP или показывать предупреждение браузера о небезопасном соединении - не паникуй, это ожидаемое временное состояние, а не поломка. Если же прошло несколько часов, а сертификата все нет, первым делом перепроверь CAA-записи из шага 8.</p>
+<p>Как только в <code>Settings → Pages</code> появится чекбокс <strong>Enforce HTTPS</strong> - включи его. С этого момента весь трафик на <code>http://</code> будет автоматически редиректиться на <code>https://</code>, что важно и для пользователей, и для поисковиков (Google явно учитывает HTTPS как фактор ранжирования).</p>
+<h2 id="шаг-10-финальная-проверка-перед-отключением-smartape">Шаг 10. Финальная проверка перед отключением smartape</h2>
+<p>Не спеши выключать старый хостинг. Сначала:</p>
+<ol>
+<li>Открой <code>https://prohomelab.com</code> в приватном окне браузера (чтобы точно не увидеть закешированную старую версию) и, если есть возможность, еще и с другого DNS-резолвера (например, временно переключи DNS на устройстве на <code>1.1.1.1</code>) - чтобы убедиться, что видишь именно новую версию, а не smartape по старому кешу.</li>
+<li>В заголовках ответа сервера должно быть что-то вроде <code>server: GitHub.com</code> - это можно проверить через вкладку Network в инструментах разработчика браузера.</li>
+<li>Пройдись по 10-15 старым URL статей (особенно тем, что хорошо ранжируются или приводят трафик) и убедись, что ни один не отдает 404.</li>
+<li>Проверь <code>sitemap.xml</code> и <code>robots.txt</code> еще раз - уже на "боевом" домене.</li>
+<li>В Google Search Console и Яндекс.Вебмастере вручную отправь sitemap заново (даже если адрес не изменился) - это не обязательно, но может немного ускорить повторный обход изменившегося IP поисковыми роботами.</li>
+</ol>
+<p>Только после того, как все это подтверждено и постояло стабильно хотя бы пару дней - можно отключать (или не продлевать) хостинг на smartape.</p>
+<h2 id="что-дальше-мониторить">Что дальше мониторить</h2>
+<p>В первые одну-две недели после переезда полезно периодически заглядывать в:</p>
+<ul>
+<li><strong>Google Search Console → Индексирование → Страницы</strong> - не появилось ли резкого роста ошибок 404 или "Страница не найдена";</li>
+<li><strong>Яндекс.Вебмастер → Индексирование → Диагностика сайта</strong> - то же самое для Яндекса;</li>
+<li>аналитику посещаемости (если она у тебя настроена) - на предмет резких провалов трафика с органического поиска.</li>
+</ul>
+<p>Небольшие и кратковременные колебания позиций после смены IP/сервера - это нормально, поисковики иногда пересчитывают технические метрики (скорость ответа, доступность). Насторожиться стоит, только если через пару недель ты видишь устойчивое падение или массовые 404 - тогда возвращайся к шагам 2 и 7 этой статьи и перепроверяй их еще раз.</p>
+<h2 id="чек-лист-который-я-использовал-чтобы-ничего-не-забыть">Чек-лист который я использовал, чтобы ничего не забыть</h2>
+<ul class="contains-task-list">
+<li class="task-list-item"><input type="checkbox" disabled> Репозиторий на GitHub создан, публичный</li>
+<li class="task-list-item"><input type="checkbox" disabled> <code>baseURL</code>, <code>permalinks</code>, <code>uglyURLs</code> в Hugo не менялись</li>
+<li class="task-list-item"><input type="checkbox" disabled> Fine-grained токен создан и добавлен как secret в Forgejo</li>
+<li class="task-list-item"><input type="checkbox" disabled> <code>static/CNAME</code> с <code>prohomelab.com</code> добавлен в проект</li>
+<li class="task-list-item"><input type="checkbox" disabled> Шаг деплоя в <code>deploy.yml</code> заменен с FTP на git push в GitHub</li>
+<li class="task-list-item"><input type="checkbox" disabled> Сборка проверена на <code>твой-юзер.github.io/repo/</code> до переключения DNS</li>
+<li class="task-list-item"><input type="checkbox" disabled> TXT-записи верификации Google Search Console / Яндекс.Вебмастер на месте в Cloudflare</li>
+<li class="task-list-item"><input type="checkbox" disabled> <code>robots.txt</code> и <code>sitemap.xml</code> проверены</li>
+<li class="task-list-item"><input type="checkbox" disabled> TTL записей не больше 300 секунд, CAA разрешает <code>letsencrypt.org</code> (или CAA-записей нет)</li>
+<li class="task-list-item"><input type="checkbox" disabled> A-записи в Cloudflare переключены на GitHub Pages, режим DNS only</li>
+<li class="task-list-item"><input type="checkbox" disabled> Custom domain добавлен в настройках GitHub Pages</li>
+<li class="task-list-item"><input type="checkbox" disabled> Сертификат выпущен, Enforce HTTPS включен</li>
+<li class="task-list-item"><input type="checkbox" disabled> Старые URL статей проверены на 404 на боевом домене</li>
+<li class="task-list-item"><input type="checkbox" disabled> Sitemap повторно отправлен в Search Console и Яндекс.Вебмастере</li>
+<li class="task-list-item"><input type="checkbox" disabled> Через 1-2 недели индексирование стабильно, только после этого smartape отключен</li>
+</ul>
+<p>В следующей статье серии разберем вторую фазу: перенос самой сборки на GitHub Actions и превращение Forgejo в резервную копию сайта.</p><!--phl-feed-end--></div><footer class="phl-article-footer"><p class="phl-article-terms"><a class="phl-term-cat" href="/categories/self-hosting/">Self-Hosting</a><a href="/tags/hugo/">#Hugo</a><a href="/tags/github-pages/">#github-pages</a><a href="/tags/cloudflare/">#cloudflare</a><a href="/tags/seo/">#seo</a><a href="/tags/forgejo/">#forgejo</a><a href="/tags/self-hosting/">#Self-Hosting</a></p><p class="phl-license">Лицензия: CC BY 4.0</p><div class="phl-share"><span class="phl-share-label">Поделиться</span><a href="https://t.me/share/url?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fsmartape-to-github-pages-migration%2F&amp;text=%D0%9F%D0%B5%D1%80%D0%B5%D0%B5%D0%B7%D0%B4%20%D1%81%20shared-%D1%85%D0%BE%D1%81%D1%82%D0%B8%D0%BD%D0%B3%D0%B0%20%D0%BD%D0%B0%20GitHub%20Pages%20-%20%D0%BA%D0%B0%D0%BA%20%D0%BF%D0%B5%D1%80%D0%B5%D0%BD%D0%B5%D1%81%D1%82%D0%B8%20%D1%81%D0%B0%D0%B9%D1%82%20%D0%BD%D0%B0%20Hugo%2C%20%D0%BD%D0%B5%20%D1%81%D0%BB%D0%BE%D0%BC%D0%B0%D0%B2%20%D0%BD%D0%B8%20%D0%BE%D0%B4%D0%BD%D0%BE%D0%B9%20%D1%81%D1%81%D1%8B%D0%BB%D0%BA%D0%B8%20%D0%B8%20%D0%BD%D0%B5%20%D0%B2%D1%8B%D0%BB%D0%B5%D1%82%D0%B5%D0%B2%20%D0%B8%D0%B7%20%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%20Google%20%D0%B8%20%D0%AF%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0" target="_blank" rel="noopener noreferrer" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://x.com/intent/post?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fsmartape-to-github-pages-migration%2F&amp;text=%D0%9F%D0%B5%D1%80%D0%B5%D0%B5%D0%B7%D0%B4%20%D1%81%20shared-%D1%85%D0%BE%D1%81%D1%82%D0%B8%D0%BD%D0%B3%D0%B0%20%D0%BD%D0%B0%20GitHub%20Pages%20-%20%D0%BA%D0%B0%D0%BA%20%D0%BF%D0%B5%D1%80%D0%B5%D0%BD%D0%B5%D1%81%D1%82%D0%B8%20%D1%81%D0%B0%D0%B9%D1%82%20%D0%BD%D0%B0%20Hugo%2C%20%D0%BD%D0%B5%20%D1%81%D0%BB%D0%BE%D0%BC%D0%B0%D0%B2%20%D0%BD%D0%B8%20%D0%BE%D0%B4%D0%BD%D0%BE%D0%B9%20%D1%81%D1%81%D1%8B%D0%BB%D0%BA%D0%B8%20%D0%B8%20%D0%BD%D0%B5%20%D0%B2%D1%8B%D0%BB%D0%B5%D1%82%D0%B5%D0%B2%20%D0%B8%D0%B7%20%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%20Google%20%D0%B8%20%D0%AF%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0" target="_blank" rel="noopener noreferrer" aria-label="X" title="X" style="--phl-brand-l:#000000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.234 10.162L22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299l-.929-1.329L3.076 1.56h3.182l5.965 8.532l.929 1.329l7.754 11.09h-3.182z"/></svg></a><a href="https://www.reddit.com/submit?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fsmartape-to-github-pages-migration%2F&amp;title=%D0%9F%D0%B5%D1%80%D0%B5%D0%B5%D0%B7%D0%B4%20%D1%81%20shared-%D1%85%D0%BE%D1%81%D1%82%D0%B8%D0%BD%D0%B3%D0%B0%20%D0%BD%D0%B0%20GitHub%20Pages%20-%20%D0%BA%D0%B0%D0%BA%20%D0%BF%D0%B5%D1%80%D0%B5%D0%BD%D0%B5%D1%81%D1%82%D0%B8%20%D1%81%D0%B0%D0%B9%D1%82%20%D0%BD%D0%B0%20Hugo%2C%20%D0%BD%D0%B5%20%D1%81%D0%BB%D0%BE%D0%BC%D0%B0%D0%B2%20%D0%BD%D0%B8%20%D0%BE%D0%B4%D0%BD%D0%BE%D0%B9%20%D1%81%D1%81%D1%8B%D0%BB%D0%BA%D0%B8%20%D0%B8%20%D0%BD%D0%B5%20%D0%B2%D1%8B%D0%BB%D0%B5%D1%82%D0%B5%D0%B2%20%D0%B8%D0%B7%20%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%20Google%20%D0%B8%20%D0%AF%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0" target="_blank" rel="noopener noreferrer" aria-label="Reddit" title="Reddit" style="--phl-brand-l:#ff4500;--phl-brand-d:#ff4500" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12c0 3.314 1.343 6.314 3.515 8.485l-2.286 2.286A.72.72 0 0 0 1.738 24H12c6.627 0 12-5.373 12-12S18.627 0 12 0m4.388 3.199a1.999 1.999 0 1 1-1.947 2.46v.002a2.37 2.37 0 0 0-2.032 2.341v.007c1.776.067 3.4.567 4.686 1.363a2.802 2.802 0 1 1 2.908 4.753c-.088 3.256-3.637 5.876-7.997 5.876c-4.361 0-7.905-2.617-7.998-5.87a2.8 2.8 0 0 1 1.189-5.34c.645 0 1.239.218 1.712.585c1.275-.79 2.881-1.291 4.64-1.365v-.01a3.23 3.23 0 0 1 2.88-3.207a2 2 0 0 1 1.959-1.595m-8.085 8.376c-.784 0-1.459.78-1.506 1.797s.64 1.429 1.426 1.429s1.371-.369 1.418-1.385s-.553-1.841-1.338-1.841m7.406 0c-.786 0-1.385.824-1.338 1.841s.634 1.385 1.418 1.385c.785 0 1.473-.413 1.426-1.429c-.046-1.017-.721-1.797-1.506-1.797m-3.703 4.013c-.974 0-1.907.048-2.77.135a.222.222 0 0 0-.183.305a3.2 3.2 0 0 0 2.953 1.964a3.2 3.2 0 0 0 2.953-1.964a.222.222 0 0 0-.184-.305a28 28 0 0 0-2.769-.135"/></svg></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fsmartape-to-github-pages-migration%2F" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn" style="--phl-brand-l:#0a66c2;--phl-brand-d:#0b73da" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037c-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85c3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.06 2.06 0 0 1-2.063-2.065a2.064 2.064 0 1 1 2.063 2.065m1.782 13.019H3.555V9h3.564zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg></a><a href="mailto:?subject=%D0%9F%D0%B5%D1%80%D0%B5%D0%B5%D0%B7%D0%B4%20%D1%81%20shared-%D1%85%D0%BE%D1%81%D1%82%D0%B8%D0%BD%D0%B3%D0%B0%20%D0%BD%D0%B0%20GitHub%20Pages%20-%20%D0%BA%D0%B0%D0%BA%20%D0%BF%D0%B5%D1%80%D0%B5%D0%BD%D0%B5%D1%81%D1%82%D0%B8%20%D1%81%D0%B0%D0%B9%D1%82%20%D0%BD%D0%B0%20Hugo%2C%20%D0%BD%D0%B5%20%D1%81%D0%BB%D0%BE%D0%BC%D0%B0%D0%B2%20%D0%BD%D0%B8%20%D0%BE%D0%B4%D0%BD%D0%BE%D0%B9%20%D1%81%D1%81%D1%8B%D0%BB%D0%BA%D0%B8%20%D0%B8%20%D0%BD%D0%B5%20%D0%B2%D1%8B%D0%BB%D0%B5%D1%82%D0%B5%D0%B2%20%D0%B8%D0%B7%20%D0%B8%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0%20Google%20%D0%B8%20%D0%AF%D0%BD%D0%B4%D0%B5%D0%BA%D1%81%D0%B0&amp;body=https%3A%2F%2Fprohomelab.com%2Fposts%2Fsmartape-to-github-pages-migration%2F" rel="noopener noreferrer" aria-label="Email" title="Email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a></div><section class="phl-author-box"><h2>Автор</h2><div class="phl-author"><img class="phl-author-image" src="/avatar-stilicho2011.webp" alt="" width="64" height="64" loading="lazy"><div class="phl-author-body"><p class="phl-author-name"><a href="/authors/stilicho2011/">Stilicho2011</a></p><p class="phl-author-bio">Пишу о homelab, self-hosting, автоматизации и open-source решениях</p><p class="phl-author-links"><a href="mailto:pavel@prohomelab.com" rel="me noopener" aria-label="email" title="email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener" target="_blank" aria-label="github" title="github" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a><a href="https://t.me/stilicho2011_videos" rel="me noopener" target="_blank" aria-label="telegram" title="telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://www.youtube.com/@prohomelab" rel="me noopener" target="_blank" aria-label="youtube" title="youtube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a><a href="https://boosty.to/stilicho2011" rel="me noopener" target="_blank" aria-label="boosty" title="boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></p></div></div></section></footer><nav class="phl-prevnext" aria-label="Предыдущая / Следующая"><a class="phl-prevnext-prev" href="/posts/github-actions-self-hosted-runner/" rel="prev"><span class="phl-prevnext-label">Предыдущая</span><span class="phl-prevnext-title">Убираем лишнее звено - переезжаем со своего Forgejo-раннера на self-hosted GitHub Actions</span></a><a class="phl-prevnext-next" href="/posts/forgejo-two-repos-revert/" rel="next"><span class="phl-prevnext-label">Следующая</span><span class="phl-prevnext-title">Когда проще - не значит лучше. Возвращаюсь на два репозитория Forgejo</span></a></nav><section class="phl-related"><h2>Похожие статьи</h2><div class="phl-cards"><article class="phl-card"><a class="phl-card-cover" href="/posts/github-actions-self-hosted-runner/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.CTEHZlU__Z1D5fSJ.webp" srcset="/_astro/featured.CTEHZlU__Z1Fg6Kj.webp 320w, /_astro/featured.CTEHZlU__1D6Y7v.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1672" height="941"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Automation</span><time datetime="2026-10-01T00:00:00.000Z">1 октября 2026 г.</time><span class="phl-views">66 просмотров</span></p><h3 class="phl-card-title"><a href="/posts/github-actions-self-hosted-runner/">Убираем лишнее звено - переезжаем со своего Forgejo-раннера на self-hosted GitHub Actions</a></h3><p class="phl-card-summary">Как я перевел сборку и деплой ProHomelab с самодельного Forgejo-раннера на self-hosted GitHub Actions runner прямо на своем LXC, объединил content и site в один репозиторий - и что из этого пошло не по плану.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/posts/forgejo-two-repos-revert/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.D9Z6465a_w0uY.webp" srcset="/_astro/featured.D9Z6465a_F4tmF.webp 320w, /_astro/featured.D9Z6465a_Z15Jyyr.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1671" height="941"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Automation</span><time datetime="2026-10-03T00:00:00.000Z">3 октября 2026 г.</time><span class="phl-views">79 просмотров</span></p><h3 class="phl-card-title"><a href="/posts/forgejo-two-repos-revert/">Когда проще - не значит лучше. Возвращаюсь на два репозитория Forgejo</a></h3><p class="phl-card-summary">Почему self-hosted GitHub Actions на едином репозитории (статья 3) оказался не тем выбором, который стоило сохранить - и как я откатился обратно на проверенную схему из двух репозиториев на Forgejo, разобрав по пути честное сравнение обоих вариантов.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/posts/obsidian-workflow-publishing/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.oDkpUNyB_Z17MtCQ.webp" srcset="/_astro/featured.oDkpUNyB_ZFdbok.webp 320w, /_astro/featured.oDkpUNyB_Z2r2ekr.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1672" height="941"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Personal Knowledge Base</span><time datetime="2026-11-09T00:00:00.000Z">9 ноября 2026 г.</time><span class="phl-views">70 просмотров</span></p><h3 class="phl-card-title"><a href="/posts/obsidian-workflow-publishing/">Как у меня устроен Obsidian - от заметки до статьи на сайте</a></h3><p class="phl-card-summary">Разбираю, как устроен мой vault Obsidian - папки по PARA, синхронизация между устройствами через Nextcloud, ручной бэкап корня в Forgejo и отдельный репозиторий со статьями, который сам публикуется на prohomelab.com. Плюс правила, которые я выучил на упавших сборках, и план восстановления, если кластер ляжет.</p></div></article></div></section></article></div><script type="module" src="/_astro/MermaidLoader.astro_astro_type_script_index_0_lang.D0cD853-.js"></script><script type="module">document.querySelectorAll(`.phl-yt`).forEach(e=>{let t=e.querySelector(`.phl-yt-link`);t?.addEventListener(`click`,n=>{n.preventDefault();let r=e.dataset.ytId,i=e.dataset.ytParams?`&${e.dataset.ytParams}`:``,a=document.createElement(`iframe`);a.src=`https://www.youtube-nocookie.com/embed/${r}?autoplay=1${i}`,a.title=t.getAttribute(`aria-label`)??`YouTube video`,a.allow=`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share`,a.allowFullscreen=!0,e.replaceChildren(a)})});var e=matchMedia(`(prefers-reduced-motion: reduce)`).matches;document.querySelectorAll(`.phl-carousel`).forEach(t=>{let n=t.querySelector(`.phl-carousel-track`),r=n?[...n.children]:[];if(!n||r.length<2)return;let i=t=>{let i=(t+r.length)%r.length;n.scrollTo({left:r[i].offsetLeft-n.offsetLeft,behavior:e?`auto`:`smooth`})},a=()=>Math.round(n.scrollLeft/n.clientWidth),o=document.createElement(`div`);o.className=`phl-carousel-nav`,o.innerHTML=`<button type="button" class="phl-carousel-prev" aria-label="Previous">‹</button><span class="phl-carousel-dots"></span><button type="button" class="phl-carousel-next" aria-label="Next">›</button>`;let s=o.querySelector(`.phl-carousel-dots`);r.forEach((e,t)=>{let n=document.createElement(`button`);n.type=`button`,n.setAttribute(`aria-label`,`${t+1} / ${r.length}`),n.addEventListener(`click`,()=>i(t)),s.appendChild(n)});let c=()=>[...s.children].forEach((e,t)=>e.toggleAttribute(`aria-current`,t===a()));n.addEventListener(`scroll`,()=>requestAnimationFrame(c),{passive:!0}),o.querySelector(`.phl-carousel-prev`).addEventListener(`click`,()=>i(a()-1)),o.querySelector(`.phl-carousel-next`).addEventListener(`click`,()=>i(a()+1)),t.appendChild(o),c();let l=Number(t.dataset.interval);if(l>0&&!e){let e=!1;t.addEventListener(`mouseenter`,()=>e=!0),t.addEventListener(`mouseleave`,()=>e=!1),t.addEventListener(`focusin`,()=>e=!0),setInterval(()=>!e&&i(a()+1),Math.max(l,1500))}});var t=e=>`phl-tabs:${e}`,n=[...document.querySelectorAll(`.phl-tabs`)],r=(e,i,a=!0)=>{let o=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!o.some(e=>e.dataset.label===i))return;o.forEach(e=>e.hidden=e.dataset.label!==i),e.querySelectorAll(`:scope > .phl-tablist button`).forEach(e=>e.setAttribute(`aria-selected`,String(e.dataset.label===i)));let s=e.dataset.group;if(a&&s){try{localStorage.setItem(t(s),i)}catch{}n.filter(t=>t!==e&&t.dataset.group===s).forEach(e=>r(e,i,!1))}};n.forEach((e,n)=>{let i=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!i.length)return;let a=document.createElement(`div`);a.className=`phl-tablist`,a.setAttribute(`role`,`tablist`),i.forEach((t,o)=>{let s=document.createElement(`button`);s.type=`button`,s.setAttribute(`role`,`tab`),s.id=`phl-tab-${n}-${o}`,s.dataset.label=t.dataset.label,s.innerHTML=t.querySelector(`.phl-tab-label`)?.innerHTML??t.dataset.label??``,t.setAttribute(`role`,`tabpanel`),t.setAttribute(`aria-labelledby`,s.id),s.addEventListener(`click`,()=>r(e,t.dataset.label)),s.addEventListener(`keydown`,e=>{let t=e.key===`ArrowRight`?1:e.key===`ArrowLeft`?-1:0;if(!t)return;let n=a.children[(o+t+i.length)%i.length];n.focus(),n.click()}),a.appendChild(s)}),e.prepend(a),e.classList.add(`phl-tabs-ready`);let o=null;try{o=e.dataset.group?localStorage.getItem(t(e.dataset.group)):null}catch{}r(e,o??e.dataset.default??i[0].dataset.label,!1)}),document.querySelectorAll(`.phl-accordion[data-mode="collapse"]`).forEach(e=>{let t=[...e.querySelectorAll(`:scope > .phl-accordion-item`)];t.forEach(e=>e.addEventListener(`toggle`,()=>e.open&&t.forEach(t=>t!==e&&(t.open=!1))))});var i=document.querySelectorAll(`.phl-prose img:not(.nozoom)`);if(i.length){let e=document.createElement(`dialog`);e.className=`phl-lightbox`,e.innerHTML=`<img alt=""><button type="button" class="phl-lightbox-close" aria-label="Close">×</button>`,document.body.appendChild(e);let t=e.querySelector(`img`);e.addEventListener(`click`,()=>e.close()),i.forEach(n=>{n.closest(`a, .phl-yt, .phl-repo`)||(n.classList.add(`phl-zoomable`),n.addEventListener(`click`,()=>{t.src=n.currentSrc||n.src,t.alt=n.alt,e.showModal()}))})}</script><script type="module" src="/_astro/ChartTypeitClient.astro_astro_type_script_index_0_lang.CjHU9QBU.js"></script><script>(function(){const smartToc = true;
+const tableHint = "Таблицу можно прокрутить вбок";
+const wideBlocks = true;
+const wideCode = false;
+
+  // TOC: collapsed on phones, open from 768 px (decision 0007).
+  // Follows width changes too (rotating a tablet, resizing the window).
+  const toc = document.querySelector('[data-phl-toc]');
+  const wide = matchMedia('(min-width: 768px)');
+  const syncToc = () => toc && toc.toggleAttribute('open', wide.matches);
+  syncToc();
+  wide.addEventListener('change', syncToc);
+
+  // Current section in the TOC.
+  if (toc && smartToc && 'IntersectionObserver' in window) {
+    const links = new Map([...toc.querySelectorAll('[data-phl-toc-link]')].map((a) => [a.dataset.phlTocLink, a]));
+    const heads = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+    const visible = new Set();
+    const mark = () => {
+      const current = heads.find((h) => visible.has(h.id)) ?? [...heads].reverse().find((h) => h.getBoundingClientRect().top < 120);
+      links.forEach((a, id) => a.toggleAttribute('aria-current', current?.id === id));
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id)));
+        mark();
+      },
+      { rootMargin: '0px 0px -70% 0px' },
+    );
+    heads.forEach((h) => io.observe(h));
+  }
+
+  // Wide blocks: tables and screenshots (and code, with wideCode) wider than the text column get data-phl-wide.
+  // Measured against the column width itself, not the window, so the result is the same on a
+  // phone and a desktop. The CSS lets them grow only on large screens (styles/layout.css).
+  if (wideBlocks) {
+    const root = document.documentElement;
+    const raw = getComputedStyle(root).getPropertyValue('--phl-content-width').trim();
+    const rem = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const column = raw.endsWith('rem') ? parseFloat(raw) * rem : parseFloat(raw) || 736;
+    // With the info column (from 1680 px) a block next to it must not grow over it:
+    // such blocks get data-phl-wide="beside-info" and stay in the text column.
+    const info = document.querySelector('.phl-article-info');
+    const large = matchMedia('(min-width: 1680px)');
+    const wideEls = new Set();
+    const classify = () => {
+      const bottom = info && large.matches ? info.getBoundingClientRect().bottom + 24 : -Infinity;
+      // Top to bottom: a block that does not grow keeps the ones below in place, a growing one
+      // only pushes them further down, so one pass is stable.
+      [...wideEls].sort((x, y) => (x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)).forEach((el) => {
+        const value = el.getBoundingClientRect().top < bottom ? 'beside-info' : '';
+        if (el.getAttribute('data-phl-wide') !== value) el.setAttribute('data-phl-wide', value);
+      });
+    };
+    let queued = false;
+    const queue = () => {
+      if (queued) return;
+      queued = true;
+      // A timer, not requestAnimationFrame: that one never fires in hidden tabs and some previews.
+      setTimeout(() => { queued = false; classify(); }, 50);
+    };
+    const mark = (el) => {
+      if (!el || wideEls.has(el)) return;
+      el.setAttribute('data-phl-wide', 'beside-info');
+      wideEls.add(el);
+      queue();
+    };
+    if (info) {
+      // Image loads, an opened series list, a resized window all move blocks.
+      if ('ResizeObserver' in window) new ResizeObserver(queue).observe(document.querySelector('.phl-article') ?? document.body);
+      addEventListener('resize', queue);
+    }
+    if (wideCode) document.querySelectorAll('.phl-prose .expressive-code').forEach((ec) => {
+      const pre = ec.querySelector('pre');
+      if (pre && pre.scrollWidth > column + 1) mark(ec);
+    });
+    document.querySelectorAll('.phl-prose table').forEach((t) => {
+      if (t.scrollWidth > column + 1) mark(t);
+    });
+    // A screenshot: an image clearly larger than the column, alone in its paragraph or figure.
+    const block = (img) => {
+      const fig = img.closest('.phl-prose figure');
+      if (fig) return fig;
+      const p = img.closest('.phl-prose > p');
+      return p && p.querySelectorAll('img').length === 1 && !p.textContent.trim() ? p : null;
+    };
+    const check = (img) => {
+      const w = Number(img.getAttribute('width')) || img.naturalWidth;
+      if (w >= column * 1.25 && !img.closest('.phl-gallery, .phl-carousel, .phl-card, .phl-repo')) mark(block(img));
+    };
+    document.querySelectorAll('.phl-prose img').forEach((img) => {
+      if (img.getAttribute('width') || img.complete) check(img);
+      else img.addEventListener('load', () => check(img), { once: true });
+    });
+  }
+
+  // Wide tables: say that they scroll, and mark the side where columns are hidden.
+  document.querySelectorAll('.phl-prose table').forEach((table) => {
+    const hint = document.createElement('p');
+    hint.className = 'phl-table-hint';
+    hint.textContent = tableHint;
+    hint.hidden = true;
+    table.before(hint);
+    table.tabIndex = 0;
+    const update = () => {
+      const hidden = table.scrollWidth - table.clientWidth > 1;
+      const pos = Math.abs(table.scrollLeft);
+      const atStart = pos < 2;
+      const atEnd = pos >= table.scrollWidth - table.clientWidth - 2;
+      const sides = [];
+      if (hidden && !atStart) sides.push('start');
+      if (hidden && !atEnd) sides.push('end');
+      table.dataset.phlScroll = sides.join(' ');
+      hint.hidden = !hidden;
+    };
+    table.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  });
+
+  // Reading progress.
+  const bar = document.querySelector('.phl-progress span');
+  const article = document.querySelector('.phl-article');
+  if (bar && article) {
+    const update = () => {
+      const r = article.getBoundingClientRect();
+      const total = r.height - innerHeight;
+      const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 1;
+      bar.style.transform = `scaleX(${p})`;
+    };
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+
+  // Reading mode: hides everything but the text; remembered; Escape exits.
+  const zen = document.querySelector('[data-phl-zen]');
+  if (zen) {
+    const set = (on) => {
+      document.documentElement.classList.toggle('phl-zen', on);
+      zen.setAttribute('aria-pressed', String(on));
+      zen.textContent = on ? zen.dataset.off : zen.dataset.on;
+      try { localStorage.setItem('phl-zen', on ? '1' : ''); } catch (e) {}
+    };
+    let saved = false;
+    try { saved = localStorage.getItem('phl-zen') === '1'; } catch (e) {}
+    if (saved) set(true);
+    zen.addEventListener('click', () => set(!document.documentElement.classList.contains('phl-zen')));
+    addEventListener('keydown', (e) => e.key === 'Escape' && document.documentElement.classList.contains('phl-zen') && set(false));
+  }
+})();</script></main><footer class="phl-footer"><div class="phl-footer-inner"><nav class="phl-footer-nav" aria-label="Меню в подвале"><ul><li><a href="/tools/traefik-compose/">Генератор docker-compose</a></li><li><a href="/tools/compose-quadlet/">Compose в Podman Quadlet</a></li><li><a href="/tools/proxmox-quorum/">Кворум Proxmox</a></li><li><a href="/tools/opnsense-vlan-planner/">Планировщик VLAN</a></li><li><a href="/tools/rackplan/">Планировщик стойки</a></li><li><a href="/privacy/">Политика конфиденциальности</a></li></ul></nav><ul class="phl-social-links phl-footer-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><div class="phl-footer-meta"><p><span>© 2025-2026 Stilicho2011. All Rights Reserved.</span><span class="phl-footer-credit">Тема: <a href="https://prohomelab.com">ProHomeLab</a></span><button type="button" class="phl-consent-open" data-phl-consent-open hidden>Настройки аналитики</button></p><div class="phl-footer-tools"><a class="phl-to-top" href="#top"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l7-7l7 7m-7 7V5"/></svg>Наверх</a></div></div></div></footer><div class="phl-consent" data-phl-consent data-mode="opt-in" role="region" aria-label="Аналитика" hidden><p><span data-phl-consent-text>Разрешить обезличенную статистику посещений?</span> <a href="/privacy/" data-phl-consent-policy>Подробнее</a></p><div class="phl-consent-actions"><button type="button" data-phl-consent-choice="granted">Разрешить</button><button type="button" data-phl-consent-choice="denied">Отказаться</button></div></div><script>(function(){const TEXTS = {"ru":{"lang":"ru-RU","label":"Аналитика","text":"Разрешить обезличенную статистику посещений?","policy":"Подробнее","href":"/privacy/","granted":"Разрешить","denied":"Отказаться","seen":"Понятно"},"en":{"lang":"en","label":"Analytics","text":"Allow anonymous visit statistics?","policy":"Details","href":"/en/privacy/","granted":"Accept","denied":"Decline","seen":"OK"}};
+const PAGE = "ru";
+
+      (() => {
+        const box = document.querySelector('[data-phl-consent]');
+        if (!box) return;
+        const key = 'phl-consent';
+        let saved = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        const texts = TEXTS;
+        const reader = window.__phlReaderLocale && window.__phlReaderLocale();
+        const tx = reader && reader !== PAGE && texts[reader];
+        if (tx) {
+          box.lang = tx.lang;
+          box.setAttribute('aria-label', tx.label);
+          box.querySelector('[data-phl-consent-text]').textContent = tx.text;
+          const pol = box.querySelector('[data-phl-consent-policy]');
+          if (pol && tx.href) { pol.textContent = tx.policy; pol.href = tx.href; }
+          box.querySelectorAll('[data-phl-consent-choice]').forEach((b) => { b.textContent = tx[b.dataset.phlConsentChoice] || b.textContent; });
+        }
+        const show = () => { box.hidden = false; };
+        if (!saved) show();
+        box.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-phl-consent-choice]');
+          if (!b) return;
+          const value = b.dataset.phlConsentChoice;
+          try { localStorage.setItem(key, value); } catch (e) {}
+          box.hidden = true;
+          if (value === 'granted' && window.__phlAnalytics) window.__phlAnalytics();
+          // Declining after accepting: counters already loaded on this page stop with the next page.
+        });
+        document.querySelectorAll('[data-phl-consent-open]').forEach((el) => {
+          el.hidden = false;
+          el.addEventListener('click', (e) => { e.preventDefault(); show(); box.querySelector('button')?.focus(); });
+        });
+      })();
+    })();</script></body></html>

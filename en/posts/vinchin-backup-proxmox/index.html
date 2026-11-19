@@ -1,0 +1,835 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-scheme="prohomelab" data-theme="light" data-mode="system" data-default-mode="system" data-mode-switch="1" data-fluid="1" data-social-colors="hover" style="--phl-content-width: 48rem"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){const cur = "en";
+const alts = {"ru":"/posts/vinchin-backup-proxmox/"};
+
+      try {
+        const p = localStorage.getItem('phl-lang');
+        if (p && p !== cur && alts[p]) location.replace(alts[p] + location.hash);
+      } catch (e) {}
+    })();</script><title>Vinchin Backup &amp; Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE | ProHomeLab</title><meta name="description" content="An overview of Vinchin Backup &amp; Recovery V9.0 SP3 - backup, recovery, and migration for mixed and import-independent infrastructure: architecture, bare-metal installation, Proxmox VE support, Russian virtualization platforms, and a comparison with Proxmox Backup Server."><link rel="canonical" href="https://prohomelab.com/en/posts/vinchin-backup-proxmox/"><link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/vinchin-backup-proxmox/"><link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/vinchin-backup-proxmox/"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32"><link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"><link rel="manifest" href="/site.webmanifest"><meta property="og:site_name" content="ProHomeLab"><meta property="og:title" content="Vinchin Backup &amp; Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE"><meta property="og:description" content="An overview of Vinchin Backup &amp; Recovery V9.0 SP3 - backup, recovery, and migration for mixed and import-independent infrastructure: architecture, bare-metal installation, Proxmox VE support, Russian virtualization platforms, and a comparison with Proxmox Backup Server."><meta property="og:type" content="article"><meta property="og:url" content="https://prohomelab.com/en/posts/vinchin-backup-proxmox/"><meta property="og:locale" content="en"><meta property="og:image" content="https://prohomelab.com/_astro/featured.BVSCczXn_ZaHVfb.jpg"><meta property="og:image:alt" content="Vinchin Backup &amp; Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE"><meta property="article:published_time" content="2026-10-05T00:00:00.000Z"><meta property="article:section" content="Backup"><meta property="article:tag" content="Backup"><meta property="article:tag" content="Proxmox"><meta property="article:tag" content="Vinchin"><meta property="article:tag" content="Import Substitution"><meta name="twitter:card" content="summary_large_image"><meta name="yandex-verification" content="103870927"><link rel="alternate" type="application/rss+xml" title="ProHomeLab" href="https://prohomelab.com/en/index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","articleSection":"Backup","name":"Vinchin Backup & Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE","headline":"Vinchin Backup & Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE","description":"An overview of Vinchin Backup & Recovery V9.0 SP3 - backup, recovery, and migration for mixed and import-independent infrastructure: architecture, bare-metal installation, Proxmox VE support, Russian virtualization platforms, and a comparison with Proxmox Backup Server.","inLanguage":"en","url":"https://prohomelab.com/en/posts/vinchin-backup-proxmox/","author":[{"@type":"Person","name":"Stilicho2011","image":"https://prohomelab.com/avatar-stilicho2011.webp","url":"https://prohomelab.com","sameAs":["https://github.com/stilicho2011/ubuntu_rep","https://t.me/stilicho2011_videos","https://www.youtube.com/@prohomelab","https://boosty.to/stilicho2011"]}],"copyrightYear":"2026","datePublished":"2026-10-05T00:00:00.000Z","dateModified":"2026-10-05T00:00:00.000Z","image":"https://prohomelab.com/_astro/featured.BVSCczXn_ZaHVfb.jpg","keywords":["Backup","Proxmox","Vinchin","Import Substitution"],"mainEntityOfPage":"https://prohomelab.com/en/posts/vinchin-backup-proxmox/","wordCount":5564}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://prohomelab.com/en/"},{"@type":"ListItem","position":2,"name":"Backup","item":"https://prohomelab.com/en/posts/backup/"},{"@type":"ListItem","position":3,"name":"Vinchin Backup & Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE","item":"https://prohomelab.com/en/posts/vinchin-backup-proxmox/"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoObject","name":"Vinchin Backup & Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE","description":"An overview of Vinchin Backup & Recovery V9.0 SP3 - backup, recovery, and migration for mixed and import-independent infrastructure: architecture, bare-metal installation, Proxmox VE support, Russian virtualization platforms, and a comparison with Proxmox Backup Server.","thumbnailUrl":["https://i.ytimg.com/vi/HcBrmlMWmqQ/maxresdefault.jpg"],"uploadDate":"2026-10-05T00:00:00.000Z","embedUrl":"https://www.youtube.com/embed/HcBrmlMWmqQ","contentUrl":"https://www.youtube.com/watch?v=HcBrmlMWmqQ"}</script><script>
+      // Light or dark before first paint, so a dark page never flashes white.
+      // data-mode is the choice (system, light, dark), data-theme the result (light or dark).
+      (() => {
+        const d = document.documentElement;
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        let mode = d.dataset.defaultMode || 'system';
+        if (d.dataset.modeSwitch) {
+          try {
+            const saved = localStorage.getItem('phl-theme');
+            if (saved === 'system' || saved === 'light' || saved === 'dark') mode = saved;
+          } catch (e) {}
+        }
+        const apply = () => {
+          d.dataset.mode = mode;
+          d.dataset.theme = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode;
+        };
+        apply();
+        media.addEventListener('change', () => mode === 'system' && apply());
+        window.__phlSetMode = (next) => {
+          mode = next;
+          try {
+            localStorage.setItem('phl-theme', next);
+          } catch (e) {}
+          apply();
+        };
+      })();
+    </script><style>:root:root{--phl-font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-heading:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-mono:'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace}</style><script>(function(){const ym = {"id":"103870927","webvisor":true,"clickmap":true,"trackLinks":true,"accurateTrackBounce":true,"ecommerce":"dataLayer"};
+const ga = {"id":"G-VRHQGK81S9"};
+const umami = {"src":"https://stats.prohomelab.com/script.js","websiteId":"31518a04-7f00-4d16-99f3-759c057c7bf2","recorder":true,"recorderSrc":"https://stats.prohomelab.com/recorder.js"};
+const consent = "opt-in";
+
+      (() => {
+        let started = false;
+        const add = (src, attrs = {}) => {
+          const s = document.createElement('script');
+          s.async = true;
+          s.src = src;
+          for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+          document.head.appendChild(s);
+        };
+        window.__phlAnalytics = () => {
+          if (started) return;
+          started = true;
+          if (ym) {
+            window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+            window.ym.l = Date.now();
+            add(`https://mc.yandex.ru/metrika/tag.js?id=${ym.id}`);
+            const opts = { ssr: true, webvisor: ym.webvisor, clickmap: ym.clickmap, accurateTrackBounce: ym.accurateTrackBounce, trackLinks: ym.trackLinks };
+            if (ym.ecommerce) opts.ecommerce = ym.ecommerce;
+            window.ym(Number(ym.id), 'init', opts);
+          }
+          if (ga) {
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ga.id);
+            add(`https://www.googletagmanager.com/gtag/js?id=${ga.id}`);
+          }
+          if (umami) {
+            const attrs = { 'data-website-id': umami.websiteId };
+            if (umami.domains) attrs['data-domains'] = umami.domains;
+            add(umami.src, { ...attrs, defer: '' });
+            if (umami.recorder) add(umami.recorderSrc, { ...attrs, defer: '' });
+          }
+        };
+        let choice = null;
+        try { choice = localStorage.getItem('phl-consent'); } catch (e) {}
+        if (consent !== 'opt-in' || choice === 'granted') window.__phlAnalytics();
+      })();
+    })();</script><link rel="stylesheet" href="/_astro/Base.CNmgq2nC.css"></head><body id="top"><template id="phl-lang-ru"><div class="phl-langbar" lang="ru-RU" role="region" aria-label="Эта страница есть на русском"><div class="phl-langbar-inner"><p>Эта страница есть на русском</p><div class="phl-langbar-actions"><a href="/posts/vinchin-backup-proxmox/" hreflang="ru-RU" data-phl-lang="ru">Читать на русском</a><button type="button" data-phl-lang-stay>Остаться</button></div></div></div></template><script>(function(){const data = {"cur":"en","alts":{"ru":"/posts/vinchin-backup-proxmox/"},"match":{"ru":["ru","uk","be","kk"],"en":["en"]},"byLang":{"ru-ru":"ru","en":"en"},"fallback":"en"};
+
+        (() => {
+          const store = (v) => { try { localStorage.setItem('phl-lang', v); } catch (e) {} };
+          // An explicit choice anywhere (language switcher, the bar) is remembered.
+          document.addEventListener('click', (e) => {
+            const go = e.target.closest('[data-phl-lang]');
+            if (go) return store(go.dataset.phlLang);
+            const link = e.target.closest('a[hreflang]');
+            const key = link && data.byLang[link.getAttribute('hreflang').toLowerCase()];
+            if (key) return store(key);
+            const stay = e.target.closest('[data-phl-lang-stay]');
+            if (stay) { store(data.cur); stay.closest('.phl-langbar')?.remove(); }
+          });
+          let saved = null;
+          try { saved = localStorage.getItem('phl-lang'); } catch (e) {}
+          const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''])
+            .map((l) => String(l).toLowerCase().split('-')[0]);
+          const fits = (key, code) => (data.match[key] || []).includes(code);
+          // The language this reader reads, for other parts of the page (the analytics banner):
+          // the stored choice, else the page language if the browser fits it, else the first
+          // locale the browser fits, else the fallback, else the page language.
+          window.__phlReaderLocale = () => {
+            if (saved && data.match[saved]) return saved;
+            if (list.some((code) => fits(data.cur, code))) return data.cur;
+            for (const code of list) {
+              const key = Object.keys(data.match).find((k) => fits(k, code));
+              if (key) return key;
+            }
+            return data.fallback || data.cur;
+          };
+          if (saved || !Object.keys(data.alts).length) return;
+          if (list.some((code) => fits(data.cur, code))) return;
+          let target = null;
+          for (const code of list) {
+            target = Object.keys(data.alts).find((key) => fits(key, code)) || null;
+            if (target) break;
+          }
+          if (!target && data.fallback && data.fallback !== data.cur && data.alts[data.fallback]) target = data.fallback;
+          const tpl = target && document.getElementById('phl-lang-' + target);
+          if (tpl) document.body.prepend(tpl.content.cloneNode(true));
+        })();
+      })();</script><a class="phl-skip" href="#phl-content">Skip to content</a><header class="phl-header phl-header-sticky"><div class="phl-header-inner"><a class="phl-brand" href="/en/"><img class="phl-logo phl-logo-light" src="/prohomelab-mark.svg" alt><span class="phl-brand-name">ProHomeLab</span><span class="phl-brand-point" aria-hidden="true"></span></a><nav class="phl-nav" aria-label="Main menu"><ul class="phl-nav-list"><li><a href="/en/blog/">All Articles</a></li><li><details class="phl-dropdown" data-phl-dropdown><summary aria-current="true">Topics<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul class="phl-dropdown-panel"><li><a href="/en/posts/">Topics</a></li><li><a href="/en/posts/authentik/">Authentik</a></li><li><a href="/en/posts/backup/">Backup</a></li><li><a href="/en/posts/crowdsec/">Crowdsec</a></li><li><a href="/en/posts/docker-ui/">Docker UI</a></li><li><a href="/en/posts/hardware/">Hardware</a></li><li><a href="/en/posts/media-servers/">Media Servers</a></li><li><a href="/en/posts/network/">Network</a></li><li><a href="/en/posts/news/">News</a></li><li><a href="/en/posts/nextcloud/">Nextcloud</a></li><li><a href="/en/posts/opnsense/">OPNsense</a></li><li><a href="/en/posts/pkm/">PKM</a></li><li><a href="/en/posts/podman/">Podman</a></li><li><a href="/en/posts/proxmox/">Proxmox</a></li><li><a href="/en/posts/selfhosting/">Self-hosting</a></li><li><a href="/en/posts/single-sign-on/">Single Sign On</a></li><li><a href="/en/posts/terraform/">Terraform</a></li><li><a href="/en/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/en/categories/">Categories</a></li><li><a href="/en/tags/">Tags</a></li><li><a href="/en/tools/">Tools</a></li><li><a href="/en/about/">About</a></li></ul></nav><div class="phl-header-tools phl-has-mobile-menu"><button type="button" class="phl-search-button" data-phl-search-open aria-label="Search" title="Search" hidden><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg></button><dialog class="phl-search" data-phl-search aria-label="Search"><div class="phl-search-box"><div class="phl-search-field"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg><input type="search" data-phl-search-input placeholder="Search articles" aria-label="Search articles" autocomplete="off" spellcheck="false"><button type="button" class="phl-search-close" data-phl-search-close aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></button></div><p class="phl-search-status" data-phl-search-status role="status" aria-live="polite"></p><ol class="phl-search-results" data-phl-search-results></ol><button type="button" class="phl-search-more" data-phl-search-more hidden>Show more</button></div></dialog><script>(function(){const options = {"shortcut":true,"pageSize":8,"text":{"noResults":"Nothing found","loading":"Searching","unavailable":"Search works on the built site (astro build)","more":"Show more"}};
+
+  (() => {
+    const open = document.querySelector('[data-phl-search-open]');
+    const dialog = document.querySelector('[data-phl-search]');
+    if (!open || !dialog || typeof dialog.showModal !== 'function') return;
+    const input = dialog.querySelector('[data-phl-search-input]');
+    const list = dialog.querySelector('[data-phl-search-results]');
+    const status = dialog.querySelector('[data-phl-search-status]');
+    const more = dialog.querySelector('[data-phl-search-more]');
+    const t = options.text;
+    let pagefind = null;
+    let failed = false;
+    let results = [];
+    let shown = 0;
+    let query = 0;
+    open.hidden = false;
+
+    const load = async () => {
+      if (pagefind || failed) return pagefind;
+      try {
+        pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+        await pagefind.init();
+      } catch (e) {
+        failed = true;
+        pagefind = null;
+      }
+      return pagefind;
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const render = async () => {
+      const page = results.slice(shown, shown + options.pageSize);
+      const id = query;
+      const data = await Promise.all(page.map((r) => r.data()));
+      if (id !== query) return;
+      for (const d of data) {
+        const li = document.createElement('li');
+        const sub = (d.sub_results || []).filter((x) => x.url !== d.url).slice(0, 2);
+        li.innerHTML =
+          `<a class="phl-search-hit" href="${esc(d.url)}"><span class="phl-search-title">${esc(d.meta?.title || d.url)}</span>` +
+          `<span class="phl-search-excerpt">${d.excerpt || ''}</span></a>` +
+          (sub.length
+            ? `<ul class="phl-search-sub">${sub.map((x) => `<li><a href="${esc(x.url)}">${esc(x.title)}</a></li>`).join('')}</ul>`
+            : '');
+        list.appendChild(li);
+      }
+      shown += page.length;
+      more.hidden = shown >= results.length;
+    };
+    const run = async () => {
+      const term = input.value.trim();
+      const id = ++query;
+      list.innerHTML = '';
+      more.hidden = true;
+      shown = 0;
+      if (!term) { status.textContent = ''; return; }
+      status.textContent = t.loading;
+      const pf = await load();
+      if (id !== query) return;
+      if (!pf) { status.textContent = t.unavailable; return; }
+      const res = await pf.debouncedSearch(term, {}, 200);
+      if (res === null || id !== query) return;
+      results = res.results;
+      status.textContent = results.length ? '' : t.noResults;
+      await render();
+    };
+
+    const show = () => {
+      dialog.showModal();
+      input.focus();
+      input.select();
+      load();
+    };
+    open.addEventListener('click', show);
+    dialog.querySelector('[data-phl-search-close]').addEventListener('click', () => dialog.close());
+    // A click on the backdrop (outside the box) closes the dialog.
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    input.addEventListener('input', run);
+    more.addEventListener('click', render);
+    // Enter opens the first result.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = list.querySelector('a');
+        if (first) { e.preventDefault(); location.href = first.href; }
+      }
+    });
+    if (options.shortcut) {
+      document.addEventListener('keydown', (e) => {
+        if (dialog.open) return;
+        const typing = /^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable;
+        if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          show();
+        }
+      });
+    }
+  })();
+})();</script><ul class="phl-social-links phl-header-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><a class="phl-lang-link" href="/posts/vinchin-backup-proxmox/" hreflang="ru-RU" lang="ru-RU" title="Language" data-phl-lang="ru">RU</a><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;System&quot;,&quot;light&quot;:&quot;Light&quot;,&quot;dark&quot;:&quot;Dark&quot;}" data-title="Color mode" aria-label="Color mode" title="Color mode"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script><details class="phl-mobile-menu" data-phl-dropdown><summary aria-label="Menu"><span class="phl-mobile-open"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"/></svg></span><span class="phl-mobile-close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></span></summary><nav class="phl-mobile-panel" aria-label="Main menu"><ul class="phl-mobile-list"><li><a href="/en/blog/">All Articles</a></li><li><details><summary>Topics<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul><li><a href="/en/posts/">Topics</a></li><li><a href="/en/posts/authentik/">Authentik</a></li><li><a href="/en/posts/backup/">Backup</a></li><li><a href="/en/posts/crowdsec/">Crowdsec</a></li><li><a href="/en/posts/docker-ui/">Docker UI</a></li><li><a href="/en/posts/hardware/">Hardware</a></li><li><a href="/en/posts/media-servers/">Media Servers</a></li><li><a href="/en/posts/network/">Network</a></li><li><a href="/en/posts/news/">News</a></li><li><a href="/en/posts/nextcloud/">Nextcloud</a></li><li><a href="/en/posts/opnsense/">OPNsense</a></li><li><a href="/en/posts/pkm/">PKM</a></li><li><a href="/en/posts/podman/">Podman</a></li><li><a href="/en/posts/proxmox/">Proxmox</a></li><li><a href="/en/posts/selfhosting/">Self-hosting</a></li><li><a href="/en/posts/single-sign-on/">Single Sign On</a></li><li><a href="/en/posts/terraform/">Terraform</a></li><li><a href="/en/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/en/categories/">Categories</a></li><li><a href="/en/tags/">Tags</a></li><li><a href="/en/tools/">Tools</a></li><li><a href="/en/about/">About</a></li></ul><ul class="phl-social-links phl-mobile-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><p class="phl-mobile-mode"><span>Color mode</span><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;System&quot;,&quot;light&quot;:&quot;Light&quot;,&quot;dark&quot;:&quot;Dark&quot;}" data-title="Color mode" aria-label="Color mode" title="Color mode"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script></p></nav></details></div></div></header><script>
+  // Close open menus on outside click, on Escape, and when another one opens.
+  (() => {
+    if (window.__phlDropdowns) return;
+    window.__phlDropdowns = true;
+    const all = () => document.querySelectorAll('[data-phl-dropdown][open]');
+    document.addEventListener('click', (e) => {
+      all().forEach((d) => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      all().forEach((d) => {
+        d.removeAttribute('open');
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener(
+      'toggle',
+      (e) => {
+        const d = e.target;
+        if (!d.matches?.('[data-phl-dropdown]') || !d.open) return;
+        all().forEach((o) => o !== d && !o.contains(d) && o.removeAttribute('open'));
+      },
+      true,
+    );
+  })();
+</script><main class="phl-main" id="phl-content" tabindex="-1"><div class="phl-progress" aria-hidden="true"><span></span></div><div class="phl-article-grid phl-has-toc"><article class="phl-article" data-pagefind-body><nav class="phl-breadcrumbs" aria-label="Breadcrumbs"><ol><li><a href="/en/">Home</a></li><li><a href="/en/posts/backup/">Backup</a></li><li><span aria-current="page">Vinchin Backup &amp; Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE</span></li></ol></nav><header class="phl-article-header"><p class="phl-eyebrow">Backup</p><h1 data-pagefind-meta="title">Vinchin Backup &amp; Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE</h1><p class="phl-meta"><span class="phl-meta-authors"><a href="/en/authors/stilicho2011/">Stilicho2011</a></span><time datetime="2026-10-05T00:00:00.000Z">October 5, 2026</time><span>28 min read</span><span class="phl-views">54 views</span></p></header><div class="phl-article-tools"><p class="phl-translations">Also available in: <a href="/posts/vinchin-backup-proxmox/" hreflang="ru-RU">RU</a></p><button type="button" class="phl-zen-toggle" data-phl-zen data-on="Reading mode" data-off="Exit reading mode" aria-pressed="false">Reading mode</button></div><div class="phl-embed phl-yt phl-article-video" data-yt-id="HcBrmlMWmqQ"><a class="phl-yt-link" href="https://www.youtube.com/watch?v=HcBrmlMWmqQ" target="_blank" rel="noopener" aria-label="Vinchin Backup &amp; Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE"><img src="https://i.ytimg.com/vi/HcBrmlMWmqQ/hqdefault.jpg" alt="Vinchin Backup &amp; Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE" width="480" height="360" loading="eager" decoding="async"><span class="phl-yt-play" aria-hidden="true"></span></a></div><details class="phl-series"><summary>Part 4 of 4 in the series <a href="/en/series/backup/">Backup</a></summary><ol><li><a href="/en/posts/duplicati/">Duplicati - Encrypted Backups for Your Home Server</a></li><li><a href="/en/posts/zerobyte/">Zerobyte - Backup Automation for Self-Hosted Infrastructure</a></li><li><a href="/en/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server 4.2.0 - Installation, Configuration, and Proxmox VE Backup</a></li><li><span aria-current="page">Vinchin Backup &amp; Recovery V9.0 SP3 - Overview and Hands-On with Proxmox VE</span></li></ol></details><details class="phl-toc" data-phl-toc><summary class="phl-toc-title">Contents</summary><nav aria-label="Contents"><ul><li class="depth-2"><a href="#introduction" data-phl-toc-link="introduction">Introduction</a></li><li class="depth-2"><a href="#1-general-product-positioning" data-phl-toc-link="1-general-product-positioning">1. General Product Positioning</a></li><li class="depth-2"><a href="#2-broad-virtualization-platform-support" data-phl-toc-link="2-broad-virtualization-platform-support">2. Broad Virtualization Platform Support</a></li><li class="depth-2"><a href="#3-relevance-for-the-russian-market" data-phl-toc-link="3-relevance-for-the-russian-market">3. Relevance for the Russian Market</a></li><li class="depth-2"><a href="#4-migration-and-recovery-across-different-environments" data-phl-toc-link="4-migration-and-recovery-across-different-environments">4. Migration and Recovery Across Different Environments</a></li><li class="depth-2"><a href="#5-automation-and-management" data-phl-toc-link="5-automation-and-management">5. Automation and Management</a></li><li class="depth-2"><a href="#6-whats-new-in-v90-sp3" data-phl-toc-link="6-whats-new-in-v90-sp3">6. What&#39;s New in V9.0 SP3</a></li><li class="depth-2"><a href="#7-architecture---server-node-proxy" data-phl-toc-link="7-architecture---server-node-proxy">7. Architecture - Server, Node, Proxy</a></li><li class="depth-2"><a href="#8-installation---its-an-iso-appliance-not-a-docker-container" data-phl-toc-link="8-installation---its-an-iso-appliance-not-a-docker-container">8. Installation - It&#39;s an ISO Appliance, Not a Docker Container</a></li><li class="depth-2"><a href="#9-system-requirements" data-phl-toc-link="9-system-requirements">9. System Requirements</a></li><li class="depth-2"><a href="#10-editions-and-licensing" data-phl-toc-link="10-editions-and-licensing">10. Editions and Licensing</a></li><li class="depth-2"><a href="#11-proxmox-ve-support" data-phl-toc-link="11-proxmox-ve-support">11. Proxmox VE Support</a></li><li class="depth-3"><a href="#backing-up-physical-servers-including-windows---a-separate-mechanism" data-phl-toc-link="backing-up-physical-servers-including-windows---a-separate-mechanism">Backing Up Physical Servers (Including Windows) - a Separate Mechanism</a></li><li class="depth-2"><a href="#12-features-that-set-vinchin-apart" data-phl-toc-link="12-features-that-set-vinchin-apart">12. Features That Set Vinchin Apart</a></li><li class="depth-2"><a href="#13-pros-and-cons-of-vinchin-for-a-home-lab" data-phl-toc-link="13-pros-and-cons-of-vinchin-for-a-home-lab">13. Pros and Cons of Vinchin for a Home Lab</a></li><li class="depth-2"><a href="#14-bottom-line" data-phl-toc-link="14-bottom-line">14. Bottom Line</a></li></ul></nav></details><div class="phl-prose"><!--phl-feed-start--><h2 id="introduction">Introduction</h2>
+<p></p>
+<p>All of us use some backup solution or another for our data and systems. But the subject of today's review stands out a bit from the crowd.</p>
+<p>Vinchin Backup &#x26; Recovery V9.0 SP3 isn't just another backup tool - it's a full platform: backup, recovery, migration, and data protection all in one product, for virtual, physical, cloud, and hybrid infrastructure.</p>
+<p>The product's key selling point is that it isn't tied to a single hypervisor the way <a href="https://prohomelab.com/en/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server</a> is tied to Proxmox - one tool supports 15+ virtualization platforms, including zVirt, RED Virtualization, ROSA Virtualization, and HOSTVM, all relevant to the Russian market. In this article we'll take a detailed look at the application's architecture, its installation, Proxmox VE support, and a comparison with PBS.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>I don't have VMware, so the migration source in the hands-on part is Proxmox VE. The migration target ended up being neither oVirt nor RHV, but <strong>XCP-ng</strong>. RHV was out immediately - its official lifecycle ended on August 31, 2026 (the product has been replaced by OpenShift Virtualization). oVirt didn't work out either: the ready-made oVirt Node NG appliance image, which is what the simpler install scenarios rely on, was flagged by the developers themselves in January 2026 as not recommended for use - deploying it for a test now doesn't make much sense, and the alternative path (installing plain EL9 plus packages by hand) isn't as simple as I'd like for a home lab. And honestly, who's running EL9 in 2026 anyway?! XCP-ng, unlike either of those two stories, installs from a single ISO image - just like Proxmox VE - and is actively developed by Vates, without any of that mess. Plus, there's going to be a review of XCP-ng on the channel regardless, so why put it off, I figured.</p>
+</div>
+</div>
+<p>An important nuance worth mentioning right away: Vinchin backs up VMs, not the Proxmox host itself as a whole (more on this in section 11). And a quick comparison with PBS: PBS is free and more deeply integrated if all you have is Proxmox, while Vinchin wins out when the infrastructure is mixed, or when a move to another platform is on the horizon. More on the pros and cons for a home lab is in section 13.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Download link for demo version - <a href="https://www.vinchin.com/ru/support/vm-backup-free-trial.html?s=ukcjvsi6u0">https://www.vinchin.com/ru/support/vm-backup-free-trial.html?s=ukcjvsi6u0</a></p>
+</div>
+</div>
+<h2 id="1-general-product-positioning">1. General Product Positioning</h2>
+<p>Vinchin Backup &#x26; Recovery V9.0 SP3 is an <strong>enterprise-grade solution</strong> for backup, recovery, migration, and data protection across virtual, physical, cloud, and hybrid IT infrastructure.</p>
+<p>Key capabilities: full VM backup with individual file recovery, cross-platform VM migration (V2V and other types), continuous data protection (CDP), disaster recovery, and failover.</p>
+<p>For ProHomelab's homelab context, what matters most about this positioning is the practical layer - Vinchin does everything a familiar Proxmox Backup Server does, but adds support for a whole range of other platforms under one license and console on top of that.</p>
+<h2 id="2-broad-virtualization-platform-support">2. Broad Virtualization Platform Support</h2>
+<p>One of Vinchin's key strengths is its broad support for a wide range of virtualization platforms.
+Vinchin Backup &#x26; Recovery supports backup and recovery for a whole list of hypervisors, including (among others) Hyper-V, Proxmox, XCP-ng, oVirt, H3C CAS/UIS, ZStack, Sangfor HCI, OpenStack, Huawei FusionCompute, Red Hat Virtualization, Oracle OLVM, and XenServer/Citrix Hypervisor.</p>
+<p>Worth calling out separately, the platforms relevant to the Russian market and local infrastructure:</p>
+<ul>
+<li><strong>Proxmox VE</strong> - the main platform for this review, supported since Vinchin 7.2. And if there's support for Proxmox, the Alt Linux-based solution should work too;</li>
+<li><strong>zVirt</strong> - a Russian virtualization platform built on oVirt/KVM from "Orion soft";</li>
+<li><strong>RED Virtualization</strong> - a platform from "RED SOFT";</li>
+<li><strong>ROSA Virtualization</strong> - a platform from NTC IT ROSA, also built on oVirt/KVM;</li>
+<li><strong>HOSTVM</strong> - another Russian virtualization solution.</li>
+</ul>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Fun fact for the record: while this review was being put together, ZStack (the very same vendor from the list above) released <strong>ZSvirt Community Edition</strong> - an open version of its ZSphere engine, positioned as a VMware alternative, with live migration, encryption, and <a href="https://prohomelab.com/en/posts/terraform-proxmox-vm-automation/">Terraform</a> support. The v1.0.0 release is very fresh, and this review doesn't test the platform - it's too early to draw conclusions about stability and real-world compatibility specifically with Vinchin (the vendor's support list mentions the enterprise ZStack Cloud, not this new open-source fork). But it's an interesting thing, and I think it's worth a review of its own down the line.</p>
+</div>
+</div>
+<p>Support for RED Virtualization and ROSA Virtualization arrived in Vinchin starting with version 8.0, along with support for the companion OSes RED OS and Astra Linux in virtualized environments.</p>
+<h2 id="3-relevance-for-the-russian-market">3. Relevance for the Russian Market</h2>
+<p>For the Russian market, scenarios involving a move away from VMware, Hyper-V, and other foreign platforms toward alternative virtualization solutions are especially relevant. Vinchin's own developers emphasize this fact themselves.</p>
+<p>Vinchin can be of interest to companies that:</p>
+<ul>
+<li>are considering alternatives to VMware;</li>
+<li>run a mixed infrastructure with several virtualization platforms at once (say, Proxmox is already deployed, but part of the workload still sits on other, older systems);</li>
+<li>are moving to domestic or open-source platforms (zVirt, RED, ROSA, HOSTVM);</li>
+<li>want to manage backup and recovery centrally across different environments instead of a pile of disconnected tools per platform.</li>
+</ul>
+<h2 id="4-migration-and-recovery-across-different-environments">4. Migration and Recovery Across Different Environments</h2>
+<p>Beyond standard backup and recovery, Vinchin has a rich set of scenarios for migrating and moving workloads between different environments:</p>
+<ul>
+<li><strong>V2V</strong> - migrating virtual machines between different virtualization platforms;</li>
+<li><strong>P2V</strong> - migrating a physical server into a virtual environment;</li>
+<li><strong>P2P</strong> - migrating between physical servers;</li>
+<li><strong>C2C</strong> - migrating between cloud environments;</li>
+<li><strong>C2V</strong> - migrating from a cloud environment into a virtual one;</li>
+<li><strong>P2C</strong> - migrating a physical server into a cloud environment.</li>
+</ul>
+<p>For the Russian market, migration scenarios specifically from VMware to alternative platforms are especially relevant.
+According to the vendor, V2V migration is supported between 19 leading virtualization platforms, including both global brands and the domestic solutions listed above.</p>
+<p>A telling example of this kind of move is a VMware → zVirt migration. The vendor has a dedicated video walkthrough for this scenario.
+I don't have VMware in my home lab (only Proxmox VE is used), so what follows is a description of the general principle, not a step-by-step personal account. Broadly, the scenario works like this: Vinchin connects simultaneously to the source VMware infrastructure and the target zVirt, takes an image of the VM from VMware, and restores it directly onto zVirt, bypassing intermediate manual disk conversion and configuration from scratch. Vinchin's capabilities here go beyond plain V2V: the product can be useful in complex infrastructure migration and modernization projects as a whole, not just as a one-off image converter.</p>
+<p>The key architectural difference from PBS here isn't that Vinchin is "better at moving between different platforms" - it's that PBS simply can't restore a VM anywhere except Proxmox VE, it has no mechanism for that at all. With Vinchin, the recovery process is decoupled from the source: the backup is stored as a platform-agnostic image and can be deployed to any target platform on the supported list.</p>
+<p>Initially I planned to keep the hands-on part of this review to Proxmox VE alone, but in the end I decided to demonstrate this mechanism not on a pair of identical Proxmox hosts, but truly cross-platform and in both directions: first a test VM is deployed on XCP-ng (the second Chuwi UBox), backed up via Vinchin, and restored onto the home Proxmox VE; then the process repeats in reverse - a VM from Proxmox is backed up and restored onto XCP-ng. This demonstrates the general principle of Vinchin's platform-agnostic recovery. The actual steps of this migration are in section 8, item 10, "The Migration Itself."</p>
+<h2 id="5-automation-and-management">5. Automation and Management</h2>
+<p>Worth a quick separate mention: Vinchin simplifies the day-to-day work of IT teams through centralized management of backup jobs, logs, notifications, job status monitoring, and other management functions - all available from a single web console, with no need to switch between separate tools for different platforms.</p>
+<h2 id="6-whats-new-in-v90-sp3">6. What's New in V9.0 SP3</h2>
+<p>Version V9.0 SP3 adds and improves the following capabilities:</p>
+<ul>
+<li>support for H3C UIS 6.5 backup and recovery;</li>
+<li>support for ZStack Cloud on ARM architecture;</li>
+<li>improvements to recovery processes and backup integrity checks;</li>
+<li>optimizations for NAS, file copies, Hadoop, object storage, and tape archiving;</li>
+<li>improvements to Server CDP, including failover and recovery;</li>
+<li>interface, log, notification, and job-information display optimizations.</li>
+</ul>
+<h2 id="7-architecture---server-node-proxy">7. Architecture - Server, Node, Proxy</h2>
+<p>Vinchin actually consists of three components (for a home lab, the first one is usually all you need):</p>
+<ul>
+<li><strong>Backup Server</strong> - the central node with the web console, where jobs, retention policies, repositories, and recovery are configured. In the vast majority of home and small-scale scenarios, this is the only component you need, and it's enough on its own.</li>
+<li><strong>Backup Node</strong> - an optional component for scaling to large infrastructures, or for ROBO (Remote Office/Branch Office) scenarios, where the backup server sits at the head office and the nodes are at remote sites, all under unified management.</li>
+<li><strong>Backup Proxy</strong> - a "shim" component, only needed for specific backup-acceleration scenarios on certain platforms; not required for Proxmox VE.</li>
+</ul>
+<p>For Proxmox VE, Vinchin works on the same principle as with every other platform - agentless: nothing gets installed inside the guest OS of any VM. That doesn't extend to the host itself - there, Vinchin works through its own backup plugin (details and install steps in section 8, item 4).</p>
+<pre class="phl-mermaid">flowchart LR
+    A["Vinchin Backup Server&#x3C;br/>web console, policies, repository"] -->|"via backup plugin, no guest agent"| B["Proxmox VE host 1"]
+    A -->|"via backup plugin"| C["Proxmox VE host 2"]
+    A --> D[("Backup Repository&#x3C;br/>Local/NFS/CIFS/iSCSI/FC")]
+    A -.->|"optional, for scaling"| E["Backup Node"]</pre>
+<h2 id="8-installation---its-an-iso-appliance-not-a-docker-container">8. Installation - It's an ISO Appliance, Not a Docker Container</h2>
+<p>An important point for my self-hosting audience: Vinchin doesn't deploy as a Docker container. It's a full appliance distribution - an ISO image with an integrated OS (recent versions are built on Rocky Linux) that you install either on physical hardware or as a separate virtual machine. There's no docker-compose here at all, so there's no casually spinning it up just to poke around.</p>
+<p>For this review, Vinchin is installed on bare metal - a dedicated Chuwi UBox mini-PC (based on an AMD Ryzen 6600H) was set aside for it, outside the main Proxmox cluster. The final test bench for the hands-on part looks like this:</p>
+<ul>
+<li><strong>UBox #1</strong> - Vinchin Backup Server (bare metal);</li>
+<li><strong>UBox #2</strong> - XCP-ng, the second platform for demonstrating cross-platform V2V migration in both directions (Proxmox → XCP-ng and XCP-ng → Proxmox) (bare metal);</li>
+<li><strong>Home PVE</strong> (the third UBox, already used for real services) - the source of VMs to back up: backup jobs are taken from it (read-only, no changes to production) (bare metal).</li>
+</ul>
+<p>The home PVE serves both as a backup source and as a recovery target in the reverse direction (XCP-ng → Proxmox) - but recovery always creates a new VM with a separate ID, without touching existing working machines, so this poses no threat to real production services.</p>
+<p>I walk through the whole installation process, connecting both Proxmox VE and XCP-ng, and the actual migration between them, in the video on the channel (link at the top of the article) - the steps below are a written version of that same process, step by step, with the exact menu item names. Menu item names may differ from version to version - check against the current UI when installing.</p>
+<p><strong>1. Installing Vinchin Backup Server from ISO</strong></p>
+<ol>
+<li>Register on the Vinchin website (name, email, hypervisor) - the ISO image arrives by email; the license key in this case comes separately.</li>
+<li>Write the ISO to a bootable USB drive (Rufus/UltraISO).</li>
+<li>Boot the UBox from the flash drive, and in the installer menu, choose <strong>"Install Backup &#x26; Disaster Recovery System (Server)."</strong></li>
+<li>Installation wizard steps (Anaconda/Rocky Linux-based interface):
+<ul>
+<li>pick the time zone (<strong>Time Zone</strong>) → Done;</li>
+<li>pick the install disk (<strong>Installation Destination</strong>) → Done;</li>
+<li>configure networking and hostname (<strong>Network &#x26; Host Name</strong>) - a static IP is set here.</li>
+</ul>
+</li>
+<li>After reboot - log into the web console at the specified IP.</li>
+</ol>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>In practice, step 2 ("just write the ISO") turned out not to be as simple as it sounds, and here's what I actually ran into. First, Rufus refused to offer <strong>DD Image mode</strong> for this ISO, and instead immediately warned about a <strong>revoked bootloader</strong> - the ISO is built on Rocky Linux 9.2, and its shim/GRUB ended up on Microsoft's list of revoked UEFI bootloaders (part of the ongoing Secure Boot revocation rotation following the BlackLotus vulnerability). The fix - disable <strong>Secure Boot</strong> in the BIOS/UEFI on the target UBox (not on the machine running Rufus, but the one Vinchin is being installed onto).</p>
+<p>Second, without DD mode, Rufus only offered writing in <strong>ISO mode</strong>, where the only available filesystem is <strong>(Large)FAT32</strong>. And FAT32 has a hard limit - <strong>no file can be larger than 4 GB</strong>. The Vinchin image (Full Installation ISO, ~17.7 GB) contains files larger than that limit, and in ISO mode Rufus simply couldn't fit them onto the flash drive in full - the result was a truncated set of data: the system booted (the bootloader and kernel are small files and copied fine), but the <strong>Installation Source</strong> screen only showed a bare <code>minimal</code> repository instead of the full package tree.</p>
+<p>Trying to write the same ISO with <strong>balenaEtcher</strong> (a byte-for-byte write, bypassing the FAT32 repackaging) threw a <strong>"Missing partition table"</strong> warning - a clear sign the previous Rufus write had been incomplete. After disabling Secure Boot and writing via Etcher, the flash drive was properly recognized by the installer as a full package source.</p>
+</div>
+</div>
+<p><strong>2. Activating the license</strong></p>
+<ol>
+<li>On first login - change the default admin password. It was emailed to you when you registered on the site.</li>
+<li>In the console, go to the licensing section and upload your license key (a file like <code>license-*.key</code>, sent by email).</li>
+</ol>
+<p><strong>3. Connecting Proxmox VE to Vinchin</strong></p>
+<ol>
+<li><strong>Resources → Infrastructure → Virtual Platform</strong>.</li>
+<li>Click <strong>Add</strong>.</li>
+<li>In the <strong>Platform</strong> dropdown, choose <strong>Proxmox VE</strong>.</li>
+<li>In the <strong>IP/Domain</strong> field, enter the Proxmox VE host's address and port in the format <code>server_ip:8006</code>.</li>
+<li>Enter the Proxmox VE administrator's <strong>Username</strong> and <strong>Password</strong>.</li>
+<li><strong>OK</strong> - the platform will appear in the Virtual Platform List.</li>
+</ol>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>The Vinchin server needs access to Proxmox VE on ports <strong>8006, 29203, and 29204</strong> - otherwise the platform won't be added and backups won't run. It's worth checking ahead of time that these ports aren't blocked by a firewall between the Vinchin UBox and the Proxmox host (in my case, the home PVE).</p>
+</div>
+</div>
+<p><strong>4. Installing the backup plugin on Proxmox VE hosts</strong></p>
+<p>Unlike VMware backup, where Vinchin works entirely without any plugins on the host, for Proxmox VE the vendor requires installing a lightweight backup plugin directly on the Proxmox hosts - not inside the guest VMs, only on the hypervisor itself:</p>
+<ol>
+<li>Download the plugin installer from the Vinchin console.</li>
+<li>Upload and install it on the master host of the Proxmox VE pool (and on every slave host too, if it's a cluster - this is mandatory).</li>
+<li>Confirm that after installing the plugin, the Proxmox VE host in the Vinchin console moves to the so-called licensed state (if the license is "Per CPU Sockets," a host initially shows as Unlicensed until a license is specifically allocated to it).</li>
+</ol>
+<p><strong>5. Setting up a repository</strong></p>
+<ol>
+<li>Go to the backup storage management section.</li>
+<li>Add a repository - a local disk/partition on the Vinchin UBox, or an NFS/CIFS share on a NAS.</li>
+</ol>
+<p><strong>6. First backup job</strong></p>
+<ol>
+<li><strong>VM Backup → Backup</strong>.</li>
+<li><strong>Step 1. Select Backup Source</strong> - pick the Proxmox VE host, check the VMs you need (the <strong>Sync</strong> button, if freshly added VMs aren't showing up).</li>
+<li><strong>Step 2. Select Backup Destination</strong> - pick the <strong>Target Node</strong> and <strong>Target Storage</strong> (the repository from the previous item).</li>
+<li><strong>Step 3. Select Backup Strategies</strong> - schedule (<strong>Backup as scheduled</strong> or a one-off <strong>Once-off backup</strong>), data transfer method (LAN or LAN-Free/SAN, if configured).</li>
+<li><strong>Step 4</strong> - job name, review the details, <strong>Submit</strong>.</li>
+<li>The job will show up on the <strong>Monitor Center → Jobs</strong> page - from there you can run it manually and watch its progress in real time.</li>
+</ol>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>Rocky Linux 9.2, which recent Vinchin versions are built on, requires CPU support for the x86-64-v2 instruction set. The Ryzen 6600H is a modern Zen3+ chip, so there's no issue here, but on older hardware, check against the LiveCD verification tool Vinchin provides ahead of time.</p>
+</div>
+</div>
+<p>Sources used in the checklist above - the official Vinchin help center:
+<a href="https://helpcenter.vinchin.com/docs/installation.html">Installation</a>,
+<a href="https://helpcenter.vinchin.com/docs/backup/virtualization-backup/proxmox-backup-restore.html">Proxmox VE Backup &#x26; Restore</a>, <a href="https://helpcenter.vinchin.com/docs/backup/virtualization-backup/proxmox-backup-restore/connect-proxmox-to-vinchin.html">Connect Proxmox VE to Vinchin</a>, <a href="https://helpcenter.vinchin.com/docs/backup/virtualization-backup/proxmox-backup-restore/install-proxmox-backup-plugins.html">Install Proxmox VE Backup Plugins</a>, <a href="https://helpcenter.vinchin.com/docs/backup/virtualization-backup/proxmox-backup-restore/backup-proxmox-vms.html">Backup Proxmox VE VMs</a>.</p>
+<p><strong>7. Installing XCP-ng on UBox #2</strong></p>
+<p>This is much simpler than the oVirt/RHV story - installation from a single ISO image, just like Proxmox VE:</p>
+<ol>
+<li>Download the current stable ISO (at the time of writing this review - 8.3, the LTS branch) from the <a href="https://xcp-ng.org/#easy-to-install">official download page</a> or from a <a href="https://mirrors.xcp-ng.org/isos/8.3/">mirror</a>.</li>
+<li>Write the image to a USB flash drive.</li>
+<li>Boot UBox #2 from the flash drive and choose <strong>Install XCP-ng</strong>. It's important to decide right away between <strong>BIOS</strong> and <strong>UEFI</strong> mode - you can't change this after installation, or the system may stop booting.</li>
+<li>Go through all the usual installation steps: keyboard layout → accept the <strong>EULA</strong> → pick the install disk (a separate physical disk is required, dual-boot isn't supported) → root password → network settings (interface, DHCP or static IP, hostname, DNS) → time zone and NTP setup.</li>
+<li>After the system installs and reboots, the console will display the host's IP address. Go to it in a browser (<code>https://&#x3C;UBox2-IP></code>) - the built-in <strong>XO Lite</strong>, a basic management web UI available right after install with no extra setup, will open.</li>
+</ol>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>For a basic scenario (create a test VM, connect Vinchin), the built-in XO Lite is enough. The full <strong>Xen Orchestra</strong> (a unified console for multiple hosts/pools, with its own built-in backup tool) is a separate add-on, deployed via the <strong>Deploy XOA</strong> button directly from XO Lite, or built "from sources" (free); it's not required for this review, since Vinchin connects directly to the XCP-ng host's XAPI, bypassing Xen Orchestra - but the video actually uses XOA.</p>
+</div>
+</div>
+<p><strong>8. Installing the backup plugin on the XCP-ng host</strong></p>
+<p>Just like with Proxmox VE, for XCP-ng Vinchin also requires a lightweight backup plugin on the host itself (dom0) - only here the package format is different, <code>.rpm</code> instead of <code>.deb</code> (XCP-ng is built on a CentOS-compatible base):</p>
+<ol>
+<li>On the Vinchin web console login page, click <strong>Download Backup Plugin</strong>.</li>
+<li><strong>Type</strong> → VM Backup Plugin, <strong>Platform</strong> → <strong>XCP-ng</strong>, <strong>Version</strong> → the exact version of your XCP-ng (8.3 in this review). An <code>.rpm</code> file will download.</li>
+<li>Using WinSCP (or any SCP/SFTP client), upload the <code>.rpm</code> to the XCP-ng host - login <code>root</code>, the XCP-ng password.</li>
+<li>Open the host console (via the built-in XO Lite/XOA console, or directly over SSH) and run:
+<div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.otfqh.css"><script type="module" src="/_astro/ec.0vx5m.js"></script><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">rpm -i vxe-backup-agent-xxx.xe.x86_64.rpm</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="rpm -i vxe-backup-agent-xxx.xe.x86_64.rpm"><div></div></button></div></figure></div>
+where <code>xxx</code> is the actual file name (easiest to fill in with Tab-completion rather than typing it out).</li>
+<li>If you have a multi-host pool, the plugin needs to be installed on <strong>every</strong> host, including the master, otherwise backup will only work for VMs on the host where it's installed.</li>
+</ol>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>Don't leave the plugin uninstalled for long on either Proxmox or XCP-ng - while it's missing (or removed without an immediate reinstall), every backup job for VMs on that host will fail with an error.</p>
+</div>
+</div>
+<p>Sources: <a href="https://helpcenter.vinchin.com/docs/backup/virtualization-backup/xcp-ng-backup-restore/install-xcp-ng-backup-plugins.html">Install XCP-ng Backup Plugins - Vinchin Help Center</a>, <a href="https://www.vinchin.com/knowledge-base/how-to-install-backup-plugin-for-xcp-ng.html">How to install backup plugin for XCP-ng?</a></p>
+<p><strong>9. Connecting XCP-ng to Vinchin</strong></p>
+<p>Just like with Proxmox VE (see item 3 above):</p>
+<ol>
+<li><strong>Resources → Infrastructure → Virtual Platform → Add</strong>.</li>
+<li>In the <strong>Platform</strong> list, choose <strong>XCP-ng</strong>.</li>
+<li><strong>IP/Domain</strong> - the address of the XCP-ng host (UBox #2).</li>
+<li><strong>Username / Password</strong> - root and the password set during installation.</li>
+<li><strong>OK</strong> - the platform will appear in the list next to Proxmox VE.</li>
+</ol>
+<p><strong>10. The migration itself: moving a VM between Proxmox and XCP-ng in both directions</strong></p>
+<p>This is the hands-on part I promised earlier in the text - showing the actual transfer process, not just installing the components. In Vinchin, this isn't done with a separate "migration wizard" but through the regular recovery function - you just need to explicitly switch to <strong>Cross Platform Restore</strong> at one of the wizard steps, instead of leaving recovery pointed at the source platform by default.</p>
+<p><em>Proxmox → XCP-ng:</em></p>
+<ol>
+<li>Create a test VM on the home Proxmox VE and include it in a backup job (see item 6 above), wait for it to finish.</li>
+<li><strong>VM Backup → Restore</strong>.</li>
+<li><strong>Step 1. Select Restore Point</strong> - pick the restore point you want for this VM.</li>
+<li><strong>Step 2</strong> - here it's important to explicitly pick <strong>Cross Platform Restore</strong> as the recovery type (not Instant Restore, which only temporarily and virtually spins the VM up straight from the repository). Set the recovery target to the <strong>XCP-ng</strong> host instead of the original Proxmox.</li>
+<li><strong>Step 3. Restore strategies</strong> - for a test, you can leave the defaults and just click Next.</li>
+<li><strong>Step 4. Submit</strong> - the job starts. Once it's done, the VM will show up on XCP-ng.</li>
+</ol>
+<p><em>XCP-ng → Proxmox (the reverse direction):</em></p>
+<ol>
+<li>Create a test VM on XCP-ng, include the XCP-ng host in a separate backup job (the same way it was done for Proxmox), and wait for it to complete.</li>
+<li><strong>VM Backup → Restore</strong>, pick the restore point for the VM from XCP-ng.</li>
+<li>Again choose <strong>Cross Platform Restore</strong>, with the home <strong>Proxmox VE</strong> as the recovery target.</li>
+<li><strong>Restore strategies</strong> - defaults.</li>
+<li><strong>Submit</strong> - the VM shows up on Proxmox as a new machine with a separate ID, without touching existing working VMs.</li>
+</ol>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>The difference between Instant Restore and Cross Platform Restore is fundamental, and it's clearly visible in the job log: with Instant Restore, the log shows something like "has cached data '36 MB'" for a VM whose actual size is tens of gigabytes - meaning the data physically stays in the Vinchin repository, and the target platform only has a thin "stub" that pulls data over the network on the fly. For a real, final migration (rather than a temporary emergency spin-up), you need Cross Platform Restore specifically - it copies the data in full.</p>
+</div>
+</div>
+<p>Links to the official Vinchin step-by-step guides:</p>
+<ul>
+<li><a href="https://www.vinchin.com/vinchin-help-tutorials/vinchin-proxmox-to-xcp-ng.html">How to Migrate VM from Proxmox to XCP-ng</a>,</li>
+<li><a href="https://www.vinchin.com/vinchin-help-tutorials/vinchin-xcp-ng-to-proxmox.html">How to Migrate VM from XCP-ng to Proxmox</a>.</li>
+</ul>
+<h2 id="9-system-requirements">9. System Requirements</h2>
+<p>Vinchin's official recommendations are aimed at production workloads and look like overkill for a home lab:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Production Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CPU</td>
+<td>2x Intel Xeon E5 (2.5 GHz, 4 cores/8 threads or higher)</td>
+</tr>
+<tr>
+<td>RAM</td>
+<td>32 GB or more</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>2x 10 Gbps RJ45 or higher</td>
+</tr>
+<tr>
+<td>OS Disk</td>
+<td>2x 100 GB SSD</td>
+</tr>
+<tr>
+<td>Repository space</td>
+<td>~150% of the data being protected</td>
+</tr>
+</tbody>
+</table>
+<p>For a test or a typical homelab scenario (a handful of VMs, gigabit or 2.5 Gbit networking), that's obviously overkill - Backup Server runs perfectly fine on a compact mini-PC like the Chuwi UBox, and the network and repository disk should be sized to your actual data volume, not the numbers from an enterprise guide. But it's worth understanding this isn't a "200 MB RAM container" anymore - it's a full, separate system that eats up a noticeable amount of hardware resources on its own.</p>
+<h2 id="10-editions-and-licensing">10. Editions and Licensing</h2>
+<p>Vinchin has three editions, and the license is sold either as a one-time purchase (Perpetual, "buy it, own it forever," tied to the number of physical CPU sockets on the target hosts) or as a subscription from 1 to 3 years:</p>
+<ul>
+<li><strong>Free Edition</strong> - free forever, protects up to <strong>3 virtual machines</strong>. Supports the basics: agentless backup, compression, flexible scheduling, various repository storage types (local disk, NFS, CIFS, iSCSI, Fibre Channel). Updates, technical support, and some advanced features aren't available in Free, but for some people that's plenty for a home scenario.</li>
+<li><strong>Standard Edition</strong> - for SMB infrastructure, adds more advanced backup and recovery features, includes 5x12 technical support.</li>
+<li><strong>Enterprise Edition</strong> - for large and complex infrastructures, maximum functionality, also 5x12 support out of the box (7x24 available on request).</li>
+</ul>
+<p>If you have an offsite copy (say, a second Vinchin server for offsite copies), Vinchin issues a separate free Offsite Copy License of the same type and duration as the main server's license - no need to pay extra for a second instance running pure offsite-copy duty.</p>
+<h2 id="11-proxmox-ve-support">11. Proxmox VE Support</h2>
+<p>Proxmox VE appeared on the list of supported platforms starting with Vinchin 7.2 (late 2023); the current lineup (v9.x) supports Proxmox VE versions 7.2-9.0. From Vinchin's documentation and help center on Proxmox, the following functionality stands out:</p>
+<ul>
+<li><strong>Agentless backup</strong> - nothing gets installed inside each VM's guest OS (the host-level backup plugin nuance is covered in section 7 and section 8, item 4).</li>
+<li><strong>Changed Block Tracking (CBT)</strong> - speeds up incremental backups by tracking changed blocks (in Vinchin's terminology for non-VMware platforms, this is called <strong>SpeedKit</strong>).</li>
+<li><strong>Forever-incremental backup</strong> - after the first full backup, every subsequent job only captures changes; a full backup never re-runs, which saves a lot of time and money.</li>
+<li><strong>LAN-Free backup</strong> - with a SAN available (FC/iSCSI/NFS), data can be transferred bypassing the production network, reducing load on it during backup.</li>
+<li><strong>Flexible scheduling and retention policies</strong>, including GFS (grandfather-father-son) for long-term storage of restore points by week/month/year.</li>
+<li><strong>Deduplication, compression, and BitDetector</strong> - a combination of three mechanisms for shrinking stored data volume: deduplication and BitDetector look for repeated blocks, swap files, partition gaps, and unused space, leaving only genuinely unique data in the repository, while compression squeezes down what's left.</li>
+<li><strong>Full recovery and individual file recovery</strong>, plus Instant VM Recovery to minimize downtime.</li>
+<li><strong>V2V migration</strong> - restoring a backup taken from Proxmox straight onto another platform (say, zVirt or RED Virtualization) without intermediate conversions.</li>
+</ul>
+<p>Licensing for Proxmox is tied to hosts: in the web console, hosts of the relevant Proxmox VE cluster are individually "licensed," after which backup jobs become available for the VMs on those hosts.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>It's important not to confuse backing up VMs with backing up the Proxmox host itself. Vinchin (like PBS) protects virtual machines running on PVE, not the hypervisor as a whole - it doesn't take a full image of the host with the entire cluster configuration and storage layer (LVM/ZFS). To protect the PVE configuration itself, the vendor only describes a file-level backup of directories like <code>/etc/pve</code>. So "moving the host to new hardware" in practice isn't implemented as transferring a hypervisor image, but as the combination "clean Proxmox VE install on the new host + VM recovery through Vinchin."</p>
+</div>
+</div>
+<h3 id="backing-up-physical-servers-including-windows---a-separate-mechanism">Backing Up Physical Servers (Including Windows) - a Separate Mechanism</h3>
+<p>Everything described above is backup at the hypervisor level (section 7). But Vinchin also has a second, fundamentally different mechanism - <strong>physical server backup</strong> (Windows and Linux), which works by installing a lightweight agent directly on the protected system, the way classic enterprise backup solutions do.</p>
+<p>For a home lab, this is a separate, standalone case: if, besides the VMs on Proxmox, you also have a separate physical PC or laptop running Windows, Vinchin can protect it too, once the corresponding agent is installed. Showing the process here based on the vendor's documentation (I didn't record video for this part):</p>
+<p><strong>1. Installing the agent on a Windows machine</strong></p>
+<ol>
+<li>On the Vinchin web console's login page, click <strong>Download Backup Plugin</strong> (or, once inside the console: <strong>Resources → Infrastructure → Agents → Add</strong>).</li>
+<li>Pick the agent type - for a full OS backup you need the regular <strong>Backup Agent</strong> (not the Database Backup Agent, which is separate, for databases), OS - <strong>Windows</strong>. An <code>.exe</code> installer downloads.</li>
+<li>Run the installer on the machine being protected <strong>as an administrator</strong>.</li>
+<li>Choose a connection mode: <strong>Connection mode 1</strong> (the agent installs on its own, and you then manually add it in the Vinchin console) or <strong>Connection mode 2</strong> (the agent registers itself on the Vinchin server right during install - you need to specify the server's address during setup for this).</li>
+<li>Once installed, the agent shows up on the <strong>Resources → Infrastructure → Agents</strong> page in the Vinchin console.</li>
+</ol>
+<p><strong>2. Creating a physical server backup job</strong></p>
+<ol>
+<li><strong>Physical Backup → Server Backup → Backup</strong>.</li>
+<li><strong>Step 1</strong> - in the Group tree, pick the host you need (the Windows agent from the previous step); you can selectively exclude specific partitions/disks - by default, for Windows, the system disk, the EFI partition, and the Microsoft Reserved Partition are included.</li>
+<li><strong>Step 2</strong> - pick the destination repository (the same one configured for VM backups, or a separate one).</li>
+<li><strong>Step 3</strong> - schedule and backup strategy.</li>
+<li><strong>Step 4</strong> - job name, <strong>Submit</strong>.</li>
+</ol>
+<p>Restoring this kind of backup works the same way as the P2V conversion discussed in the migration section - meaning, if you want, you can not only back up a physical Windows machine, but also spin it up as a VM on Proxmox or XCP-ng.</p>
+<p>Sources: <a href="https://helpcenter.vinchin.com/docs/resources/infrastructure/agent-client/agent-deployment.html">Agents Deployment - Vinchin Help Center</a>, <a href="https://helpcenter.vinchin.com/docs/server-backup-restore/server-backup.html">Server Backup - Vinchin Help Center</a>, <a href="https://www.vinchin.com/vinchin-help-tutorials/vinchin-windows-operating-system-backup.html">How to Backup Windows Operating System with Vinchin Backup &#x26; Recovery?</a></p>
+<h2 id="12-features-that-set-vinchin-apart">12. Features That Set Vinchin Apart</h2>
+<p>Beyond basic backup/recovery, Vinchin has a set of features that PBS either implements partially or doesn't implement at all (because PBS deliberately focuses on simplicity - that's a literary way of putting it, no offense meant, PBS fans):</p>
+<ul>
+<li><strong>AES-256 encryption</strong> for backups in the repository.</li>
+<li><strong>Anti-ransomware / Malware Scan</strong> (since v9.0) - automatically scans backups for malware before recovery, integrated with the Kaspersky antivirus engine.</li>
+<li><strong>WORM protection</strong> and backup integrity checking (Backup Data Integrity Check) - for when you need copies to be immutable to meet retention requirements.</li>
+<li><strong>DR Lab</strong> - a built-in sandbox for testing disaster recovery without touching production: you can spin up a VM from a backup in an isolated environment and confirm the recovery actually worked without a hitch.</li>
+<li><strong>Server CDP (Continuous Data Protection)</strong> - continuous data protection with failover, improved in V9.0 SP3.</li>
+<li><strong>Any-to-Any Migration</strong> - migrating VMs between practically any supported platforms: V2V, P2V, C2C, and other combinations.</li>
+<li><strong>Kubernetes backup</strong> - if your lab also runs a k8s/k3s cluster besides VMs, that's covered by the same tool too.</li>
+</ul>
+<h2 id="13-pros-and-cons-of-vinchin-for-a-home-lab">13. Pros and Cons of Vinchin for a Home Lab</h2>
+<p><strong>Pros:</strong></p>
+<ul>
+<li>Free Edition is genuinely free forever, no crippled trial - just a 3 VM limit.</li>
+<li>Proxmox VE support is official and actively developed.</li>
+<li>One tool for a mixed and transitional infrastructure - no need to run a separate backup stack per platform, including the Russian zVirt/RED/ROSA/HOSTVM.</li>
+<li>DR Lab, CDP, and malware scanning - features you'd normally have to cobble together from several tools in the open-source world.</li>
+<li>V2V migration is useful if you're at all inclined to experiment with different hypervisors (a common thing for a homelab) or move from one platform to another.</li>
+</ul>
+<p><strong>Cons:</strong></p>
+<ul>
+<li>It's not a Docker service - a separate machine (a VM, or, as in this review, dedicated physical hardware) and one more OS to maintain (updates, security patches).</li>
+<li>No LXC container support - and LXC containers get used very often in Proxmox setups.</li>
+<li>The Free Edition's 3-VM limit gets hit pretty fast even in a home lab.</li>
+<li>Less independent, user-reported data on real-world performance and deduplication ratios compared to PBS.</li>
+<li>The product's core targets enterprise scenarios - part of the interface and terminology (SAN, HBA, Backup Node for ROBO) is clearly overkill for a single Proxmox host.</li>
+</ul>
+<h2 id="14-bottom-line">14. Bottom Line</h2>
+<p>If you have a clean Proxmox VE setup and nothing else, Proxmox Backup Server will almost always be the better choice: free with no restrictions, more deeply integrated, and able to back up LXC containers, which a typical homelab user usually has even more of than full VMs.</p>
+<p>Vinchin is worth looking at if at least one of these applies:</p>
+<ul>
+<li>you genuinely have a mixed infrastructure across several virtualization platforms at once;</li>
+<li>a move from one platform to another is planned (including to domestic solutions - zVirt, RED, ROSA, HOSTVM), and you'd rather do it with a proper V2V tool than by hand;</li>
+<li>three VMs comfortably cover your critical perimeter, and you'd rather not stand up a separate PBS just for them;</li>
+<li>you're interested in ready-made DR/CDP features (sandboxed test recovery, malware scanning, continuous protection) without building it all yourself.</li>
+</ul>
+<p>In every other case, for a pure Proxmox lab, PBS remains the primary tool.</p><!--phl-feed-end--></div><footer class="phl-article-footer"><p class="phl-article-terms"><a class="phl-term-cat" href="/en/categories/backup/">Backup</a><a href="/en/tags/backup/">#Backup</a><a href="/en/tags/proxmox/">#Proxmox</a><a href="/en/tags/vinchin/">#Vinchin</a><a href="/en/tags/import-substitution/">#Import Substitution</a></p><p class="phl-license">License: CC BY 4.0</p><div class="phl-share"><span class="phl-share-label">Share</span><a href="https://t.me/share/url?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fvinchin-backup-proxmox%2F&amp;text=Vinchin%20Backup%20%26%20Recovery%20V9.0%20SP3%20-%20Overview%20and%20Hands-On%20with%20Proxmox%20VE" target="_blank" rel="noopener noreferrer" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://x.com/intent/post?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fvinchin-backup-proxmox%2F&amp;text=Vinchin%20Backup%20%26%20Recovery%20V9.0%20SP3%20-%20Overview%20and%20Hands-On%20with%20Proxmox%20VE" target="_blank" rel="noopener noreferrer" aria-label="X" title="X" style="--phl-brand-l:#000000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.234 10.162L22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299l-.929-1.329L3.076 1.56h3.182l5.965 8.532l.929 1.329l7.754 11.09h-3.182z"/></svg></a><a href="https://www.reddit.com/submit?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fvinchin-backup-proxmox%2F&amp;title=Vinchin%20Backup%20%26%20Recovery%20V9.0%20SP3%20-%20Overview%20and%20Hands-On%20with%20Proxmox%20VE" target="_blank" rel="noopener noreferrer" aria-label="Reddit" title="Reddit" style="--phl-brand-l:#ff4500;--phl-brand-d:#ff4500" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12c0 3.314 1.343 6.314 3.515 8.485l-2.286 2.286A.72.72 0 0 0 1.738 24H12c6.627 0 12-5.373 12-12S18.627 0 12 0m4.388 3.199a1.999 1.999 0 1 1-1.947 2.46v.002a2.37 2.37 0 0 0-2.032 2.341v.007c1.776.067 3.4.567 4.686 1.363a2.802 2.802 0 1 1 2.908 4.753c-.088 3.256-3.637 5.876-7.997 5.876c-4.361 0-7.905-2.617-7.998-5.87a2.8 2.8 0 0 1 1.189-5.34c.645 0 1.239.218 1.712.585c1.275-.79 2.881-1.291 4.64-1.365v-.01a3.23 3.23 0 0 1 2.88-3.207a2 2 0 0 1 1.959-1.595m-8.085 8.376c-.784 0-1.459.78-1.506 1.797s.64 1.429 1.426 1.429s1.371-.369 1.418-1.385s-.553-1.841-1.338-1.841m7.406 0c-.786 0-1.385.824-1.338 1.841s.634 1.385 1.418 1.385c.785 0 1.473-.413 1.426-1.429c-.046-1.017-.721-1.797-1.506-1.797m-3.703 4.013c-.974 0-1.907.048-2.77.135a.222.222 0 0 0-.183.305a3.2 3.2 0 0 0 2.953 1.964a3.2 3.2 0 0 0 2.953-1.964a.222.222 0 0 0-.184-.305a28 28 0 0 0-2.769-.135"/></svg></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fvinchin-backup-proxmox%2F" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn" style="--phl-brand-l:#0a66c2;--phl-brand-d:#0b73da" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037c-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85c3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.06 2.06 0 0 1-2.063-2.065a2.064 2.064 0 1 1 2.063 2.065m1.782 13.019H3.555V9h3.564zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg></a><a href="mailto:?subject=Vinchin%20Backup%20%26%20Recovery%20V9.0%20SP3%20-%20Overview%20and%20Hands-On%20with%20Proxmox%20VE&amp;body=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fvinchin-backup-proxmox%2F" rel="noopener noreferrer" aria-label="Email" title="Email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a></div><section class="phl-author-box"><h2>Author</h2><div class="phl-author"><img class="phl-author-image" src="/avatar-stilicho2011.webp" alt="" width="64" height="64" loading="lazy"><div class="phl-author-body"><p class="phl-author-name"><a href="/en/authors/stilicho2011/">Stilicho2011</a></p><p class="phl-author-bio">Writing about homelab, self-hosting, automation and open-source solutions</p><p class="phl-author-links"><a href="mailto:pavel@prohomelab.com" rel="me noopener" aria-label="email" title="email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener" target="_blank" aria-label="github" title="github" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a><a href="https://t.me/stilicho2011_videos" rel="me noopener" target="_blank" aria-label="telegram" title="telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://www.youtube.com/@prohomelab" rel="me noopener" target="_blank" aria-label="youtube" title="youtube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a><a href="https://boosty.to/stilicho2011" rel="me noopener" target="_blank" aria-label="boosty" title="boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></p></div></div></section></footer><nav class="phl-prevnext" aria-label="Previous / Next"><a class="phl-prevnext-prev" href="/en/posts/proxmox-backup-server-4-2-installation-guide/" rel="prev"><span class="phl-prevnext-label">Previous</span><span class="phl-prevnext-title">Proxmox Backup Server 4.2.0 - Installation, Configuration, and Proxmox VE Backup</span></a><span></span></nav><section class="phl-related"><h2>Related articles</h2><div class="phl-cards"><article class="phl-card"><a class="phl-card-cover" href="/en/posts/proxmox-backup-server-4-2-installation-guide/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.39sdxuF4_1RStyK.webp" srcset="/_astro/featured.39sdxuF4_2o3fdb.webp 320w, /_astro/featured.39sdxuF4_14X5Ul.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Backup</span><time datetime="2026-05-31T00:00:00.000Z">May 31, 2026</time><span class="phl-card-video">▶ video</span><span class="phl-views">54 views</span></p><h3 class="phl-card-title"><a href="/en/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server 4.2.0 - Installation, Configuration, and Proxmox VE Backup</a></h3><p class="phl-card-summary">A complete guide to installing and configuring Proxmox Backup Server 4.2.0 for building a reliable backup system for Proxmox VE virtual machines and containers.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/en/posts/zerobyte/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.Bi9ICYOF_V7te4.webp" srcset="/_astro/featured.Bi9ICYOF_Z1oWqKb.webp 320w, /_astro/featured.Bi9ICYOF_2m9xKU.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Backup</span><time datetime="2026-04-24T00:00:00.000Z">April 24, 2026</time><span class="phl-card-video">▶ video</span><span class="phl-views">25 views</span></p><h3 class="phl-card-title"><a href="/en/posts/zerobyte/">Zerobyte - Backup Automation for Self-Hosted Infrastructure</a></h3><p class="phl-card-summary">A step-by-step guide to installing and configuring Zerobyte for backup automation in self-hosted infrastructure and homelabs.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/en/posts/duplicati/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.7QzjGUHm_1PEu5X.webp" srcset="/_astro/featured.7QzjGUHm_1oVveo.webp 320w, /_astro/featured.7QzjGUHm_5QlVy.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Backup</span><time datetime="2026-04-17T00:00:00.000Z">April 17, 2026</time><span class="phl-card-video">▶ video</span><span class="phl-views">24 views</span></p><h3 class="phl-card-title"><a href="/en/posts/duplicati/">Duplicati - Encrypted Backups for Your Home Server</a></h3><p class="phl-card-summary">A step-by-step guide to installing and configuring Duplicati for automatic encrypted backups on a home server or in the cloud</p></div></article></div></section></article></div><script type="module" src="/_astro/MermaidLoader.astro_astro_type_script_index_0_lang.D0cD853-.js"></script><script type="module">document.querySelectorAll(`.phl-yt`).forEach(e=>{let t=e.querySelector(`.phl-yt-link`);t?.addEventListener(`click`,n=>{n.preventDefault();let r=e.dataset.ytId,i=e.dataset.ytParams?`&${e.dataset.ytParams}`:``,a=document.createElement(`iframe`);a.src=`https://www.youtube-nocookie.com/embed/${r}?autoplay=1${i}`,a.title=t.getAttribute(`aria-label`)??`YouTube video`,a.allow=`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share`,a.allowFullscreen=!0,e.replaceChildren(a)})});var e=matchMedia(`(prefers-reduced-motion: reduce)`).matches;document.querySelectorAll(`.phl-carousel`).forEach(t=>{let n=t.querySelector(`.phl-carousel-track`),r=n?[...n.children]:[];if(!n||r.length<2)return;let i=t=>{let i=(t+r.length)%r.length;n.scrollTo({left:r[i].offsetLeft-n.offsetLeft,behavior:e?`auto`:`smooth`})},a=()=>Math.round(n.scrollLeft/n.clientWidth),o=document.createElement(`div`);o.className=`phl-carousel-nav`,o.innerHTML=`<button type="button" class="phl-carousel-prev" aria-label="Previous">‹</button><span class="phl-carousel-dots"></span><button type="button" class="phl-carousel-next" aria-label="Next">›</button>`;let s=o.querySelector(`.phl-carousel-dots`);r.forEach((e,t)=>{let n=document.createElement(`button`);n.type=`button`,n.setAttribute(`aria-label`,`${t+1} / ${r.length}`),n.addEventListener(`click`,()=>i(t)),s.appendChild(n)});let c=()=>[...s.children].forEach((e,t)=>e.toggleAttribute(`aria-current`,t===a()));n.addEventListener(`scroll`,()=>requestAnimationFrame(c),{passive:!0}),o.querySelector(`.phl-carousel-prev`).addEventListener(`click`,()=>i(a()-1)),o.querySelector(`.phl-carousel-next`).addEventListener(`click`,()=>i(a()+1)),t.appendChild(o),c();let l=Number(t.dataset.interval);if(l>0&&!e){let e=!1;t.addEventListener(`mouseenter`,()=>e=!0),t.addEventListener(`mouseleave`,()=>e=!1),t.addEventListener(`focusin`,()=>e=!0),setInterval(()=>!e&&i(a()+1),Math.max(l,1500))}});var t=e=>`phl-tabs:${e}`,n=[...document.querySelectorAll(`.phl-tabs`)],r=(e,i,a=!0)=>{let o=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!o.some(e=>e.dataset.label===i))return;o.forEach(e=>e.hidden=e.dataset.label!==i),e.querySelectorAll(`:scope > .phl-tablist button`).forEach(e=>e.setAttribute(`aria-selected`,String(e.dataset.label===i)));let s=e.dataset.group;if(a&&s){try{localStorage.setItem(t(s),i)}catch{}n.filter(t=>t!==e&&t.dataset.group===s).forEach(e=>r(e,i,!1))}};n.forEach((e,n)=>{let i=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!i.length)return;let a=document.createElement(`div`);a.className=`phl-tablist`,a.setAttribute(`role`,`tablist`),i.forEach((t,o)=>{let s=document.createElement(`button`);s.type=`button`,s.setAttribute(`role`,`tab`),s.id=`phl-tab-${n}-${o}`,s.dataset.label=t.dataset.label,s.innerHTML=t.querySelector(`.phl-tab-label`)?.innerHTML??t.dataset.label??``,t.setAttribute(`role`,`tabpanel`),t.setAttribute(`aria-labelledby`,s.id),s.addEventListener(`click`,()=>r(e,t.dataset.label)),s.addEventListener(`keydown`,e=>{let t=e.key===`ArrowRight`?1:e.key===`ArrowLeft`?-1:0;if(!t)return;let n=a.children[(o+t+i.length)%i.length];n.focus(),n.click()}),a.appendChild(s)}),e.prepend(a),e.classList.add(`phl-tabs-ready`);let o=null;try{o=e.dataset.group?localStorage.getItem(t(e.dataset.group)):null}catch{}r(e,o??e.dataset.default??i[0].dataset.label,!1)}),document.querySelectorAll(`.phl-accordion[data-mode="collapse"]`).forEach(e=>{let t=[...e.querySelectorAll(`:scope > .phl-accordion-item`)];t.forEach(e=>e.addEventListener(`toggle`,()=>e.open&&t.forEach(t=>t!==e&&(t.open=!1))))});var i=document.querySelectorAll(`.phl-prose img:not(.nozoom)`);if(i.length){let e=document.createElement(`dialog`);e.className=`phl-lightbox`,e.innerHTML=`<img alt=""><button type="button" class="phl-lightbox-close" aria-label="Close">×</button>`,document.body.appendChild(e);let t=e.querySelector(`img`);e.addEventListener(`click`,()=>e.close()),i.forEach(n=>{n.closest(`a, .phl-yt, .phl-repo`)||(n.classList.add(`phl-zoomable`),n.addEventListener(`click`,()=>{t.src=n.currentSrc||n.src,t.alt=n.alt,e.showModal()}))})}</script><script type="module" src="/_astro/ChartTypeitClient.astro_astro_type_script_index_0_lang.CjHU9QBU.js"></script><script>(function(){const smartToc = true;
+const tableHint = "The table scrolls sideways";
+const wideBlocks = true;
+const wideCode = false;
+
+  // TOC: collapsed on phones, open from 768 px (decision 0007).
+  // Follows width changes too (rotating a tablet, resizing the window).
+  const toc = document.querySelector('[data-phl-toc]');
+  const wide = matchMedia('(min-width: 768px)');
+  const syncToc = () => toc && toc.toggleAttribute('open', wide.matches);
+  syncToc();
+  wide.addEventListener('change', syncToc);
+
+  // Current section in the TOC.
+  if (toc && smartToc && 'IntersectionObserver' in window) {
+    const links = new Map([...toc.querySelectorAll('[data-phl-toc-link]')].map((a) => [a.dataset.phlTocLink, a]));
+    const heads = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+    const visible = new Set();
+    const mark = () => {
+      const current = heads.find((h) => visible.has(h.id)) ?? [...heads].reverse().find((h) => h.getBoundingClientRect().top < 120);
+      links.forEach((a, id) => a.toggleAttribute('aria-current', current?.id === id));
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id)));
+        mark();
+      },
+      { rootMargin: '0px 0px -70% 0px' },
+    );
+    heads.forEach((h) => io.observe(h));
+  }
+
+  // Wide blocks: tables and screenshots (and code, with wideCode) wider than the text column get data-phl-wide.
+  // Measured against the column width itself, not the window, so the result is the same on a
+  // phone and a desktop. The CSS lets them grow only on large screens (styles/layout.css).
+  if (wideBlocks) {
+    const root = document.documentElement;
+    const raw = getComputedStyle(root).getPropertyValue('--phl-content-width').trim();
+    const rem = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const column = raw.endsWith('rem') ? parseFloat(raw) * rem : parseFloat(raw) || 736;
+    // With the info column (from 1680 px) a block next to it must not grow over it:
+    // such blocks get data-phl-wide="beside-info" and stay in the text column.
+    const info = document.querySelector('.phl-article-info');
+    const large = matchMedia('(min-width: 1680px)');
+    const wideEls = new Set();
+    const classify = () => {
+      const bottom = info && large.matches ? info.getBoundingClientRect().bottom + 24 : -Infinity;
+      // Top to bottom: a block that does not grow keeps the ones below in place, a growing one
+      // only pushes them further down, so one pass is stable.
+      [...wideEls].sort((x, y) => (x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)).forEach((el) => {
+        const value = el.getBoundingClientRect().top < bottom ? 'beside-info' : '';
+        if (el.getAttribute('data-phl-wide') !== value) el.setAttribute('data-phl-wide', value);
+      });
+    };
+    let queued = false;
+    const queue = () => {
+      if (queued) return;
+      queued = true;
+      // A timer, not requestAnimationFrame: that one never fires in hidden tabs and some previews.
+      setTimeout(() => { queued = false; classify(); }, 50);
+    };
+    const mark = (el) => {
+      if (!el || wideEls.has(el)) return;
+      el.setAttribute('data-phl-wide', 'beside-info');
+      wideEls.add(el);
+      queue();
+    };
+    if (info) {
+      // Image loads, an opened series list, a resized window all move blocks.
+      if ('ResizeObserver' in window) new ResizeObserver(queue).observe(document.querySelector('.phl-article') ?? document.body);
+      addEventListener('resize', queue);
+    }
+    if (wideCode) document.querySelectorAll('.phl-prose .expressive-code').forEach((ec) => {
+      const pre = ec.querySelector('pre');
+      if (pre && pre.scrollWidth > column + 1) mark(ec);
+    });
+    document.querySelectorAll('.phl-prose table').forEach((t) => {
+      if (t.scrollWidth > column + 1) mark(t);
+    });
+    // A screenshot: an image clearly larger than the column, alone in its paragraph or figure.
+    const block = (img) => {
+      const fig = img.closest('.phl-prose figure');
+      if (fig) return fig;
+      const p = img.closest('.phl-prose > p');
+      return p && p.querySelectorAll('img').length === 1 && !p.textContent.trim() ? p : null;
+    };
+    const check = (img) => {
+      const w = Number(img.getAttribute('width')) || img.naturalWidth;
+      if (w >= column * 1.25 && !img.closest('.phl-gallery, .phl-carousel, .phl-card, .phl-repo')) mark(block(img));
+    };
+    document.querySelectorAll('.phl-prose img').forEach((img) => {
+      if (img.getAttribute('width') || img.complete) check(img);
+      else img.addEventListener('load', () => check(img), { once: true });
+    });
+  }
+
+  // Wide tables: say that they scroll, and mark the side where columns are hidden.
+  document.querySelectorAll('.phl-prose table').forEach((table) => {
+    const hint = document.createElement('p');
+    hint.className = 'phl-table-hint';
+    hint.textContent = tableHint;
+    hint.hidden = true;
+    table.before(hint);
+    table.tabIndex = 0;
+    const update = () => {
+      const hidden = table.scrollWidth - table.clientWidth > 1;
+      const pos = Math.abs(table.scrollLeft);
+      const atStart = pos < 2;
+      const atEnd = pos >= table.scrollWidth - table.clientWidth - 2;
+      const sides = [];
+      if (hidden && !atStart) sides.push('start');
+      if (hidden && !atEnd) sides.push('end');
+      table.dataset.phlScroll = sides.join(' ');
+      hint.hidden = !hidden;
+    };
+    table.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  });
+
+  // Reading progress.
+  const bar = document.querySelector('.phl-progress span');
+  const article = document.querySelector('.phl-article');
+  if (bar && article) {
+    const update = () => {
+      const r = article.getBoundingClientRect();
+      const total = r.height - innerHeight;
+      const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 1;
+      bar.style.transform = `scaleX(${p})`;
+    };
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+
+  // Reading mode: hides everything but the text; remembered; Escape exits.
+  const zen = document.querySelector('[data-phl-zen]');
+  if (zen) {
+    const set = (on) => {
+      document.documentElement.classList.toggle('phl-zen', on);
+      zen.setAttribute('aria-pressed', String(on));
+      zen.textContent = on ? zen.dataset.off : zen.dataset.on;
+      try { localStorage.setItem('phl-zen', on ? '1' : ''); } catch (e) {}
+    };
+    let saved = false;
+    try { saved = localStorage.getItem('phl-zen') === '1'; } catch (e) {}
+    if (saved) set(true);
+    zen.addEventListener('click', () => set(!document.documentElement.classList.contains('phl-zen')));
+    addEventListener('keydown', (e) => e.key === 'Escape' && document.documentElement.classList.contains('phl-zen') && set(false));
+  }
+})();</script></main><footer class="phl-footer"><div class="phl-footer-inner"><nav class="phl-footer-nav" aria-label="Footer menu"><ul><li><a href="/en/tools/traefik-compose/">Docker Compose generator</a></li><li><a href="/en/tools/compose-quadlet/">Compose to Podman Quadlet</a></li><li><a href="/en/tools/proxmox-quorum/">Proxmox quorum</a></li><li><a href="/en/tools/opnsense-vlan-planner/">VLAN planner</a></li><li><a href="/en/tools/rackplan/">Rack planner</a></li><li><a href="/en/privacy/">Privacy policy</a></li></ul></nav><ul class="phl-social-links phl-footer-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><div class="phl-footer-meta"><p><span>© 2025-2026 Stilicho2011. All Rights Reserved.</span><span class="phl-footer-credit">Theme: <a href="https://prohomelab.com">ProHomeLab</a></span><button type="button" class="phl-consent-open" data-phl-consent-open hidden>Analytics settings</button></p><div class="phl-footer-tools"><a class="phl-to-top" href="#top"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l7-7l7 7m-7 7V5"/></svg>Back to top</a></div></div></div></footer><div class="phl-consent" data-phl-consent data-mode="opt-in" role="region" aria-label="Analytics" hidden><p><span data-phl-consent-text>Allow anonymous visit statistics?</span> <a href="/en/privacy/" data-phl-consent-policy>Details</a></p><div class="phl-consent-actions"><button type="button" data-phl-consent-choice="granted">Accept</button><button type="button" data-phl-consent-choice="denied">Decline</button></div></div><script>(function(){const TEXTS = {"ru":{"lang":"ru-RU","label":"Аналитика","text":"Разрешить обезличенную статистику посещений?","policy":"Подробнее","href":"/privacy/","granted":"Разрешить","denied":"Отказаться","seen":"Понятно"},"en":{"lang":"en","label":"Analytics","text":"Allow anonymous visit statistics?","policy":"Details","href":"/en/privacy/","granted":"Accept","denied":"Decline","seen":"OK"}};
+const PAGE = "en";
+
+      (() => {
+        const box = document.querySelector('[data-phl-consent]');
+        if (!box) return;
+        const key = 'phl-consent';
+        let saved = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        const texts = TEXTS;
+        const reader = window.__phlReaderLocale && window.__phlReaderLocale();
+        const tx = reader && reader !== PAGE && texts[reader];
+        if (tx) {
+          box.lang = tx.lang;
+          box.setAttribute('aria-label', tx.label);
+          box.querySelector('[data-phl-consent-text]').textContent = tx.text;
+          const pol = box.querySelector('[data-phl-consent-policy]');
+          if (pol && tx.href) { pol.textContent = tx.policy; pol.href = tx.href; }
+          box.querySelectorAll('[data-phl-consent-choice]').forEach((b) => { b.textContent = tx[b.dataset.phlConsentChoice] || b.textContent; });
+        }
+        const show = () => { box.hidden = false; };
+        if (!saved) show();
+        box.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-phl-consent-choice]');
+          if (!b) return;
+          const value = b.dataset.phlConsentChoice;
+          try { localStorage.setItem(key, value); } catch (e) {}
+          box.hidden = true;
+          if (value === 'granted' && window.__phlAnalytics) window.__phlAnalytics();
+          // Declining after accepting: counters already loaded on this page stop with the next page.
+        });
+        document.querySelectorAll('[data-phl-consent-open]').forEach((el) => {
+          el.hidden = false;
+          el.addEventListener('click', (e) => { e.preventDefault(); show(); box.querySelector('button')?.focus(); });
+        });
+      })();
+    })();</script></body></html>

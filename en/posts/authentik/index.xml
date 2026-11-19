@@ -1,0 +1,1122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Authentik | ProHomeLab</title>
+    <link>https://prohomelab.com/en/posts/authentik/</link>
+    <description>Сайт про homelab, self-hosting и IT: инструкции по установке серверов, виртуализация, Docker, Proxmox, безопасность и автоматизация.</description>
+    <language>en</language>
+    <lastBuildDate>Fri, 06 Feb 2026 00:00:00 GMT</lastBuildDate>
+    <generator>ProHomeLab theme for Astro</generator>
+    <atom:link href="https://prohomelab.com/en/posts/authentik/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Authentik - Setting Up a Reputation Policy</title>
+      <link>https://prohomelab.com/en/posts/authentik-reputation-policy/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/authentik-reputation-policy/</guid>
+      <pubDate>Fri, 06 Feb 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>SSO</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <category>Authentik</category>
+      <description>A step-by-step setup of the Reputation Policy in Authentik for restricting access based on IP address and username reputation, with a breakdown of typical protection scenarios.</description>
+      <content:encoded><![CDATA[<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>If you enjoyed this article, you can become a sponsor on <a href="https://boosty.to/stilicho2011">Boosty</a>.</p>
+</div>
+</div>
+<p>I'm assuming you already have Authentik installed and configured (see the <a href="https://prohomelab.com/en/posts/authentik-overview/">general overview</a> and <a href="https://prohomelab.com/en/posts/authentik-setup/">initial setup</a> articles). Policies provide configuration and flexibility when defining the user login and authentication process.</p>
+<p>Essentially, policies decide whether a given stage will be applied within a flow, as well as whether specific users can access that flow at all.</p>
+<p>For example, you can create a policy that skips the MFA prompt stage for certain users. Or you could define a policy that only allows access to the login flow if certain conditions are met. In this article, I'll look at the reputation policy.</p>
+<h2 id="reputation-policy">Reputation Policy</h2>
+<p><strong>Authentik</strong> tracks recent login attempts for each "identifier (username, email address, etc.) + client IP address" pair. These values are stored as scores. Every failed login attempt lowers the score by 1. A successful login raises it by 1 - or, if the score was negative at that point, resets it to 0.</p>
+<p>The score has a floor and a ceiling: -5 to 5 by default (configurable under <code>System</code> > <code>Settings</code> via <code>Reputation: lower limit</code> and <code>Reputation: upper limit</code>). Reputation records don't last forever either - by default they live for a day and are then removed.</p>
+<p>You can use this policy, for example, to make users with a low score pass a CAPTCHA check before continuing to log in - I covered setting that up in the article on <a href="https://prohomelab.com/en/posts/authentik-cloudflare-turnstile/">Cloudflare Turnstile in Authentik</a>. Or you can take a harder line and not let them through at all - which is the option we'll walk through below.</p>
+<p>Under the administrator account, go to the <code>Flows and Stages</code> > <code>Flows</code> menu</p>
+<p>Select your main identification flow, in my case <code>default-authentication-flow</code>, then go to the <code>Policy/Groups/User Bindings</code> section</p>
+<p><img alt="Policy/Group/User Bindings section of the default-authentication-flow" loading="lazy" decoding="async" width="835" height="430" src="https://prohomelab.com/_astro/0.0MobmJrw_1bEPRr.webp"></p>
+<p>Next, go to <code>Create and Bind Policy</code>, and select <code>Reputation Policy</code> from the menu.</p>
+<p><img alt="Selecting the policy type - Reputation Policy" loading="lazy" decoding="async" width="1233" height="994" src="https://prohomelab.com/_astro/1.MpmVr0fJ_Z2n31I5.webp"></p>
+<hr>
+<p>In the next section, give the policy a name that makes sense to you.</p>
+<p>Next comes a very important point to keep in mind: what exactly the policy is going to count.</p>
+<p>If you select only <code>check ip</code>, the policy adds up the scores of all login attempts from that IP address, regardless of username. A few failed attempts from one IP, and logins from it are blocked for everyone.</p>
+<p>If you select only <code>check username</code>, the policy adds up the scores of all login attempts under that username, regardless of the IP address it's coming from. Only that specific user gets blocked.</p>
+<p>If you select both <code>check ip</code> and <code>check username</code>, the scores are combined: every attempt from that IP address and every attempt under that username count together. In practice, this means that if, say, user Vanya fails to log in a few times from a particular IP address, then, say, Galya logging in from the same IP address takes the hit too: Vanya's failures land in her total as well. The only thing that can save Galya is her own good track record of successful logins, if it outweighs Vanya's mistakes.</p>
+<p>Choose whichever option best fits your needs.</p>
+<p><strong>Threshold</strong> is the cutoff value. The policy fires (returns <code>true</code>) when the score is <strong>at or below the threshold</strong>. The default is -5.</p>
+<p><img alt="Configuring the Reputation Policy - Check IP and Threshold" loading="lazy" decoding="async" width="1210" height="990" src="https://prohomelab.com/_astro/2.Bxb8QG8X_2moyDS.webp"></p>
+<hr>
+<p>In the next section, enable the <code>Negate the result</code> option.</p>
+<p><img alt="Binding the Reputation Policy - Negate result and Order" loading="lazy" decoding="async" width="1211" height="1034" src="https://prohomelab.com/_astro/3.0BlnMwsO_ZGazRu.webp"></p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>In short: Negate the result is a flag that inverts the policy's outcome.</p>
+</div>
+</div>
+<p>Put simply:</p>
+<ul>
+<li>disabled → the policy works "as is"</li>
+<li>enabled → the policy's result gets flipped</li>
+</ul>
+<p>For example, suppose the policy returns:</p>
+<ul>
+<li><code>true</code> - conditions are met</li>
+<li><code>false</code> - conditions are not met</li>
+</ul>
+<p>If you enable Negate the result:</p>
+<ul>
+<li><code>true</code> → becomes <code>false</code></li>
+<li><code>false</code> → becomes <code>true</code></li>
+</ul>
+<p>Why is this needed in <strong>Authentik</strong>: it's handy when a policy defines a "bad" condition but you need to react to the "good" one, or vice versa.</p>
+<p>The Reputation Policy is exactly that kind of "bad" condition: it returns <code>true</code> when the score has dropped to the threshold or below - in other words, when the reputation is bad. That gives you two scenarios:</p>
+<ul>
+<li><strong>Show a CAPTCHA only to suspicious requests.</strong> Bind the policy to the CAPTCHA stage <strong>without</strong> <code>Negate the result</code>: the stage runs when the policy fires, i.e. when the reputation is bad. The Authentik docs recommend enabling <code>Evaluate when stage is run</code> on the stage binding in this case, so the policy takes the most recent login attempts into account.</li>
+<li><strong>Don't let suspicious requests in at all.</strong> Bind the policy to the whole flow <strong>with</strong> <code>Negate the result</code>: the flow is available when the policy does <strong>not</strong> fire, i.e. when the reputation is fine. That's exactly what we're doing in this article.</li>
+</ul>
+<p>Also specify the policy's order number.</p>
+<hr>
+<p>In the Flow overview section, you can see how the flow now works.</p>
+<p><img alt="Diagram of the default-authentication-flow with the Reputation Policy attached" loading="lazy" decoding="async" width="951" height="1166" src="https://prohomelab.com/_astro/4.CbvXCx7F_JN12N.webp"></p>
+<p>If your reputation is good, you'll be able to go through all authentication stages. If your reputation is below the configured threshold (in my case, three failed login attempts from the same IP address), Authentik simply won't let you proceed further.</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>With the "don't let them in at all" option, be careful not to lock yourself out: a few password typos and logins from your own IP are closed until the score climbs back above the threshold (reputation records live for a day by default). Keep a second way into the admin panel or a backup account handy - and you can reset the score by deleting the corresponding entry under <code>Reputation scores</code>.</p>
+</div>
+</div>
+<p>You can view reputation values in the <code>Customization</code> → <code>Reputation scores</code> menu.</p>
+<p><img alt="Reputation Scores table in Customization" loading="lazy" decoding="async" width="2259" height="617" src="https://prohomelab.com/_astro/5.BAW_39Ha_H1t7i.webp"></p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Setting Up Email Notifications in Authentik</title>
+      <link>https://prohomelab.com/en/posts/authentik-email-notifications/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/authentik-email-notifications/</guid>
+      <pubDate>Thu, 05 Feb 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>SSO</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <category>Authentik</category>
+      <description>A step-by-step guide to setting up email notifications in Authentik: connecting SMTP, common mistakes, enabling event notifications, and verifying delivery.</description>
+      <content:encoded><![CDATA[<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>If you enjoyed this article, you can become a sponsor on <a href="https://boosty.to/stilicho2011">Boosty</a>.</p>
+</div>
+</div>
+<p>I'm assuming you already have Authentik installed and configured (see the <a href="https://prohomelab.com/en/posts/authentik-overview/">general overview</a> and <a href="https://prohomelab.com/en/posts/authentik-setup/">initial setup</a> articles). In this article I'll talk about setting up email notifications in Authentik. They let you receive notifications about important events in the system - such as user logins, logouts, and authentication errors. This is useful for security monitoring and responding promptly to suspicious activity.</p>
+<h2 id="configuring-smtp">Configuring SMTP</h2>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>For this setup, and for Authentik to work correctly in general, you need to have already configured your mail server settings in the <code>.env</code> environment variables file.</p>
+</div>
+</div>
+<p>The block in <code>.env</code> looks like this (fill in the values from your mail provider):</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">AUTHENTIK_EMAIL__HOST</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">smtp.example.com</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">AUTHENTIK_EMAIL__PORT</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">587</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">AUTHENTIK_EMAIL__USERNAME</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">authentik@stilicho.ru</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">AUTHENTIK_EMAIL__PASSWORD</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">&#x3C;mailbox_password></span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># STARTTLS, usually port 587</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">AUTHENTIK_EMAIL__USE_TLS</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">true</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># SSL (implicit TLS), usually port 465</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">AUTHENTIK_EMAIL__USE_SSL</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">false</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">AUTHENTIK_EMAIL__TIMEOUT</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">10</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">AUTHENTIK_EMAIL__FROM</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">authentik@stilicho.ru</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="AUTHENTIK_EMAIL__HOST=smtp.example.comAUTHENTIK_EMAIL__PORT=587AUTHENTIK_EMAIL__USERNAME=authentik@stilicho.ruAUTHENTIK_EMAIL__PASSWORD=<mailbox_password>AUTHENTIK_EMAIL__USE_TLS=trueAUTHENTIK_EMAIL__USE_SSL=falseAUTHENTIK_EMAIL__TIMEOUT=10AUTHENTIK_EMAIL__FROM=authentik@stilicho.ru"><div></div></button></div></figure></div>
+<p>After changing <code>.env</code>, recreate the containers: <code>docker compose up -d</code>.</p>
+<p>You can verify that SMTP is configured correctly with the following command:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">exec</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">authentik_worker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">ak</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">test_email</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">your_email@domain.com</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="docker exec authentik_worker ak test_email your_email@domain.com"><div></div></button></div></figure></div>
+<p>The <code>authentik_worker</code> container must be running, and the <code>AUTHENTIK_EMAIL__*</code> variables must be set correctly. If you haven't given your containers custom names via <code>container_name</code>, do the same thing through the service name: <code>docker compose exec worker ak test_email your_email@domain.com</code>.</p>
+<p>Common mistakes that keep the test email from going out:</p>
+<ul>
+<li><strong><code>USE_TLS</code> and <code>USE_SSL</code> both enabled.</strong> Pick one: <code>USE_TLS=true</code> for STARTTLS (usually port 587) or <code>USE_SSL=true</code> for SSL (usually port 465).</li>
+<li><strong>Password in quotes.</strong> Quotes in <code>.env</code> become part of the password, and authentication fails.</li>
+<li><strong>A single underscore in the variable names instead of two.</strong> It's <code>AUTHENTIK_EMAIL__HOST</code>, with a double underscore after <code>EMAIL</code>.</li>
+<li><strong>Your hosting provider blocks outgoing SMTP ports.</strong> Many VPS providers close ports 25/465/587 by default - in that case no settings will get the email out, and you need either a support request or an SMTP relay on a different port.</li>
+<li><strong>The address in <code>AUTHENTIK_EMAIL__FROM</code> doesn't match the mailbox you authenticate as.</strong> Many mail services reject such messages.</li>
+</ul>
+<h2 id="setting-up-event-notifications">Setting up event notifications</h2>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>The application settings described in this article are accurate as of the time of writing.</p>
+</div>
+</div>
+<p>Log in to Authentik as an administrator and go to:</p>
+<p><code>Events</code> → <code>Notification Rules</code></p>
+<p><img alt="List of Notification Rules in Authentik" loading="lazy" decoding="async" width="2552" height="483" src="https://prohomelab.com/_astro/0.D3cF6ATy_181GHE.webp"></p>
+<p>In this article I'll show notification setup for only three basic events, which I consider the most important from a security standpoint. If needed, you can configure any other events you like.</p>
+<p>Click <code>Create</code>. In the window that appears, give the rule a name that makes sense to you. In my case, this is a rule for monitoring logins to Authentik.</p>
+<p>In the <code>Groups</code> section, specify which group's users will receive the notifications. In my case, this is authentik Admins.</p>
+<p>In the <code>Transport</code> section, choose the notification delivery mechanism. In this case, email is used - the built-in <code>default-email-transport</code>, which sends mail through the global SMTP settings from <code>.env</code>. Next to it there's <code>default-local-transport</code>, which shows notifications right in the Authentik UI; you can select both at once.</p>
+<p>Keep in mind: with no recipient, the notification simply isn't created. The rule will fire just fine, but you'll never see an email unless a group is selected under <code>Groups</code> (or the <code>Send notification to event user</code> option is on, which notifies the user the event is about).</p>
+<p>In the <code>Severity</code> section, choose the importance level of the event. I use the <code>Alert</code> value, then click <code>Create</code>.</p>
+<p><img alt="Notification Rule creation window - name, group, transport, severity" loading="lazy" decoding="async" width="1394" height="984" src="https://prohomelab.com/_astro/1.LcafDdfv_19qoWk.webp"></p>
+<p>Go to the rule we just created and click <code>Create and Bind Policy</code>.</p>
+<p><img alt="Empty list of policies bound to the rule - Create and Bind Policy button" loading="lazy" decoding="async" width="2214" height="753" src="https://prohomelab.com/_astro/2.vckNc-Xi_ZYWePR.webp"></p>
+<p>In the window that appears, select <code>Event Matcher Policy</code>.</p>
+<p><img alt="Selecting the policy type - Event Matcher Policy" loading="lazy" decoding="async" width="1277" height="1011" src="https://prohomelab.com/_astro/3.B0n9DPN1_U8ggs.webp"></p>
+<p>Give the policy a name (for example, <code>login</code>). In the <code>Action</code> section, choose the event that will trigger the notification. In my case, this is <code>Login</code>.</p>
+<p>The remaining parameters depend on your requirements - they're described in more detail in the <a href="https://docs.goauthentik.io/sys-mgmt/events/notifications/">official documentation</a>. If your goal is simply to get notified about the event without additional filtering, you can leave them unchanged, as shown in my screenshot.</p>
+<p><img alt="Configuring the Event Matcher Policy - name login and Action Login" loading="lazy" decoding="async" width="1200" height="1050" src="https://prohomelab.com/_astro/5.CoZRga0B_2nfeCu.webp"></p>
+<p>In the next window, set the processing order for the policy. I start with a value of 10 and click <code>Finish</code>.</p>
+<p><img alt="Creating the policy binding - Order 10, Enabled, Finish" loading="lazy" decoding="async" width="1402" height="1081" src="https://prohomelab.com/_astro/6.DPbeluTn_1hPlQ7.webp"></p>
+<p>To keep track of key user actions (or potential attackers), I create two more similar policies. The only difference is the event type:</p>
+<ul>
+<li><code>Logout</code></li>
+<li><code>Login Failed</code></li>
+</ul>
+<p><img alt="Event Matcher Policy for the Logout event" loading="lazy" decoding="async" width="1373" height="1087" src="https://prohomelab.com/_astro/7.Dlvoy55X_1djf2u.webp"></p>
+<p><img alt="Event Matcher Policy for the Login Failed event" loading="lazy" decoding="async" width="1227" height="1127" src="https://prohomelab.com/_astro/8.DB2M_qwm_Z1txa7k.webp"></p>
+<p>As a result, the list of bound policies looks roughly like this:</p>
+<p><img alt="Final list of bound policies - login, logout, login-failure" loading="lazy" decoding="async" width="2149" height="551" src="https://prohomelab.com/_astro/9.qx33hEhZ_2fso9a.webp"></p>
+<p>The rule fires when an event matches any of the bound policies, so a single rule with three policies covers all three events.</p>
+<p>Once configured, it's recommended to run a test. To do this, you can log out and log back into Authentik, and also try logging in with incorrect credentials. If everything is set up correctly, an email notification will arrive for each corresponding event.</p>
+<p>Notifications only tell you about failed logins - they don't stop them. To have Authentik actually react to password guessing, by showing a CAPTCHA or shutting the login down altogether, see the articles on the <a href="https://prohomelab.com/en/posts/authentik-reputation-policy/">Reputation Policy</a> and <a href="https://prohomelab.com/en/posts/authentik-cloudflare-turnstile/">Cloudflare Turnstile</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Cloudflare Turnstile in Authentik - Setting Up Login Form Protection</title>
+      <link>https://prohomelab.com/en/posts/authentik-cloudflare-turnstile/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/authentik-cloudflare-turnstile/</guid>
+      <pubDate>Thu, 15 Jan 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>SSO</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <category>Authentik</category>
+      <description>A detailed guide to setting up Cloudflare Turnstile - a modern alternative to CAPTCHA for protecting login, registration, and password recovery forms without degrading the user experience.</description>
+      <content:encoded><![CDATA[<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p><strong>Update, October 10, 2026: this method no longer works in Russia.</strong> The Turnstile widget is loaded from Cloudflare's servers (<code>challenges.cloudflare.com</code>), and access to them is restricted by Russian ISPs. For a user in Russia the widget simply never shows up, the check can't be passed - and the login form won't let them through. So instead of bot protection, you end up locking yourself out. If your users (or you) access Authentik from Russia, don't enable Turnstile. What you can use instead:</p>
+<ul>
+<li>the <a href="https://prohomelab.com/en/posts/authentik-reputation-policy/">Reputation Policy</a> - built-in protection against password guessing that doesn't call out to anything external;</li>
+<li><strong>Cap</strong> - a CAPTCHA you can host on your own server; Authentik supports it in the same <code>Captcha Stage</code> (see the <a href="https://docs.goauthentik.io/add-secure-apps/flows-stages/stages/captcha/">docs</a>).</li>
+</ul>
+<p>The article is still relevant if your users are outside Russia.</p>
+</div>
+</div>
+<p>I'm assuming you already have Authentik installed and configured (see the <a href="https://prohomelab.com/en/posts/authentik-setup/">initial setup</a> article, and also <a href="https://prohomelab.com/en/posts/authentik-overview-proxy-oidc/">OIDC, OAuth2, and Proxy Provider</a> if you're protecting a third-party app). Cloudflare Turnstile is a modern alternative to CAPTCHA that lets you protect authentication forms from bots and brute-force attacks <strong>without forcing users to decipher images or type in characters</strong>.</p>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>If you enjoyed this article, you can become a sponsor on <a href="https://boosty.to/stilicho2011">Boosty</a>.</p>
+</div>
+</div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Cloudflare Turnstile is an analog of Captcha technology, but for Cloudflare users. If you specifically need to set up Captcha, you can read more in the official <a href="https://docs.goauthentik.io/add-secure-apps/flows-stages/stages/captcha/"><strong>documentation</strong></a></p>
+</div>
+</div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>As of July 1, 2025, changes to Russian personal data legislation (Federal Law No. 152) came into effect, under which using Google reCAPTCHA or its analogs on sites that transfer data abroad becomes a violation. Keep this restriction in mind if you plan to use this service for commercial activity.</p>
+</div>
+</div>
+<hr>
+<h2 id="why-use-cloudflare-turnstile-in-authentik">Why use Cloudflare Turnstile in Authentik</h2>
+<p>By default, Authentik already has decent protection against:</p>
+<ul>
+<li>brute-force attacks;</li>
+<li>username enumeration;</li>
+<li>automated login attempts.</li>
+</ul>
+<p>However, when exposing your IdP to the internet, this is often not enough.</p>
+<p>Cloudflare Turnstile lets you:</p>
+<ul>
+<li>filter out bots <strong>before they even get to the password</strong>;</li>
+<li>reduce the load on Authentik;</li>
+<li>improve the user experience compared to classic CAPTCHAs;</li>
+<li>raise the overall security level without complicating your flow logic.</li>
+</ul>
+<p>In other words, in addition to the authentication and authorization methods we already set up in previous articles, we're adding one more verification method.</p>
+<p>Visually, it looks something like this</p>
+<p><img alt="Authentik login screen with the Cloudflare Turnstile widget" loading="lazy" decoding="async" width="318" height="159" src="https://prohomelab.com/_astro/0.DJNAj-ce_tsIfb.webp"></p>
+<hr>
+<h2 id="requirements">Requirements</h2>
+<p>Before you start, make sure you have a Cloudflare account - a free one is enough.</p>
+<p>The domain Authentik runs on doesn't have to be moved to Cloudflare: Turnstile works on any website, and you just enter the domain name when creating the widget. The exception is Pre-Clearance mode, covered below.</p>
+<hr>
+<h2 id="creating-a-turnstile-widget-in-cloudflare">Creating a Turnstile widget in Cloudflare</h2>
+<ol>
+<li>Go to the Cloudflare dashboard.</li>
+<li>Open the <strong>Security</strong> > <strong>Turnstile</strong> section (Cloudflare periodically moves menu items between sections - at the time of writing this was under "Protect &#x26; Connect", now it's moved to "Security". If you still can't find it, just search for "Turnstile" in the dashboard search).</li>
+<li>Click <strong>Add Widget</strong> (in some UI versions the button is already called <strong>Add site</strong>).</li>
+<li>Specify:
+<ul>
+<li><strong>Widget name</strong> - any name you like (e.g. <code>authentik-login</code>);</li>
+<li><strong>Add Hostname</strong> > <strong>Domains</strong> - the domain where Authentik runs;</li>
+<li><strong>Widget mode</strong> - Managed (recommended for home use).</li>
+<li><strong>Pre-Clearance Mode</strong> - <strong>Yes</strong></li>
+<li><strong>Level of pre-clearance</strong> - interactive</li>
+</ul>
+</li>
+</ol>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Change the last two settings however you see fit, depending on your needs and level of paranoia. Pre-Clearance only makes sense when the domain itself is served through Cloudflare and has protection rules set up there. If your domain isn't on Cloudflare, set it to <strong>No</strong>.</p>
+</div>
+</div>
+<p><img alt="Turnstile widget creation form in Cloudflare" loading="lazy" decoding="async" width="1841" height="1199" src="https://prohomelab.com/_astro/1._KtPeMWE_ixQo1.webp"></p>
+<p>Once created, you'll receive:</p>
+<ul>
+<li><strong>Site Key</strong></li>
+<li><strong>Secret Key</strong></li>
+</ul>
+<p>You can copy them, but Cloudflare kindly notes that you'll always be able to access them again later.</p>
+<p><img alt="Site Key and Secret Key of the Turnstile widget in Cloudflare" loading="lazy" decoding="async" width="1504" height="918" src="https://prohomelab.com/_astro/2.pWn9_4av_1Lx8BT.webp"></p>
+<h2 id="creating-a-captcha-stage-in-authentik">Creating a Captcha Stage in Authentik</h2>
+<h3 id="configuring-the-stage-in-authentik">Configuring the stage in Authentik</h3>
+<p>Now let's move on to the configuration in Authentik.</p>
+<ol>
+<li>Open the Authentik admin panel.</li>
+<li>Go to <strong>Flows and Stages</strong> → <strong>Stages</strong>.</li>
+<li>Click <strong>Create</strong>.</li>
+<li>Select <strong>Captcha Stage</strong>.</li>
+</ol>
+<p><img alt="Selecting the Captcha Stage type in Authentik" loading="lazy" decoding="async" width="1266" height="1007" src="https://prohomelab.com/_astro/3.v74-oyQ2_Za8HBX.webp"></p>
+<ol start="5">
+<li>Give the stage a name.</li>
+<li>For the verification type, select <strong>Cloudflare Turnstile</strong>.</li>
+<li>In the <code>Public key</code> and <code>Private Key</code> fields, enter the values we got from <strong>Cloudflare</strong>.</li>
+<li>You can leave the <code>Interactive</code> toggle enabled if your Turnstile is configured as <code>Invisible</code> or <code>Managed</code>.
+<img alt="Configuring Public key, Private key, and Interactive in the Captcha Stage" loading="lazy" decoding="async" width="1206" height="954" src="https://prohomelab.com/_astro/4.CG7Xb7Sp_Z1jhz5n.webp"></li>
+</ol>
+<p>Don't touch anything in the <strong>Advanced Settings</strong> section. In the version of Authentik current as of writing, the correct values are already filled in automatically. Previously you had to enter them manually. You can read more in the official <a href="https://developers.cloudflare.com/turnstile/get-started/client-side-rendering/widget-configurations/"><strong>documentation</strong></a></p>
+<p><img alt="Advanced Settings of the Captcha Stage in Authentik" loading="lazy" decoding="async" width="973" height="531" src="https://prohomelab.com/_astro/5.CwJTY7aN_2txyM9.webp"></p>
+<ol start="9">
+<li><strong>Finish</strong></li>
+</ol>
+<h3 id="integrating-the-turnstile-stage-into-the-main-authentication-and-authorization-flow">Integrating the Turnstile stage into the main authentication and authorization flow</h3>
+<ol>
+<li>Open the <code>Authentik</code> admin panel.</li>
+<li>Go to <strong>Flows and Stages</strong> → <strong>Flows</strong> → <strong>default-authentication-flow</strong>.</li>
+<li>Select <strong>Stage Bindings</strong> → <strong>Bind Existing Stage</strong></li>
+<li>Select the stage we just created.</li>
+<li>Choose the processing order for the Turnstile stage - after the identification stage (where the username is entered), but before the password entry stage.</li>
+<li>Select <code>evaluate when flow is planned</code>.</li>
+<li><strong>Create</strong></li>
+</ol>
+<p><img alt="Binding the Turnstile stage to default-authentication-flow" loading="lazy" decoding="async" width="1219" height="857" src="https://prohomelab.com/_astro/6.BZe2WeoA_TjQ8C.webp"></p>
+<p>We've now integrated the "captcha" stage into Authentik's authentication process.</p>
+<p><img alt="Turnstile stage in the Stage Bindings list of the authentication flow" loading="lazy" decoding="async" width="1912" height="579" src="https://prohomelab.com/_astro/9.C2SaP5Wk_Z1D8LGb.webp"></p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Set up this way, the captcha is shown to every user on every login. If you'd rather show it only to suspicious requests - say, after a few failed login attempts from the same IP - attach a Reputation Policy to this stage binding (without <code>Negate the result</code>) and switch the binding to <code>evaluate when stage is run</code>. I covered how that policy works in <a href="https://prohomelab.com/en/posts/authentik-reputation-policy/">Authentik - Setting Up a Reputation Policy</a>.</p>
+</div>
+</div>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>Test the login in a separate incognito window without closing your admin session. If the widget fails to load, you won't be able to get from the login form into the admin panel to turn the stage off. For that case there's an emergency way in: <code>docker exec authentik_server ak create_recovery_key 10 &#x3C;admin_username></code> prints a link that's valid for 10 minutes and logs you in as the given user, bypassing the login form. After that you can unbind the Turnstile stage from the flow.</p>
+</div>
+</div>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>In the <code>Turnstile</code> panel on the <code>Cloudflare</code> site, you can view analytics for this widget</p>
+</div>
+</div>
+<p><img alt="Turnstile widget analytics in the Cloudflare dashboard" loading="lazy" decoding="async" width="1368" height="109" src="https://prohomelab.com/_astro/7.BAwwk_rn_27v4IP.webp"></p>
+<p><img alt="Turnstile analytics charts in Cloudflare" loading="lazy" decoding="async" width="1342" height="766" src="https://prohomelab.com/_astro/8.OajqmB7B_2dwKhW.webp"></p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Setting Up Two-Factor Authentication in Authentik</title>
+      <link>https://prohomelab.com/en/posts/authentik-two-factor-authentication/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/authentik-two-factor-authentication/</guid>
+      <pubDate>Wed, 14 Jan 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>SSO</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <category>Authentik</category>
+      <description>A guide to setting up two-factor authentication in Authentik using TOTP and WebAuthn, covering flows, stages, and security best practices.</description>
+      <content:encoded><![CDATA[<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>If you enjoyed this article, you can become a sponsor on <a href="https://boosty.to/stilicho2011">Boosty</a>.</p>
+</div>
+</div>
+<p>In previous articles, we talked about how to create and <a href="https://prohomelab.com/en/posts/authentik-password-recovery/">recover passwords</a> according to a policy we defined, and how to set up <a href="https://prohomelab.com/en/posts/authentik-enrollment-invitation/">automated user registration</a>. In this article, we'll talk about setting up two-factor authentication, and we'll configure it so that all users are required to set up two-factor authentication. I'll show you how to set up authentication with TOTP codes and WebAuthn devices, and we'll also set up passwordless login.</p>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>The most secure authentication is a hardware key like a YubiKey, but that's an expensive option, you always need a spare key in case you lose the first one, and unfortunately I don't have that hardware for a demo. And the Cisco Duo service is temporarily unavailable in Russia as of the time of writing.</p>
+</div>
+</div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>There's already an article published on the site about the differences between TOTP, WebAuthn, and Passwordless Login. You can check it out <a href="https://prohomelab.com/en/posts/totp-webauthn-passwordless/">here</a>. So I'll assume you already know what TOTP, WebAuthn, and Passwordless Login are.</p>
+</div>
+</div>
+<p>First of all, I should note that in this article I describe automating the process, which in my view is the most optimal approach. But everything can also be done manually. To do that, each user goes to their personal settings by clicking the gear icon in the top-right corner, and selects <code>MFA Devices</code> > <code>Enroll</code></p>
+<p><img alt="Going to MFA Devices - the Enroll section in user settings" loading="lazy" decoding="async" width="1754" height="658" src="https://prohomelab.com/_astro/0.B1iyveZF_1mttyY.webp"></p>
+<p>In the dropdown menu, select a TOTP or WebAuthn device and follow the instructions.</p>
+<p><img alt="Selecting the device type - TOTP or WebAuthn" loading="lazy" decoding="async" width="861" height="695" src="https://prohomelab.com/_astro/1.RT2zuCPj_T2if2.webp"></p>
+<p>We'll do the same thing, but at the global level, so that every <a href="https://prohomelab.com/en/posts/authentik-overview/">Authentik</a> user is required to set up two-factor authentication.
+For TOTP codes to work properly, you need to have any authenticator app you like installed: Google Authenticator, <a href="https://prohomelab.com/en/posts/vaultwarden/">Vaultwarden</a>, Bitwarden, Yandex.Key, or even Kaspersky Password Manager. Choose whichever solution is most convenient and comfortable for you.
+For WebAuthn and Passwordless Login, any device with fingerprint login or Windows Hello will work (I'm sure the Mac equivalent works too). I personally use a combination of Vaultwarden + Google Authenticator + Windows Hello.
+I'm performing all these actions from an administrator account.</p>
+<h2 id="setting-up-totp-codes">Setting up TOTP codes</h2>
+<p>In principle, as in previous articles, we could create all the necessary flows from scratch. But to keep things simple, let's use the default flow.
+Go to <code>Flows and Stages</code> > <code>Flows</code> > <code>default-authentication-flow</code>. Within <code>default-authentication-flow</code>, go to <code>Stage Bindings</code>.</p>
+<p>Right now our stages look like this</p>
+<p><img alt="List of Stage Bindings for the default-authentication-flow" loading="lazy" decoding="async" width="1829" height="817" src="https://prohomelab.com/_astro/2.3JqomhvR_Z1BBSrX.webp"></p>
+<p>Now we need to make changes to the default <code>default-authentication-mfa-validation</code> stage. The thing is, it's present in the list of stages for the <code>default-authentication-flow</code>, but it's not configured and doesn't do anything. Don't worry, my young viewers, we're about to fix that.</p>
+<p>In the list that appears, under <code>not configured action</code>, select <code>force the user to configure an authenticator</code>. This forces the user to use two-factor authentication. In the <code>configure stages</code> menu that appears, select <code>TOTP Authenticator Setup Stage</code> and click <code>Update</code>.</p>
+<p><img alt="Configuring default-authentication-mfa-validation - TOTP Authenticator Setup Stage" loading="lazy" decoding="async" width="1120" height="1105" src="https://prohomelab.com/_astro/3.BQkVfuG-_1WXyvi.webp"></p>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>My personal opinion is that an admin should have several two-factor authentication options in case one of them fails.</p>
+</div>
+</div>
+<p>Now let's log out of our account (it's highly advisable to do everything in an incognito browser window to avoid later confusion about why nothing works). Log back in with our account, and after entering our login and password, we'll be greeted by a TOTP device registration window. Scan the QR code with your TOTP app on your smartphone, enter the resulting six-digit code. That's it, the device is registered. Now, on every login, after entering our username and password, we'll need to enter a 6-digit code from our authenticator app.</p>
+<p><img alt="Registering a TOTP device on first login" loading="lazy" decoding="async" width="560" height="628" src="https://prohomelab.com/_astro/4.Dx75k0qq_1ImthN.webp"></p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>The 6-digit code generated by the smartphone app is normally valid for 30 seconds. So it's extremely important that the clock is accurate on both your phone and the Authentik server - ideally synced automatically via NTP. Note that it's the time itself that matters, not the time zone: TOTP is calculated from universal time (UTC), so different time zones on your devices don't bother it, but a clock that's drifted by a minute does. Otherwise, if devices become desynchronized, your code may expire before you manage to enter it into Authentik.</p>
+</div>
+</div>
+<h2 id="setting-up-webauthn">Setting up WebAuthn</h2>
+<p>WebAuthn (Web Authentication API) is a W3C and FIDO Alliance standard that lets you log in using cryptographic keys built into your device. This includes fingerprints, Windows Hello, Face ID, etc.</p>
+<p>Actually, the whole procedure is virtually identical to what we did with TOTP, except for one detail.
+Go to <code>Flows and Stages</code> > <code>Flows</code> > <code>default-authentication-flow</code>. Within <code>default-authentication-flow</code>, go to <code>Stage Bindings</code>, and make changes to the default <code>default-authentication-mfa-validation</code> stage. In addition to the existing TOTP, add <code>WebAuthn Authenticator Setup Stage</code>.</p>
+<p><img alt="Adding the WebAuthn Authenticator Setup Stage to default-authentication-mfa-validation" loading="lazy" decoding="async" width="1290" height="1227" src="https://prohomelab.com/_astro/5.uJyB7pfV_2caymT.webp"></p>
+<p>In <code>not configured action</code>, leave <code>force the user to configure an authenticator</code>.</p>
+<p>Log out of the account, and now when we try to log in from our mobile device or computer using a fingerprint or face scan, we'll have a choice: TOTP or WebAuthn. Note that if some form of two-factor auth is already registered on your account, you won't get a list to choose an authentication method from, since you've already committed to one method earlier. So if you want to add another option alongside an existing one, you'll have to add it manually in the user settings. From then on, you'll have two-factor options to choose from.</p>
+<h2 id="passwordless-login">Passwordless Login</h2>
+<p>As I mentioned above, there's an article on the site describing the specifics of passwordless login and why webauthn and passwordless login shouldn't be seen as opposites. Specifically in our case, Passwordless login will let us skip entering a username and password and then scanning a fingerprint or face, and instead scan immediately. The scan serves as confirmation of both the login and the password.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>To set up passwordless login, you must first configure the WebAuthn login method.</p>
+</div>
+</div>
+<p>Go to <code>Flows and Stages</code> > <code>Flows</code> > <code>Create</code>.</p>
+<p>Create a new flow. Give the flow whatever name you find suitable. For <code>Designation</code>, select <code>Authentication</code> and click <code>Create</code></p>
+<p><img alt="Creating a new Flow for passwordless login" loading="lazy" decoding="async" width="1310" height="907" src="https://prohomelab.com/_astro/6.BJuuJaCP_2lPC5M.webp"></p>
+<p>In the <code>Flows</code> section, click on our new <code>flow</code> > <code>Stage Bindings</code> > <code>Create and bind stage</code> > <code>Authenticator Validation Stage</code></p>
+<p><img alt="Creating an Authenticator Validation Stage for the passwordless flow" loading="lazy" decoding="async" width="1146" height="960" src="https://prohomelab.com/_astro/7.o4JFmon8_agARM.webp"></p>
+<p><code>Next</code>. Again, give the stage a name. In the <code>Device Classes</code> section, select WebAuthn. This is needed because currently only security keys, like a Yubikey, or biometrics are supported.</p>
+<p>In <code>not configured action</code>, leave <code>force the user to configure an authenticator</code>.</p>
+<p><img alt="Configuring the Authenticator Validation Stage - Device Classes WebAuthn" loading="lazy" decoding="async" width="1122" height="970" src="https://prohomelab.com/_astro/8.N20jXabk_Z143uID.webp"></p>
+<p>Scroll down a bit, and in the <code>WebAuthn User verification</code> field, choose whichever option suits your needs. I choose <code>User verification must occur</code>. In the <code>Configuration Stages</code> section, select <code>WebAuthn Authenticator Setup Stage</code>.</p>
+<p><img alt="Configuring WebAuthn User verification and Configuration Stages" loading="lazy" decoding="async" width="910" height="797" src="https://prohomelab.com/_astro/9.V1gpZiN__ZybaAn.webp"></p>
+<p>Click <code>Next</code> and in the next menu choose the stage's execution order and <code>evaluate when stage is run</code>.</p>
+<p><img alt="Binding the Authenticator Validation Stage - order and evaluate when stage is run" loading="lazy" decoding="async" width="1077" height="1002" src="https://prohomelab.com/_astro/10.DNhoqerj_jn8HC.webp"></p>
+<p>That's still not all. Now we need to bind the existing login stage.</p>
+<p><code>Bind existing stage</code>, select <code>default-authentication-login</code> and the order in which this stage should run, which must come after the new stage created in this section. Be sure to select <code>evaluate when stage is run</code>, then <code>Create</code></p>
+<p><img alt="Binding the default-authentication-login stage to the passwordless flow" loading="lazy" decoding="async" width="1341" height="971" src="https://prohomelab.com/_astro/11.Cq0oT2jN_Z15q2wI.webp"></p>
+<p>Go to <code>Flows</code> > <code>default-authentication-flow</code> > <code>Stage Bindings</code> > <code>default-authentication-identification</code> > <code>Edit Stage</code>. Scroll all the way down, and for <code>Passwordless flow</code>, select the flow we created, in my case <code>passwordless-web-authn</code> > <code>Update</code>.</p>
+<p><img alt="Selecting the Passwordless flow in default-authentication-identification" loading="lazy" decoding="async" width="1053" height="1208" src="https://prohomelab.com/_astro/12.C7Co5Ifb_2uAveV.webp"></p>
+<p>Log out of the application - now it depends on which device you're using. If you're on a laptop, you'll be prompted to insert a USB key; just click cancel and choose whichever method you prefer instead. The same applies to mobile devices.
+Either way, you'll now see a new button in the login window for using a key.</p>
+<p><img alt="Authentik login screen with the passwordless key-login button" loading="lazy" decoding="async" width="811" height="671" src="https://prohomelab.com/_astro/13.9LgcrDoV_Z2rySaY.webp"></p>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>Since Authentik 2025.12 there's also a simpler option - <strong>passkey autofill</strong>. The browser offers to sign in with your key right in the username field, with no separate button and no separate flow. To set it up, point the <strong>WebAuthn Authenticator Validation Stage</strong> field in <code>default-authentication-identification</code> at a validation stage that allows the WebAuthn device class. Requirements: Authentik has to be served over HTTPS (already the case behind Traefik), the browser has to support the feature, and the key has to be enrolled as a passkey (discoverable credential) on the same domain. Details are in the <a href="https://docs.goauthentik.io/add-secure-apps/flows-stages/stages/identification/">Authentik docs</a>.</p>
+</div>
+</div>]]></content:encoded>
+    </item>
+    <item>
+      <title>Setting Up User Enrollment and Invitation Processes in Authentik</title>
+      <link>https://prohomelab.com/en/posts/authentik-enrollment-invitation/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/authentik-enrollment-invitation/</guid>
+      <pubDate>Tue, 13 Jan 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>SSO</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <category>Authentik</category>
+      <description>A guide to setting up the enrollment and invitation flow in Authentik: registering new users, invitations, stages, flows, and access policies.</description>
+      <content:encoded><![CDATA[<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>If you enjoyed this article, you can become a sponsor on <a href="https://boosty.to/stilicho2011">Boosty</a>.</p>
+</div>
+</div>
+<p>As an administrator in <a href="https://prohomelab.com/en/posts/authentik-overview/">Authentik</a>, you can manually create and delete users, generate complex passwords for them, and set up their login rules using TOTP codes or WebAuthn devices. This is certainly a workable mechanism, but what if there are a lot of such users? Or even if we're talking about some home use scenario, you simply want to automate the process so that you only deal with the management side of things.
+In this article, we'll talk about how to set up such automation for user registration and invitations in Authentik.</p>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>For this setup, and generally for Authentik to work correctly going forward, you should have already configured your mail server details in the <code>.env</code> environment variables file, from which notifications will be sent to both you and your users (more on that in <a href="https://prohomelab.com/en/posts/authentik-email-notifications/">Setting Up Email Notifications in Authentik</a>). You can verify the mail server is configured correctly with the simple command <code>docker exec authentik_worker ak test_email your_email@domain.com</code></p>
+</div>
+</div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>The application settings described in this article are accurate as of the time of writing. The video guide below was recorded earlier, but the configuration logic hasn't changed since.</p>
+</div>
+</div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Starting with release 2026.5, Authentik has a dedicated <strong>Invitation Wizard</strong> right in the admin panel (<code>Directory</code> > <code>Invitations</code>, the <code>New Invitation</code> button). It can create a minimal enrollment flow with an invitation stage for you, bind the invitation to it, and email the link right away - no manual assembly of flows/stages needed. The manual method below still works and gives you more control over the details - and it's the one I show in this article.</p>
+</div>
+</div>
+<h2 id="creating-a-group-for-regular-users">Creating a group for regular users</h2>
+<p>In the Authentik interface, go to <code>Directory > Groups > New Group</code></p>
+<p>In the window that appears, give our group a name. Since these will be regular users, we don't toggle the <code>Superuser Privileges</code> switch.</p>
+<p><img alt="Creating the authentik Users group without Superuser Privileges" loading="lazy" decoding="async" width="1340" height="970" src="https://prohomelab.com/_astro/0.BuQggoAa_Z1ukGOD.webp"></p>
+<p>Click <code>Create</code></p>
+<p>Answering an unasked question - "why did I name the group so oddly, with the first word lowercase and the second capitalized?" - I'll explain that the default group for admins is spelled exactly that way, <code>authentik Admins</code>. I'm just keeping the style consistent.</p>
+<h2 id="creating-stages-and-flows">Creating stages and flows</h2>
+<h3 id="email-stage">Email Stage</h3>
+<p>Go to <code>Flows and Stages</code> > <code>Stages</code> > <code>Create</code></p>
+<p>In the menu that appears, select <code>Email Stage</code></p>
+<p><img alt="Selecting the stage type - Email Stage" loading="lazy" decoding="async" width="1245" height="976" src="https://prohomelab.com/_astro/1.CVeD1Z1J_Z1oLd1C.webp"></p>
+<p>Click <code>Next</code> and in the next window set the necessary parameters: give the stage a name, an email subject, and the template that will be used. Click <code>Finish</code></p>
+<p><img alt="Configuring the Email Stage - name, email subject, template" loading="lazy" decoding="async" width="1245" height="976" src="https://prohomelab.com/_astro/2.CVD6X5OT_1Vm2.webp"></p>
+<h3 id="creating-the-self-registration-flow">Creating the self-registration flow</h3>
+<p>Go to <code>Flows</code> > <code>Create</code></p>
+<p>Fill in and set the necessary parameters roughly as shown in the screenshot below. I enabled <code>compatibility mode</code> for better compatibility with password managers. In the <code>Authentication</code> field, I didn't set any mandatory parameters. I did this intentionally - later on I'll set a hard requirement for all users, without exception, to set up <a href="https://prohomelab.com/en/posts/authentik-two-factor-authentication/">two-factor authentication</a>.</p>
+<p><img alt="Creating the Enrollment Flow with compatibility mode enabled" loading="lazy" decoding="async" width="1366" height="1227" src="https://prohomelab.com/_astro/3.CYqkVPJW_3oKTF.webp"></p>
+<p>Now go to the <code>main-page-enrollment</code> flow we created > <code>Stage Bindings</code> > <code>Bind existing stage</code> (as you probably guessed, you can also create stages from this menu by clicking <code>Create and Bind Stage</code>, but I think my approach is more illustrative).</p>
+<p>In the menu that appears, fill it in following my screenshot. Select the existing stage <code>default-source-enrollment-prompt</code>, and set the processing order for this stage.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Note that I have the <code>evaluate when flow is planned</code> toggle enabled. If you're familiar with the topic, you can choose a different option.</p>
+</div>
+</div>
+<p><img alt="Binding the default-source-enrollment-prompt stage to the Enrollment Flow" loading="lazy" decoding="async" width="1557" height="980" src="https://prohomelab.com/_astro/4.BU6PPQLc_rlAjV.webp"></p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>The <code>default-source-enrollment-prompt</code>, <code>default-source-enrollment-write</code>, and <code>default-source-enrollment-login</code> stages are built-in, and by default they're also used by the <code>default-source-enrollment</code> flow (enrollment through external sources - signing in with Google, GitHub, and the like). A stage is a shared object: whatever we change in it below changes in every flow it's bound to. If you don't use external login sources, this doesn't affect anything. But if you do, or plan to, it's better to create separate copies of these stages for your own flows and edit those instead. Otherwise the <code>Create users as inactive</code> option, for example, will also kick in for people signing in through an external source. There's a second reason too: the built-in stages are managed by a bundled blueprint, and an Authentik upgrade may reset their settings to the defaults. Your own copies won't have that problem.</p>
+</div>
+</div>
+<p>Now we need to make changes to the stage we just bound. Click <code>Edit Stage</code> and select the data fields we need, which new users will need to fill in when registering.</p>
+<p>We select the following values: <code>name</code>, <code>email</code>, <code>password</code>, <code>repeat password</code>. The <code>username</code> value is already selected by default. In the <strong>Validation Policy</strong> section, select the <code>password complexity</code> policy we created (you can read how to set password complexity values in the article <a href="https://prohomelab.com/en/posts/authentik-password-recovery/">on password recovery</a>). Click <code>Update</code></p>
+<p><img alt="Configuring registration fields and the Validation Policy in default-source-enrollment-prompt" loading="lazy" decoding="async" width="1455" height="1255" src="https://prohomelab.com/_astro/5.3Es8oyGr_du3Th.webp"></p>
+<p>Now let's create a new stage binding for the flow: click <code>Bind existing stage</code> > <code>default-source-enrollment-write</code>, set the processing order, click <code>Create</code>.</p>
+<p><img alt="Binding the default-source-enrollment-write stage to the Enrollment Flow" loading="lazy" decoding="async" width="1379" height="919" src="https://prohomelab.com/_astro/6.DInGP2GX_Z1Mw68T.webp"></p>
+<p>As before, let's make changes to the created stage > <code>Edit Stage</code></p>
+<p>Enable the <code>Create users as inactive</code> option. This is needed so that after new users enter their data and register in the system, their account remains inactive until they confirm the action via email.
+For <code>Group</code>, select the <code>authentik Users</code> group we created. Be sure to select <code>internal</code> in the <code>User type</code> section.</p>
+<p><img alt="Configuring default-source-enrollment-write - Create users as inactive, group, and User type" loading="lazy" decoding="async" width="1531" height="1085" src="https://prohomelab.com/_astro/7.CrRXgn_e_wUO2O.webp"></p>
+<p>Click <code>Bind existing stage</code> once more, select <code>email-account-confirmation</code>, which we created earlier, set the processing order, click <code>Create</code>.</p>
+<p><img alt="Binding the email-account-confirmation stage to the Enrollment Flow" loading="lazy" decoding="async" width="1169" height="823" src="https://prohomelab.com/_astro/8.CJj7OKVV_4Nivz.webp"></p>
+<p>You can check the settings for this stage.
+Actually there isn't much to edit here, we just make sure that the <strong>Activate pending users on success</strong> feature is enabled.
+If you haven't configured mail via environment variables, deactivate the <code>global settings</code> toggle. New fields will appear that you'll need to fill in with the corresponding values from your email provider.</p>
+<p><img alt="Configuring the email-account-confirmation stage - Activate pending users on success" loading="lazy" decoding="async" width="1552" height="1055" src="https://prohomelab.com/_astro/9.BfTJr9O5_ZmbQlr.webp"></p>
+<h2 id="configuring-default-authentication-flow">Configuring default-authentication-flow</h2>
+<p>Go to <code>Flows</code>, select our authentication flow, in my case <code>default-authentication-flow</code>, go into the <code>Stage Bindings</code> menu, and make changes to the <code>default-authentication-identification</code> stage. Scroll all the way down, and in the <code>Flow Settings</code> menu under <code>Enrollment Flow</code>, select the newly created flow and click <code>Update</code>.</p>
+<p><img alt="Binding the Enrollment Flow to the default-authentication-identification stage" loading="lazy" decoding="async" width="1235" height="1207" src="https://prohomelab.com/_astro/10.CrG_Lv5q_EXNgX.webp"></p>
+<p>Log out of our account and check the login menu (of course, all this should be done in incognito mode, and at minimum you need to clear your browser cookies).</p>
+<p>We see that a new registration menu for new users has appeared.</p>
+<p><img alt="Authentik login screen with the new registration link" loading="lazy" decoding="async" width="832" height="651" src="https://prohomelab.com/_astro/11.3Gp1CPdm_Z1JmjW1.webp"></p>
+<p>You can test the menu's functionality: have a new (test) user (you, in this case) register, receive a confirmation email, click the link in the email, and the rest is intuitive. If you did everything right, and the article's author didn't mess anything up (as sometimes happens), you now have a new user who created their own account, with a password matching the parameters and policies you set, and they're now in the regular users group.</p>
+<h2 id="setting-up-user-invitations-in-authentik">Setting up user invitations in Authentik</h2>
+<p>We've now enabled new users to register on our Authentik instance themselves. But that's too much freedom, letting any random passerby simply visit the Authentik site and register. We don't want that, right? We want only select users to be able to register, and only by invitation. Or we could do a mass invitation mailing, but in any case, only the person we sent an invitation to will be able to register. Let's set that up now.</p>
+<h3 id="user-write-stage">User Write Stage</h3>
+<p>Go to <code>Stages</code>, create a new <code>User Write Stage</code> stage (due to a translation bug in application version 2025.10.3, which isn't fully disabled, this stage is called "Этап записи пользователя" in my instance).</p>
+<p><img alt="Creating the User Write Stage" loading="lazy" decoding="async" width="1494" height="1069" src="https://prohomelab.com/_astro/12.smbS0kSA_1AyjGC.webp"></p>
+<p>Click <code>Next</code>. Set the necessary parameters: the stage name and its settings, plus which group new users will be placed into. Since we're assuming we know who is registering, we can deactivate the <code>Create users as inactive</code> toggle.</p>
+<p><img alt="Configuring the User Write Stage for invited users" loading="lazy" decoding="async" width="1260" height="937" src="https://prohomelab.com/_astro/13.qdWQp-6O_159Iho.webp"></p>
+<h3 id="invitation-stage">Invitation Stage</h3>
+<p>Let's create another new stage, this time <code>Invitation Stage</code> (in my instance it's called "Этап приглашения").</p>
+<p><img alt="Creating the Invitation Stage" loading="lazy" decoding="async" width="1191" height="896" src="https://prohomelab.com/_astro/14.BaRFRPXa_Z1H3af2.webp"></p>
+<p>Click <code>Next</code>, give the stage a name. If the <code>Continue flow without invitation</code> toggle is enabled, disable it.</p>
+<p><img alt="Configuring the Invitation Stage - disabling Continue flow without invitation" loading="lazy" decoding="async" width="1595" height="1068" src="https://prohomelab.com/_astro/15.BQQgC6cI_Z1bx8ya.webp"></p>
+<p>Next, go to <code>Flows</code> > <code>Create</code> and set the necessary parameters. As before, I enable compatibility mode for password managers.</p>
+<p><img alt="Creating the enrollment invitation flow with compatibility mode" loading="lazy" decoding="async" width="1414" height="1140" src="https://prohomelab.com/_astro/16.BcXGJTlk_FtkVq.webp"></p>
+<p>Now go to the <code>enrollment invitation flow</code> we just created, and click <code>Bind existing stage</code>.</p>
+<p>Here we select the stage we created, set its processing order, and choose <code>Evaluate when flow is planned</code> instead of <code>Evaluate when stage is run</code>.</p>
+<p><img alt="Binding the Invitation Stage to the enrollment invitation flow" loading="lazy" decoding="async" width="1392" height="956" src="https://prohomelab.com/_astro/17.lEOrlViG_ZX7grm.webp"></p>
+<p>Click <code>Bind existing stage</code> again and select <code>default-source-enrollment-prompt</code>, set its processing order, and choose <code>Evaluate when flow is planned</code> instead of <code>Evaluate when stage is run</code>.</p>
+<p><img alt="Binding the default-source-enrollment-prompt stage to the enrollment invitation flow" loading="lazy" decoding="async" width="1401" height="967" src="https://prohomelab.com/_astro/18.Bbanz896_Z13yQ9z.webp"></p>
+<p>Now edit the <code>default-source-enrollment-prompt</code> stage and check that everything matches the screenshot. Basically, everything here is similar to the settings described at the beginning of this article.</p>
+<p><img alt="Configuring the default-source-enrollment-prompt stage for the invitation flow" loading="lazy" decoding="async" width="1435" height="1233" src="https://prohomelab.com/_astro/19.D3HVZtG7_B9SEi.webp"></p>
+<p>Click <code>Bind existing stage</code> again and select <code>enrollment-invitation-write</code>, set its processing order, and choose <code>Evaluate when flow is planned</code> instead of <code>Evaluate when stage is run</code>.</p>
+<p><img alt="Binding the enrollment-invitation-write stage to the enrollment invitation flow" loading="lazy" decoding="async" width="1426" height="985" src="https://prohomelab.com/_astro/20.DRMxssaT_lUnuj.webp"></p>
+<p>One last time, click <code>Bind existing stage</code> and select <code>default-source-enrollment-login</code>, set its processing order, and choose <code>Evaluate when flow is planned</code> instead of <code>Evaluate when stage is run</code>.</p>
+<p><img alt="Binding the default-source-enrollment-login stage to the enrollment invitation flow" loading="lazy" decoding="async" width="1385" height="808" src="https://prohomelab.com/_astro/21.QBsfzrZ9_1gRfbv.webp"></p>
+<h2 id="creating-invitations">Creating invitations</h2>
+<p>Now go to <code>Directory</code> > <code>Invitations</code> > <code>Create</code></p>
+<p>In the window that appears, give the invitation a name, specify how long it will be valid (you can effectively make it permanent), and decide whether it's <code>single use</code> or reusable multiple times. In the <code>Flow</code> field, it's worth selecting our <code>enrollment invitation flow</code>: that way the invitation only works in this flow. Leave the field empty, and the invitation will be accepted in any flow that has an invitation stage.</p>
+<p><img alt="Creating an invitation - expiration and single use" loading="lazy" decoding="async" width="1569" height="900" src="https://prohomelab.com/_astro/22.4lN0-ndK_Z1d79oj.webp"></p>
+<p>Click <code>Create</code>.</p>
+<p>Now, to get the invitation link, just click the corresponding item in the dropdown menu, and we get our invitation link, which we can send to our users.</p>
+<p><img alt="Getting the invitation link in the Invitations section" loading="lazy" decoding="async" width="711" height="574" src="https://prohomelab.com/_astro/23.COZiVFZL_ZlmFn8.webp"></p>
+<p>Now anyone who receives such an invitation link, upon following it, will land on the new user registration menu, just like in the previous section.</p>
+<h2 id="shutting-the-door-on-self-registration">Shutting the door on self-registration</h2>
+<p>Freedom is good, but in moderation. Let's say we've registered everyone we need and aren't expecting anyone else. Now we'll strictly forbid new users from registering without our explicit control.</p>
+<p>Go to <code>Stages</code> > <code>Create</code> and create a new <code>Deny Stage</code>.</p>
+<p><img alt="Creating the Deny Stage" loading="lazy" decoding="async" width="1264" height="977" src="https://prohomelab.com/_astro/24.4nfsOFa9_ZfgJ5C.webp"></p>
+<p>Click <code>Next</code>, give our stage a name, and write the message that an uninvited guest will see if the wild idea strikes them to try registering on our Authentik instance.</p>
+<p><img alt="Configuring the denial message in the Deny Stage" loading="lazy" decoding="async" width="1436" height="1008" src="https://prohomelab.com/_astro/25.D75necNy_Z2d02Sa.webp"></p>
+<p>Go to <code>Flows</code> > <code>main-page-enrollment</code>, go to <code>Bind existing stage</code>.
+Select our <code>Deny Stage</code>. For the order number, choose any value, but with the mandatory condition that this stage is processed first - in my case that's <code>0</code> - and choose <code>Evaluate when flow is planned</code> instead of <code>Evaluate when stage is run</code>, then click <code>Create</code>.</p>
+<p><img alt="Binding the Deny Stage as the first stage of main-page-enrollment" loading="lazy" decoding="async" width="1326" height="935" src="https://prohomelab.com/_astro/26.BVRnGtFc_ZMLphM.webp"></p>
+<p>Now, in incognito mode, let's try registering on our Authentik instance, and if we did everything right, the user (whom we weren't expecting) will get a rather unpleasant message.</p>
+<p><img alt="Registration denial message after the Deny Stage block" loading="lazy" decoding="async" width="901" height="682" src="https://prohomelab.com/_astro/27.DHvFnUHn_Z1XKCC3.webp"></p>
+<p>While you're at it, you can also remove the registration link itself from the login screen: in the <code>default-authentication-identification</code> stage, clear the <code>Enrollment Flow</code> field we filled in earlier. That alone isn't enough, though - the flow is still reachable by its direct URL, so it still needs the <code>Deny Stage</code>. Invitations aren't affected: they have a separate flow of their own.</p>
+<p>With that, this article, which is essentially just a bunch of fun screenshots, can come to a close.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Setting Up Password Recovery in Authentik</title>
+      <link>https://prohomelab.com/en/posts/authentik-password-recovery/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/authentik-password-recovery/</guid>
+      <pubDate>Mon, 12 Jan 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>SSO</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <category>Authentik</category>
+      <description>A detailed guide to setting up password recovery in Authentik, covering flows, stages, and policies, along with recommendations for protecting against username enumeration attacks.</description>
+      <content:encoded><![CDATA[<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>If you enjoyed this article, you can become a sponsor on <a href="https://boosty.to/stilicho2011">Boosty</a>.</p>
+</div>
+</div>
+<h2 id="password-recovery-in-authentik">Password recovery in Authentik</h2>
+<p>I'm assuming that by this point you already have Authentik installed and configured (see the <a href="https://prohomelab.com/en/posts/authentik-overview/">general overview</a> and <a href="https://prohomelab.com/en/posts/authentik-setup/">initial setup</a> articles). As an administrator (even for a homelab), first and foremost we must <strong>force</strong> (yes, force) our existing or future users to create complex passwords, rather than the simple passwords muggles love, like <code>12345</code> or <code>password123</code>. In this article, we'll talk about how to do that, and we'll also set up the ability for users to recover their passwords themselves (if you, as the administrator, want that).</p>
+<p>For this setup, and generally for Authentik to work correctly going forward, you should have already configured your mail server details in the <code>.env</code> environment variables file, from which notifications will be sent to both you and your users. You can verify the mail server is configured correctly with the simple command <code>docker exec authentik_worker ak test_email your_email@domain.com</code></p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>The application settings described in this article are accurate as of the time of writing.</p>
+</div>
+</div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>The video guide linked below is accurate as of when it was created, but the configuration logic hasn't changed.</p>
+</div>
+</div>
+<h3 id="creating-a-policy-for-password-complexity-settings">Creating a policy for password complexity settings</h3>
+<p>Go to <code>Customisation</code> > <code>Policies</code>. Click the <code>Create</code> button. Select the <code>Password Policy</code> policy.</p>
+<p><img alt="Selecting the policy type - Password Policy" loading="lazy" decoding="async" width="1514" height="1087" src="https://prohomelab.com/_astro/17.BNbznt2o_18yubY.webp"></p>
+<p>First, give the policy a name. I prefer to name things in Authentik with a lowercase first letter, so the names don't stand out from the rest, since Authentik's default names start with a lowercase letter. Let's say our policy will be called <code>password-complexity</code>. You're free to use any name in whatever language is convenient for you. Scroll down and in the <code>Static rules</code> section, set the password complexity parameters - i.e., password length, number of characters, and so on.</p>
+<p>In the <code>Error Message</code> section, specify the message that will be shown if a user sets a password that doesn't comply with the policy you've configured.</p>
+<p>Here's roughly what I ended up with:</p>
+<p><img alt="Configuring the Password Policy - Static rules and Error Message" loading="lazy" decoding="async" width="1359" height="1037" src="https://prohomelab.com/_astro/15.BXBy9J_T_1mDOCY.webp"></p>
+<p>Leave all other fields in this menu at their defaults.</p>
+<p>Click <code>Finish</code>.</p>
+<h3 id="creating-flows-and-stages">Creating Flows and Stages</h3>
+<p>Now we need to create a <code>Flow</code> and <code>Stages</code>.</p>
+<p>In the <code>Flow and Stages</code> section, select <code>Stages</code>. We need to create two stages.</p>
+<h4 id="identification-stage">Identification Stage</h4>
+<p>The first is user identification. Click <code>Create > Identification Stage</code>. Unfortunately, due to a bug in application version 2025.10.3, part of the menu is displayed in Russian for me, despite explicitly disabling automatic translation in the application, but I think you'll get the idea.</p>
+<p><img alt="Creating an Identification Stage (part of the UI is in Russian due to a translation bug)" loading="lazy" decoding="async" width="1428" height="1061" src="https://prohomelab.com/_astro/2.B-bCrEgZ_2gSkQp.webp"></p>
+<p>Click <code>Next</code>. In the next menu, give the stage a name, something like <code>recovery-authentication-identification</code>.</p>
+<p>For the user fields, select <code>Username and Email</code>.</p>
+<p><img alt="Configuring the Identification Stage - name and Username/Email fields" loading="lazy" decoding="async" width="1377" height="1098" src="https://prohomelab.com/_astro/1.9RKtK3eR_Z1x84ix.webp"></p>
+<p>Leave the rest of the menu sections alone for now - we won't need them at this stage of the setup. Click <code>Finish</code>.</p>
+<p>The next stage we need to create is password recovery with email confirmation.</p>
+<h4 id="email-stage">Email Stage</h4>
+<p>In the <code>Flow and Stages</code> section, select <code>Stages > Create > Email Stage</code>.</p>
+<p><img alt="Creating the Email Stage for password recovery" loading="lazy" decoding="async" width="1446" height="1082" src="https://prohomelab.com/_astro/16.Cft3hoVV_1vvrrA.webp"></p>
+<p>For the email subject you can put something like "Password Recovery". For the template, leave <code>Password Reset</code>. Click <code>Finish</code>.</p>
+<p><img alt="Configuring the Email Stage - subject and the Password Reset template" loading="lazy" decoding="async" width="1276" height="1068" src="https://prohomelab.com/_astro/11.DSd2OwxQ_Z1Mz39h.webp"></p>
+<p>Now we need to create the password recovery flow.</p>
+<h4 id="recovery-flow">Recovery Flow</h4>
+<p>In <code>Flow and Stages</code>, select <code>Flows > Create</code>.</p>
+<p>Set the values following the screenshot below. I enabled <code>compatibility mode</code> - this improves compatibility with password managers and mobile devices.</p>
+<p>I left the other values at their defaults, but if you need additional customization for each individual flow, you're free to make the corresponding changes.</p>
+<p><img alt="Creating the Recovery Flow with compatibility mode enabled" loading="lazy" decoding="async" width="1348" height="1185" src="https://prohomelab.com/_astro/10.Cg1tXd3U_Zd6nhu.webp"></p>
+<p>In the <code>Flows</code> section, click the flow we just created - in my case it's called <code>recovery</code> - and select <code>Stage Bindings</code>.</p>
+<p><img alt="Navigating to Stage Bindings of the recovery flow" loading="lazy" decoding="async" width="1814" height="913" src="https://prohomelab.com/_astro/5.DOEwdHVC_ZtsIr.webp"></p>
+<p>Click <code>Bind existing stage</code> and select the <code>recovery-authentication-identification</code> stage we created earlier (as you probably guessed, you can also create stages from this menu by clicking <code>Create and Bind Stage</code>, but I think my approach is more illustrative).</p>
+<p>Leave the processing order for the stage at <code>0</code>. Click <code>Finish</code>.</p>
+<p><img alt="Binding the recovery-authentication-identification stage with order 0" loading="lazy" decoding="async" width="1501" height="939" src="https://prohomelab.com/_astro/13.CVuiZ4kS_1OjQ6u.webp"></p>
+<p>Bind another stage via <code>Bind existing stage</code>, and this time select the password recovery stage. I set the processing order to <code>10</code>, because it's more convenient to work with values like this, so there's always room for new stages if needed later (and the developers do the same). Click <code>Finish</code>.</p>
+<p><img alt="Binding the recovery-email stage with order 10" loading="lazy" decoding="async" width="1690" height="933" src="https://prohomelab.com/_astro/6.wWatFFpM_ZDtsFg.webp"></p>
+<p>Bind another stage, this time an existing default one: <code>Bind existing stage > default-password-change-prompt</code>.</p>
+<p><img alt="Binding the default-password-change-prompt stage" loading="lazy" decoding="async" width="1642" height="998" src="https://prohomelab.com/_astro/9.-dbflBR__ZUEni9.webp"></p>
+<p>And the last stage for this flow - <code>Bind existing stage > default-password-change-write</code>. Again, pay attention to the stage processing order.</p>
+<p><img alt="Binding the default-password-change-write stage" loading="lazy" decoding="async" width="1697" height="1050" src="https://prohomelab.com/_astro/0.BZpYSiaC_Z241uP0.webp"></p>
+<p>In the end, we get the following picture:</p>
+<p><img alt="Final list of bound stages for the recovery flow" loading="lazy" decoding="async" width="1804" height="693" src="https://prohomelab.com/_astro/14.BGaLo1d2_Z1C7ecC.webp"></p>
+<p>Once again, pay attention to the stage processing order.</p>
+<p>Now, in this menu, select <code>default-password-change-prompt</code> and click <code>Edit Stage</code>. In the <code>Validation Policies</code> section, you need to select the previously created <code>password-complexity</code> policy and drag it into the menu on the right. Click <code>Update</code>.</p>
+<p><img alt="Binding the password-complexity Validation Policy to default-password-change-prompt" loading="lazy" decoding="async" width="1432" height="1217" src="https://prohomelab.com/_astro/4.B-fuzAJ6_Z1YvuPL.webp"></p>
+<h3 id="configuring-the-authentication-flow">Configuring the Authentication Flow</h3>
+<p>Go to the main <code>Flows</code> page, select <code>default-authentication-flow > Stage bindings</code>.</p>
+<p><img alt="Stage Bindings of the default-authentication-flow" loading="lazy" decoding="async" width="2237" height="789" src="https://prohomelab.com/_astro/12.BL-A0k9X_20RJwE.webp"></p>
+<p>On this page, select <code>Edit stage</code> next to <code>default-authentication-identification</code>.</p>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>In the <code>Password Stage</code> section, you can select <code>default-authentication-password</code>. As noted below: "If this option is enabled, the password field is shown on the same page rather than a separate one. This prevents username enumeration attacks." This seems like a good setting, but if you later want to disable verification for local addresses (I'll show how to do that in a future article), you'll need to disable this option. So the decision is up to you.</p>
+</div>
+</div>
+<p>Scroll all the way to the bottom of the menu, and in the <code>Recovery Flow</code> section, select the password recovery flow we created earlier.</p>
+<p><img alt="Selecting the Recovery Flow in the default-authentication-identification settings" loading="lazy" decoding="async" width="1134" height="1205" src="https://prohomelab.com/_astro/19.D5PJRddG_Z1WzyIj.webp"></p>
+<p>Click <code>Update</code>.</p>
+<p>If you selected <code>default-authentication-password</code> in the <code>Password Stage</code> section, then in this flow's main menu you need to remove the <code>default-authentication-password</code> stage. Otherwise it will conflict with the setting you chose.</p>
+<p><img alt="List of default-authentication-flow stages after removing default-authentication-password" loading="lazy" decoding="async" width="614" height="274" src="https://prohomelab.com/_astro/3.DzXJSC6d_Z1gjDCf.webp"></p>
+<h3 id="result">Result</h3>
+<p>Log out of our account, and at the bottom of the welcome page a note appears offering to recover the user's login or password. If you configured showing the username and password on the same page, you'll already see the password entry menu on this page.</p>
+<p><img alt="Authentik login screen with the password recovery link" loading="lazy" decoding="async" width="845" height="618" src="https://prohomelab.com/_astro/7.DOJEjyjL_Z1UwkiS.webp"></p>
+<p>From here everything is fairly simple and intuitive. Choose the corresponding menu item, enter the email address of the user whose password you've forgotten, you'll receive a notification by email offering to click a link, where Authentik will let you create a new password matching the complexity policy we set.</p>
+<p>Now your future users will be able to register in the application themselves or recover forgotten passwords. If you'd also like to automate the registration process itself, check out the article on the <a href="https://prohomelab.com/en/posts/authentik-enrollment-invitation/">enrollment and invitation flow</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>OIDC, OAuth2, and Proxy Provider in Authentik - How to Protect Any Application</title>
+      <link>https://prohomelab.com/en/posts/authentik-overview-proxy-oidc/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/authentik-overview-proxy-oidc/</guid>
+      <pubDate>Sun, 16 Nov 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>SSO</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <category>Authentik</category>
+      <description>A detailed explanation of how Authentik's Proxy Provider adds authentication and SSO to any application. A simple flow diagram, key concepts, and usage examples.</description>
+      <content:encoded><![CDATA[<h2 id="oidc-oauth2-and-proxy-provider-in-authentik---how-to-protect-any-application">OIDC, OAuth2, and Proxy Provider in Authentik - how to protect any application</h2>
+<p>I'm assuming you're already familiar with the <a href="https://prohomelab.com/en/posts/authentik-overview/">general Authentik overview</a> and have completed the <a href="https://prohomelab.com/en/posts/authentik-setup/">initial setup</a>. In this article, I'll try to describe how to set up authorization in applications using OIDC technology or Authentik's built-in proxy provider.</p>
+<p>A bit of theory first.</p>
+<h4 id="what-is-oidc">What is OIDC</h4>
+<p><strong>OIDC (OpenID Connect)</strong> is a modern authorization and <em>authentication</em> protocol built on top of <strong>OAuth 2.0</strong>. While OAuth2 on its own solves the problem of granting access rights (authorization), <strong>OIDC adds confirmation of the user's identity</strong> (authentication).</p>
+<p>Put simply:</p>
+<blockquote>
+<p><strong>OIDC = "who the user is" + "can they be granted access"</strong>, built on OAuth2.</p>
+</blockquote>
+<hr>
+<h5 id="how-it-works">How it works</h5>
+<ol>
+<li>The <strong>user</strong> tries to log in to an application.</li>
+<li>The <strong>application</strong> sends them to the authorization server (Identity Provider) with a request essentially saying <em>"I want to find out who this is"</em>.</li>
+<li>The user logs in with the provider.</li>
+<li>The provider returns:
+<ul>
+<li>an <strong>ID Token</strong> - a JWT token with information about the user (name, email, ID, etc.).</li>
+<li>an <strong>Access Token</strong> - an access token (as in OAuth2).</li>
+</ul>
+</li>
+<li>The application receives confirmed information about the user and lets them in.</li>
+</ol>
+<hr>
+<h4 id="key-concepts">Key concepts</h4>
+<h5 id="id-token"><strong>ID Token</strong></h5>
+<p>The main "feature" of OIDC - it contains data about the user:</p>
+<ul>
+<li><code>sub</code> - a unique identifier</li>
+<li><code>name</code></li>
+<li><code>email</code></li>
+<li>issuance time, expiration time, etc.</li>
+</ul>
+<h5 id="openid-provider-op"><strong>OpenID Provider (OP)</strong></h5>
+<p>The server that logs users in and issues tokens:<br>
+Keycloak, Authentik, Authelia, Zitadel, Google, GitHub, etc.</p>
+<h5 id="relying-party-rp"><strong>Relying Party (RP)</strong></h5>
+<p>The application that trusts the provider and accepts its tokens.</p>
+<hr>
+<h5 id="why-oidc-is-needed">Why OIDC is needed</h5>
+<ul>
+<li>Centralized authentication (one login for many services).</li>
+<li>Better interoperability between different systems.</li>
+<li>Single Sign-On (SSO) capability.</li>
+<li>Easy integration with applications (via standard libraries).</li>
+</ul>
+<hr>
+<h5 id="where-its-used">Where it's used</h5>
+<p>Practically everywhere:</p>
+<ul>
+<li>Keycloak</li>
+<li>Authentik</li>
+<li>Authelia</li>
+<li>Zitadel</li>
+<li>Google Sign-In</li>
+<li>GitHub Login</li>
+<li>Kubernetes (via Dex)</li>
+<li>Traefik / Nginx / Envoy as an OIDC proxy</li>
+</ul>
+<h4 id="what-is-oauth-20">What is OAuth 2.0</h4>
+<p><strong>OAuth 2.0</strong> is an <strong>authorization protocol</strong> that allows one service to gain limited access to a user's resources on another service <strong>without transmitting the password</strong>.</p>
+<p>Put simply:</p>
+<blockquote>
+<p><strong>OAuth 2.0 is a way to grant an application access "on behalf of the user" without revealing the login and password.</strong></p>
+</blockquote>
+<hr>
+<h5 id="why-oauth2-is-needed">Why OAuth2 is needed</h5>
+<p>Common scenarios:</p>
+<ul>
+<li>You want to log in to a service via <strong>Google / GitHub / VK / Facebook</strong>.</li>
+<li>An application wants access to, say, only your <strong>photos</strong>, but not your email.</li>
+<li>Microservices want to securely "talk" to each other.</li>
+</ul>
+<hr>
+<h5 id="how-it-works-a-very-simple-diagram">How it works (a very simple diagram)</h5>
+<ol>
+<li>The <strong>application</strong> wants to do something on behalf of the user → sends a request to the <strong>Authorization Server</strong>.</li>
+<li>The user logs in on that server.</li>
+<li>The server returns an <strong>Authorization Code</strong>.</li>
+<li>The application exchanges the code for an <strong>Access Token</strong>.</li>
+<li>The application uses the Access Token to access the API.</li>
+</ol>
+<p>The user's password remains known only to the authorization server.</p>
+<hr>
+<h4 id="key-oauth2-entities">Key OAuth2 entities</h4>
+<h5 id="authorization-server"><strong>Authorization Server</strong></h5>
+<p>Issues tokens (for example: Authentik, Keycloak, Authelia, Google).</p>
+<h5 id="resource-server"><strong>Resource Server</strong></h5>
+<p>The API or service that needs to be accessed (files, mail, profile, etc.).</p>
+<h5 id="client"><strong>Client</strong></h5>
+<p>The application that needs access.</p>
+<h5 id="access-token"><strong>Access Token</strong></h5>
+<p>The token the client uses to access resources.</p>
+<h5 id="refresh-token"><strong>Refresh Token</strong></h5>
+<p>Allows obtaining a new Access Token without logging in again.</p>
+<hr>
+<h5 id="grants-authorization-types">Grants (authorization types)</h5>
+<p>The most commonly used is the <strong>Authorization Code Flow</strong>, especially with PKCE for secure SPAs and mobile apps.</p>
+<p>Others:</p>
+<ul>
+<li>Client Credentials - service-to-service authorization</li>
+<li>Refresh Token - refreshing tokens</li>
+<li>Device Code Flow - devices without a keyboard (TV, set-top boxes)</li>
+<li>Password Grant - deprecated, NOT used</li>
+</ul>
+<hr>
+<h4 id="key-takeaway">Key takeaway</h4>
+<p>OAuth 2.0 <strong>does not confirm the user's identity</strong> (who they are).<br>
+It only grants permissions (what they can do).</p>
+<p><strong>OIDC</strong> is used to confirm identity - it's a layer on top of OAuth2.</p>
+<h3 id="whats-the-difference-between-oidc-and-oauth-20">What's the difference between OIDC and OAuth 2.0</h3>
+<h4 id="the-short-version">The short version</h4>
+<ul>
+<li><strong>OAuth2</strong> is about <em>access</em> ("let the application do something on my behalf").</li>
+<li><strong>OIDC</strong> is about <em>identity</em> ("who is this user?"), built on top of OAuth2.</li>
+</ul>
+<hr>
+<h4 id="a-real-life-analogy">A real-life analogy</h4>
+<h5 id="oauth2---power-of-attorney"><strong>OAuth2 - power of attorney</strong></h5>
+<p>You give a courier a power of attorney to pick up your package.<br>
+The courier doesn't know who you are. They just received permission to perform an action.</p>
+<h5 id="oidc---a-passport--power-of-attorney"><strong>OIDC - a passport + power of attorney</strong></h5>
+<p>Now you've also shown your passport, and the service knows exactly <strong>who</strong> got access.</p>
+<hr>
+<h5 id="key-difference">Key difference</h5>
+<table>
+<thead>
+<tr>
+<th>What we're comparing</th>
+<th>OAuth 2.0</th>
+<th>OIDC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What it does</td>
+<td>Grants <strong>access</strong></td>
+<td>Confirms <strong>identity</strong></td>
+</tr>
+<tr>
+<td>Protocol type</td>
+<td>Authorization</td>
+<td>Authentication + authorization</td>
+</tr>
+<tr>
+<td>Which tokens</td>
+<td>Access Token</td>
+<td>Access Token + <strong>ID Token</strong></td>
+</tr>
+<tr>
+<td>What the client can learn</td>
+<td>Whether or not an action can be performed</td>
+<td><strong>Who the user is</strong> (email, name, ID)</td>
+</tr>
+<tr>
+<td>Where it's used</td>
+<td>API access</td>
+<td>Logging into applications</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h5 id="why-oidc-came-about">Why OIDC came about</h5>
+<p>OAuth2 doesn't say <strong>who the user is</strong>.<br>
+The application gets access, but doesn't get profile data and doesn't know who's logged in.</p>
+<p>To solve this problem, they created:</p>
+<p><strong>OIDC = OAuth2 + ID Token + UserInfo API + SSO standards.</strong></p>
+<hr>
+<h4 id="usage-examples">Usage examples</h4>
+<h5 id="oauth2">OAuth2</h5>
+<ul>
+<li>Grant an application access to the YouTube API</li>
+<li>A "Google Drive file access" scenario</li>
+<li>Microservice-to-microservice communication</li>
+</ul>
+<h5 id="oidc">OIDC</h5>
+<ul>
+<li>Logging in via Google / GitHub</li>
+<li>Company-wide SSO</li>
+<li>Authorization in Keycloak/Authentik/Authelia/Zitadel</li>
+</ul>
+<hr>
+<h4 id="summary-brief">Summary (brief)</h4>
+<ul>
+<li><strong>OAuth2 says what can be done.</strong></li>
+<li><strong>OIDC says who is doing it.</strong></li>
+</ul>
+<h4 id="proxy-provider-in-authentik"><strong>Proxy Provider in Authentik</strong></h4>
+<p><strong>Proxy Provider in Authentik</strong> is a special type of provider that lets Authentik act as a transparent "proxy layer" between the user and an external service, adding authentication and access control where the service itself doesn't support it.</p>
+<p>Put simply:</p>
+<blockquote>
+<p><strong>Proxy Provider is a way to protect any web service, even if it doesn't support OAuth2 / OIDC / SAML at all.</strong></p>
+</blockquote>
+<p>Authentik "inserts itself" between the user and the application as a reverse proxy.</p>
+<hr>
+<h5 id="how-it-works-1">How it works</h5>
+<ol>
+<li>The user tries to open the application.</li>
+<li>The request doesn't go directly to the application, but to the <strong>Authentik Proxy Provider</strong>, which works through nginx/traefik/caddy or is embedded as a sidecar.</li>
+<li>Authentik:
+<ul>
+<li>checks whether the user is logged in;</li>
+<li>if not - sends them to the login page;</li>
+<li>after login, forwards the request on to the application.</li>
+</ul>
+</li>
+<li>The application receives <strong>headers containing information about the user</strong>, for example:
+<ul>
+<li><code>X-authentik-username</code></li>
+<li><code>X-authentik-email</code></li>
+<li><code>X-authentik-groups</code></li>
+</ul>
+</li>
+</ol>
+<p>The application accepts this data as fact - it doesn't understand OIDC, but it can read headers.</p>
+<hr>
+<h5 id="when-you-need-a-proxy-provider">When you need a Proxy Provider</h5>
+<h5 id="when-a-service-doesnt-have">When a service doesn't have:</h5>
+<ul>
+<li>OIDC</li>
+<li>OAuth2</li>
+<li>SAML</li>
+<li>LDAP</li>
+</ul>
+<h5 id="when-you-need-to-protect">When you need to protect:</h5>
+<ul>
+<li>Legacy web applications</li>
+<li>Admin panels (Grafana without SSO, Adminer, phpMyAdmin)</li>
+<li>Web UIs of Docker containers</li>
+<li>Home services on the local network</li>
+<li>APIs that can't be modified</li>
+</ul>
+<hr>
+<h5 id="what-the-proxy-provider-gives-you">What the Proxy Provider gives you</h5>
+<ul>
+<li>Authorization via Authentik (password, 2FA, OTP, WebAuthn).</li>
+<li>Access restriction by group / role.</li>
+<li>Passing user attributes via headers.</li>
+<li>Unified SSO for old applications.</li>
+<li>The ability to combine it with reverse proxies:
+<ul>
+<li>Traefik</li>
+<li>Nginx</li>
+<li>Caddy</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h4 id="example---how-it-works-with-traefik">Example - how it works with Traefik</h4>
+<p>Traefik redirects requests to the Authentik Proxy Provider → Authentik checks the user → returns them to Traefik → which forwards the request to the application along with headers containing the user's information.</p>
+<h5 id="flow-diagram-proxy-provider--authentik--application"><strong>Flow diagram (Proxy Provider → Authentik → application)</strong></h5>
+<pre class="phl-mermaid">sequenceDiagram
+    participant U as User
+    participant P as Proxy (Traefik / Nginx / Caddy)
+    participant A as Authentik
+    participant S as Service / Application
+    U->>P: 1. Opens the application URL
+    P->>U: Checks session&#x3C;br/>If absent - redirect
+    P->>A: 2. Redirects to the login page
+    A->>U: 3. Login form (password, 2FA, WebAuthn)
+    U->>A: Enters credentials
+    A->>P: 4. Successful authentication&#x3C;br/>Redirect back to the proxy
+    P->>S: 5. Forwards headers&#x3C;br/>with user data
+    S->>U: 6. Access to the protected application</pre>
+<hr>
+<h5 id="step-by-step-explanation-even-shorter"><strong>Step-by-step explanation, even shorter</strong></h5>
+<ol>
+<li>The user → visits the service</li>
+<li>Traefik/Nginx → redirects to Authentik</li>
+<li>Authentik → asks for login / 2FA</li>
+<li>Authentik → gives the proxy a "mark" that the user is authenticated</li>
+<li>The proxy → adds headers with the user's data</li>
+<li>The application → accepts the headers → the user is in</li>
+</ol>
+<hr>
+<h4 id="summary">Summary</h4>
+<p><strong>Proxy Provider is a way to add SSO + protection + access control to any application, even if it doesn't support that itself.</strong></p>
+<p>In the next article, we'll move on from boring theory to more interesting practice.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Authentik - Initial Setup After Installation</title>
+      <link>https://prohomelab.com/en/posts/authentik-setup/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/authentik-setup/</guid>
+      <pubDate>Sun, 16 Nov 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>SSO</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <category>Authentik</category>
+      <description>A first-run walkthrough for Authentik, the identity provider that hands every other self-hosted app one shared login instead of a dozen separate ones - first user, MFA, sessions, and API tokens.</description>
+      <content:encoded><![CDATA[<p>Most homelabs eventually hit the same wall: every app wants its own login, and you end up juggling a password for <a href="https://prohomelab.com/en/posts/nextcloud-aio/">Nextcloud</a>, another for Grafana, another for whatever you spun up last weekend. <strong>Authentik</strong> is the fix for that - a self-hosted identity provider that sits in front of everything else, handles the login once, and hands that trust off to any app that asks for it, whether it speaks SSO, OIDC, or SAML, plus group and access-policy management on top.</p>
+<p>If you're not yet familiar with Authentik's architecture and features, it's worth reading the <a href="https://prohomelab.com/en/posts/authentik-overview/">general overview</a> first. In this article, we'll go over how to perform the <strong>initial setup of Authentik</strong> after installation - to quickly get your own IDP up and running.</p>
+<h2 id="initial-registration">Initial registration</h2>
+<p>I'm assuming you're using Docker for deployment. I provided a sample <code>docker compose</code> file in the previous article. Note that starting with version <code>2025.10.0</code>, the developers removed the <code>redis</code> container from the equation. Unfortunately, the developers overlooked something in that version, and if you look at the <code>postgres</code> logs, you'll see the <code>postgres</code> container giving us something like this</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">2025-11-11 14:14:03.578 UTC WARNING: you don't own a lock of type ExclusiveLock</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="2025-11-11 14:14:03.578 UTC WARNING: you don&#x27;t own a lock of type ExclusiveLock"><div></div></button></div></figure></div>
+<p>This should be fixed in future versions, but in any case, this bug doesn't affect the application's functionality in any way.</p>
+<p>So, we've prepared our <code>docker-compose</code> file and started it with the good old <code>docker compose up -d</code> command</p>
+<p>Check that all three containers are running. Since the application is far from lightweight, starting it up will take some time.</p>
+<p>Once the application is running, we can navigate to the subdomain we assigned to the application via our reverse proxy, in my case that's</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">authentik.stilicho.ru</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="authentik.stilicho.ru"><div></div></button></div></figure></div>
+<p>However, when we go to that address, the application asks us for a username and password, which we don't have yet.
+<img alt="Authentik login screen" loading="lazy" decoding="async" width="2066" height="945" src="https://prohomelab.com/_astro/Authentik-login-screen.4eOg5CHU_9hTN5.webp"></p>
+<p>The thing is, to create the initial administrator, you need to go to the link</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">https://authentik.your_domain_name.ru/if/flow/initial-setup/</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="https://authentik.your_domain_name.ru/if/flow/initial-setup/"><div></div></button></div></figure></div>
+<p>Note the trailing slash at the end of the link - that's important</p>
+<p>Now you'll land on the full initial registration menu</p>
+<p><img alt="authentik initial setup" loading="lazy" decoding="async" width="2154" height="1040" src="https://prohomelab.com/_astro/authentik-initial-setup.DchAa2_o_2k8Far.webp"></p>
+<p>Enter an email address and password, and it's entirely unnecessary to use a real email - I'll explain why a bit further down.
+Once you've entered all the required data, you land on the main menu.
+The home page, where all the applications we set up access to via <strong>Authentik</strong> will be displayed</p>
+<p><img alt="authentik first homepage" loading="lazy" decoding="async" width="2526" height="679" src="https://prohomelab.com/_astro/authentik-first-homepage.BA3n1VZD_Z1wsEc2.webp"></p>
+<p>and the settings menu for <strong>Authentik</strong> itself</p>
+<p><img alt="first admin interface" loading="lazy" decoding="async" width="2536" height="1183" src="https://prohomelab.com/_astro/first-admin-interface.B599BEyi_9z1AA.webp"></p>
+<h2 id="creating-a-new-administrator">Creating a new administrator</h2>
+<p>Now let me explain why I said not to bother with a real email for the administrator.</p>
+<p>The thing is, by default, the first administrator we create has the nickname <code>akadmin</code>, and that's a fixed value. So it's much safer to create a new user, make them an administrator, and deactivate the original administrator.</p>
+<p>Go to <strong>Directory > Users > New User</strong></p>
+<p><img alt="authentik new user button" loading="lazy" decoding="async" width="2506" height="862" src="https://prohomelab.com/_astro/authentik-new-user-button.5vG4xlAX_SnAJz.webp"></p>
+<p>Fill in all the necessary data. Be sure to specify an email address. Leave the attributes section alone for now. We'll need it in the future, when we set up applications with OIDC, where users will be automatically created that are already present in <strong>Authentik</strong>, and we'll need to assign the appropriate permissions to those users. In short, we'll be managing user permissions for specific applications or services at the <strong>Authentik</strong> level.</p>
+<p><img alt="authentik new user menu" loading="lazy" decoding="async" width="1477" height="1027" src="https://prohomelab.com/_astro/authentik-new-user-menu.CzauJW0I_2mxfC2.webp"></p>
+<p>Click <strong>Create User</strong></p>
+<p>Now we need to set a password. Of course, the password should be complex. I generate passwords using <strong>Vaultwarden</strong>, setting the length to at least 42 characters</p>
+<p><img alt="authentik set password user" loading="lazy" decoding="async" width="2258" height="867" src="https://prohomelab.com/_astro/authentik-set-password-use.BQppn1ol_2l4xNF.webp"></p>
+<p>Now let's grant our user superuser privileges.</p>
+<p>Go to <strong>Directory > Groups</strong>, and select the superadmin group <strong>authentik Admins</strong></p>
+<p><img alt="authentik admins" loading="lazy" decoding="async" width="2237" height="485" src="https://prohomelab.com/_astro/authentik-admins.C3gnkdS9_24tft0.webp"></p>
+<p>Go to the <strong>Users</strong> tab, select <strong>Add existing user</strong>, click +, and add our new user. You'll get a warning that <strong>"with great power comes great responsibility"</strong>, but we're not afraid of anything.</p>
+<p>Now calmly log out of the <strong>akadmin</strong> account and log in as the new user.</p>
+<h2 id="disabling-the-default-administrator">Disabling the default administrator</h2>
+<p>The next step is to disable the initial administrator account. Go to <strong>Directory > Users</strong>, click the down arrow next to our <code>akadmin</code>, and disable it with the <strong>deactivate</strong> button</p>
+<p><img alt="deactivate akadmin" loading="lazy" decoding="async" width="2241" height="797" src="https://prohomelab.com/_astro/deactivate-akadmin.BbGBK0Wv_Z1XEpIB.webp"></p>
+<h2 id="overview-of-the-adminuser-settings-panel">Overview of the admin/user settings panel</h2>
+<p><img alt="authentik user interface" loading="lazy" decoding="async" width="2546" height="839" src="https://prohomelab.com/_astro/authentik-user-interface.CdeCrFtu_Z1a7LiD.webp"></p>
+<p>Clicking the ⚙ icon at the top next to our username takes us to the user's personal settings menu</p>
+<h3 id="-user-profile">👤 User profile</h3>
+<p>This section lets you view and change basic account details.</p>
+<p><strong>Available fields:</strong></p>
+<ul>
+<li><strong>Username</strong> - a unique username (unchangeable after creation).</li>
+<li><strong>Display name</strong> - the name shown in the interface and when logging into applications.</li>
+<li><strong>Email address</strong> - used for notifications, confirmation, and access recovery.</li>
+<li><strong>Locale</strong> - the interface language.</li>
+</ul>
+<h3 id="-sessions">🔒 <strong>Sessions</strong></h3>
+<p>Shows all active sessions where the user is authenticated via Authentik.</p>
+<p><strong>Columns:</strong></p>
+<ul>
+<li><strong>Last IP</strong> - the IP address the login was made from.</li>
+<li><strong>Last used</strong> - the last time Authentik was accessed from this session.</li>
+<li><strong>Expires</strong> - when the session expires.</li>
+</ul>
+<p><strong>Available actions:</strong></p>
+<ul>
+<li>Terminate an individual session (for example, if you logged out on a device).</li>
+<li>Terminate all sessions except the current one - for a full logout from all devices.</li>
+</ul>
+<p>🔐 <em>Useful if a device is lost or a password is changed.</em></p>
+<h3 id="-consent">🪪 <strong>Consent</strong></h3>
+<p>This section shows a list of applications the user has <strong>granted access</strong> to their data via OpenID Connect (OIDC).</p>
+<p><strong>Information for each entry:</strong></p>
+<ul>
+<li><strong>Application name</strong> - the name of the application (e.g., Grafana, Vault, Gitea).</li>
+<li><strong>Scopes</strong> - what data has been permitted for use (<code>openid</code>, <code>email</code>, <code>profile</code>, etc.).</li>
+<li><strong>Date granted</strong> - when consent was given.</li>
+</ul>
+<p><strong>Actions:</strong></p>
+<ul>
+<li>Revoke consent - after this, the application loses access, and will ask for permission again on the next login.</li>
+</ul>
+<p>The most interesting menu section</p>
+<h3 id="-mfa-devices">🔐 <strong>MFA Devices</strong></h3>
+<p>Manage connected <strong>two-factor authentication devices</strong>.</p>
+<p><strong>Supported types:</strong></p>
+<ul>
+<li><strong>TOTP</strong> - one-time codes (Google Authenticator, Authy, 1Password, etc.).</li>
+<li><strong>WebAuthn / FIDO2</strong> - hardware security keys (YubiKey, Touch ID, Windows Hello).</li>
+</ul>
+<p><strong>Columns:</strong></p>
+<ul>
+<li><strong>Device name</strong> - the name of the device.</li>
+<li><strong>Last used</strong> - when it was last used.</li>
+<li><strong>Added on</strong> - the date it was connected.</li>
+</ul>
+<p><strong>Actions:</strong></p>
+<ul>
+<li>Add a new 2FA device.</li>
+<li>Remove a registered device.</li>
+</ul>
+<p>💡 <em>It's recommended to have at least one backup device (for example, TOTP and WebAuthn).</em></p>
+<h3 id="-connected-services">🔗 <strong>Connected services</strong></h3>
+<p>Shows external services linked to the Authentik account.</p>
+<p><strong>Example connections:</strong></p>
+<ul>
+<li>GitHub</li>
+<li>Google</li>
+<li>Microsoft Entra ID (Azure AD)</li>
+<li>LDAP</li>
+</ul>
+<p><strong>Columns:</strong></p>
+<ul>
+<li><strong>Service</strong> - the name of the external provider.</li>
+<li><strong>Last used</strong> - the last time this service was used to log in.</li>
+</ul>
+<p><strong>Actions:</strong></p>
+<ul>
+<li>Disconnect from the external provider (Unlink).</li>
+</ul>
+<p>🔗 <em>Allows logging in via external accounts without creating a new password.</em></p>
+<h3 id="-tokens-and-app-passwords">🧩 <strong>Tokens and App passwords</strong></h3>
+<p>A section for managing <strong>personal access tokens</strong> and <strong>application passwords</strong>.</p>
+<p>Used for:</p>
+<ul>
+<li>Accessing the Authentik API without an interactive login.</li>
+<li>Connecting CLI tools or integrations.</li>
+</ul>
+<p><strong>Columns:</strong></p>
+<ul>
+<li><strong>Name</strong> - the name of the token or application.</li>
+<li><strong>Last IP</strong> - the IP the token was used from.</li>
+<li><strong>Last used</strong> - the last time it was used.</li>
+<li><strong>Expires</strong> - the expiration date.</li>
+</ul>
+<p><strong>Actions:</strong></p>
+<ul>
+<li>Create a new token.</li>
+<li>Set an expiration date and access level (scopes).</li>
+<li>Delete or revoke an existing token.</li>
+</ul>
+<p>🔒 <em>A created token is shown only once - save it somewhere safe.</em></p>
+<h3 id="-summary">🧭 Summary</h3>
+<p>The <strong>User Settings</strong> section in Authentik lets a user:</p>
+<ul>
+<li>View and edit their profile data,</li>
+<li>Control active sessions,</li>
+<li>Manage granted permissions (Consent),</li>
+<li>Connect or remove 2FA devices,</li>
+<li>Configure external login services,</li>
+<li>Create and revoke API tokens.</li>
+</ul>
+<p>This is a powerful self-service tool that simplifies security and personal data management.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

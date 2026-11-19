@@ -1,0 +1,1469 @@
+<?xml version="1.0" encoding="utf-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://prohomelab.com/en/about/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/about/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/about/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/authors/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/authors/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/authors/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/authors/stilicho2011/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/authors/stilicho2011/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/authors/stilicho2011/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/blog/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/blog/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/blog/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/automation/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/automation/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/automation/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/backup/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/backup/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/backup/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/containerization/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/containerization/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/containerization/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/crowdsec/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/crowdsec/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/crowdsec/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/databases/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/databases/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/databases/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/docker/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/docker/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/docker/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/docker-ui/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/docker-ui/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/docker-ui/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/forgejo/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/forgejo/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/forgejo/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/hardware/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/hardware/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/hardware/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/hugo/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/hugo/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/hugo/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/linkwarden/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/linkwarden/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/linkwarden/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/linux/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/linux/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/linux/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/media-servers/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/media-servers/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/media-servers/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/monitoring--logs/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/monitoring--logs/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/monitoring--logs/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/nas/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/nas/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/nas/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/networking/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/networking/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/networking/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/nextcloud/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/nextcloud/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/nextcloud/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/open-source/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/open-source/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/open-source/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/opnsense/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/opnsense/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/opnsense/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/personal-knowledge-base/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/personal-knowledge-base/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/personal-knowledge-base/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/proxmox/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/proxmox/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/proxmox/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/recipes/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/recipes/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/recipes/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/self-hosting/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/self-hosting/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/self-hosting/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/sso/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/sso/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/sso/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/terraform/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/terraform/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/terraform/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/traefik/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/traefik/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/traefik/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/categories/vaultwarden/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/categories/vaultwarden/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/categories/vaultwarden/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/arcane-docker-manager/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/arcane-docker-manager/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/arcane-docker-manager/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/audiobookshelf-install-docker/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/audiobookshelf-install-docker/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/audiobookshelf-install-docker/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/authelia-docker-install/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authelia-docker-install/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authelia-docker-install/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/authentik/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authentik/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authentik/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/authentik-cloudflare-turnstile/</loc>
+    <lastmod>2026-10-10T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authentik-cloudflare-turnstile/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authentik-cloudflare-turnstile/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/authentik-email-notifications/</loc>
+    <lastmod>2026-10-10T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authentik-email-notifications/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authentik-email-notifications/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/authentik-enrollment-invitation/</loc>
+    <lastmod>2026-10-10T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authentik-enrollment-invitation/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authentik-enrollment-invitation/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/authentik-overview/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authentik-overview/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authentik-overview/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/authentik-overview-proxy-oidc/</loc>
+    <lastmod>2026-08-16T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authentik-overview-proxy-oidc/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authentik-overview-proxy-oidc/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/authentik-password-recovery/</loc>
+    <lastmod>2026-08-16T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authentik-password-recovery/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authentik-password-recovery/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/authentik-reputation-policy/</loc>
+    <lastmod>2026-10-10T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authentik-reputation-policy/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authentik-reputation-policy/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/authentik-setup/</loc>
+    <lastmod>2026-09-28T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authentik-setup/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authentik-setup/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/authentik-two-factor-authentication/</loc>
+    <lastmod>2026-10-10T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authentik-two-factor-authentication/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authentik-two-factor-authentication/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/automation-publishing/</loc>
+    <lastmod>2026-09-28T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/automation-publishing/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/automation-publishing/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/backup/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/backup/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/backup/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/best-apps-2025/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/best-apps-2025/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/best-apps-2025/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/booklore/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/booklore/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/booklore/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/cloud-init-install-in-proxmox/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/cloud-init-install-in-proxmox/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/cloud-init-install-in-proxmox/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/crowdsec/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/crowdsec/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/crowdsec/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/crowdsec-in-docker/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/crowdsec-in-docker/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/crowdsec-in-docker/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/crowdsec-in-lxc/</loc>
+    <lastmod>2026-10-10T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/crowdsec-in-lxc/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/crowdsec-in-lxc/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/diun-docker-update-notifications/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/diun-docker-update-notifications/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/diun-docker-update-notifications/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/dns-over-https-setup-in-opnsense/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/dns-over-https-setup-in-opnsense/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/dns-over-https-setup-in-opnsense/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/dns-over-tls-setup-in-opnsense/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/dns-over-tls-setup-in-opnsense/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/dns-over-tls-setup-in-opnsense/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/docker-default-address-pools/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/docker-default-address-pools/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/docker-default-address-pools/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/docker-podman-kubernetes/</loc>
+    <lastmod>2026-10-08T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/docker-podman-kubernetes/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/docker-podman-kubernetes/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/docker-ui/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/docker-ui/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/docker-ui/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/dockhand-docker-web-ui/</loc>
+    <lastmod>2026-09-24T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/dockhand-docker-web-ui/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/dockhand-docker-web-ui/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/dockhand-vs-arcane-vs-komodo/</loc>
+    <lastmod>2026-11-06T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/dockhand-vs-arcane-vs-komodo/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/dockhand-vs-arcane-vs-komodo/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/dozzle/</loc>
+    <lastmod>2026-10-10T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/dozzle/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/dozzle/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/duplicati/</loc>
+    <lastmod>2026-10-09T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/duplicati/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/duplicati/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/fedora-server-42-in-proxmox/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/fedora-server-42-in-proxmox/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/fedora-server-42-in-proxmox/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/fedora-server-nas/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/fedora-server-nas/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/fedora-server-nas/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/fedora-server-sanoid-zfs-snapshots/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/fedora-server-sanoid-zfs-snapshots/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/fedora-server-sanoid-zfs-snapshots/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/forgejo-komodo-gitops/</loc>
+    <lastmod>2026-11-08T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/forgejo-komodo-gitops/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/forgejo-komodo-gitops/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/forgejo-komodo-gitops-tutorial/</loc>
+    <lastmod>2026-09-23T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/forgejo-komodo-gitops-tutorial/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/forgejo-komodo-gitops-tutorial/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/forgejo-two-repos-revert/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/forgejo-two-repos-revert/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/forgejo-two-repos-revert/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/github-actions-self-hosted-runner/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/github-actions-self-hosted-runner/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/github-actions-self-hosted-runner/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/gitlab-vs-gitea-vs-forgejo/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/gitlab-vs-gitea-vs-forgejo/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/gitlab-vs-gitea-vs-forgejo/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/gotify-push-notifications/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/gotify-push-notifications/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/gotify-push-notifications/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/grimmory/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/grimmory/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/grimmory/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/hardware/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/hardware/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/hardware/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/homelabbing/</loc>
+    <lastmod>2026-10-08T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/homelabbing/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/homelabbing/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/install-hugo-blowfish/</loc>
+    <lastmod>2026-09-25T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/install-hugo-blowfish/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/install-hugo-blowfish/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/kea-dhcp-setup-in-opnsense/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/kea-dhcp-setup-in-opnsense/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/kea-dhcp-setup-in-opnsense/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/keycloak/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/keycloak/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/keycloak/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/linkwarden/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/linkwarden/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/linkwarden/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/linkwarden-vs-karakeep/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/linkwarden-vs-karakeep/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/linkwarden-vs-karakeep/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/matrix-synapse-docker/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/matrix-synapse-docker/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/matrix-synapse-docker/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/mealie/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/mealie/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/mealie/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/media-servers/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/media-servers/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/media-servers/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/memos/</loc>
+    <lastmod>2026-09-22T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/memos/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/memos/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/merge-local-lvm-and-local/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/merge-local-lvm-and-local/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/merge-local-lvm-and-local/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/my-firewall-rules/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/my-firewall-rules/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/my-firewall-rules/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/netbird/</loc>
+    <lastmod>2026-09-28T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/netbird/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/netbird/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/network/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/network/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/network/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/news/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/news/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/news/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/nextcloud/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/nextcloud/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/nextcloud/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/nextcloud-aio/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/nextcloud-aio/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/nextcloud-aio/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/nextcloud-in-lxc/</loc>
+    <lastmod>2026-09-10T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/nextcloud-in-lxc/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/nextcloud-in-lxc/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/obsidian-plugins/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/obsidian-plugins/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/obsidian-plugins/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/obsidian-workflow-publishing/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/obsidian-workflow-publishing/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/obsidian-workflow-publishing/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/open-source-crisis-2025/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/open-source-crisis-2025/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/open-source-crisis-2025/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/openclaw-on-tos7/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/openclaw-on-tos7/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/openclaw-on-tos7/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/opnsense/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/opnsense/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/opnsense/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/opnsense-26.1/</loc>
+    <lastmod>2026-09-28T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/opnsense-26.1/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/opnsense-26.1/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/opnsense-firewall-segmentation/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/opnsense-firewall-segmentation/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/opnsense-firewall-segmentation/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/opnsense-history/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/opnsense-history/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/opnsense-history/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/own-astro-theme/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/own-astro-theme/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/own-astro-theme/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/pangolin/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/pangolin/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/pangolin/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/pkm/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/pkm/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/pkm/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/podman/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/podman/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/podman/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/podman-disadvantages/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/podman-disadvantages/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/podman-disadvantages/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/portainer-to-komodo/</loc>
+    <lastmod>2026-08-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/portainer-to-komodo/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/portainer-to-komodo/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/postgres-p-1/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/postgres-p-1/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/postgres-p-1/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/postgres-p-2/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/postgres-p-2/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/postgres-p-2/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/postiz-youtube-vk-rutube/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/postiz-youtube-vk-rutube/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/postiz-youtube-vk-rutube/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/proxmox/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/proxmox/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/proxmox/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/proxmox-backup-server-4-2-installation-guide/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/proxmox-backup-server-4-2-installation-guide/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/proxmox-backup-server-4-2-installation-guide/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/proxmox-ceph-home/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/proxmox-ceph-home/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/proxmox-ceph-home/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/proxmox-cluster/</loc>
+    <lastmod>2026-11-18T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/proxmox-cluster/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/proxmox-cluster/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/proxmox-cluster-types/</loc>
+    <lastmod>2026-09-20T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/proxmox-cluster-types/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/proxmox-cluster-types/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/proxmox-firewall/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/proxmox-firewall/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/proxmox-firewall/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/proxmox-sdn-guide/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/proxmox-sdn-guide/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/proxmox-sdn-guide/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/quadelts-vs-podlets/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/quadelts-vs-podlets/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/quadelts-vs-podlets/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/renovate-forgejo-komodo/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/renovate-forgejo-komodo/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/renovate-forgejo-komodo/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/router-virtualization-pros-and-cons/</loc>
+    <lastmod>2026-08-16T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/router-virtualization-pros-and-cons/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/router-virtualization-pros-and-cons/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/selfhosting/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/selfhosting/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/selfhosting/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/single-sign-on/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/single-sign-on/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/single-sign-on/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/smartape-to-github-pages-migration/</loc>
+    <lastmod>2026-11-08T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/smartape-to-github-pages-migration/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/smartape-to-github-pages-migration/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/split-dns/</loc>
+    <lastmod>2026-08-16T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/split-dns/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/split-dns/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/ssl-termination-in-proxmox/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/ssl-termination-in-proxmox/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/ssl-termination-in-proxmox/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/sso-comparison/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/sso-comparison/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/sso-comparison/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/tempaltes-in-proxmox/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/tempaltes-in-proxmox/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/tempaltes-in-proxmox/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/terraform/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/terraform/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/terraform/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/terraform-proxmox-3vm-automation/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/terraform-proxmox-3vm-automation/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/terraform-proxmox-3vm-automation/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/terraform-proxmox-vm-automation/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/terraform-proxmox-vm-automation/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/terraform-proxmox-vm-automation/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/totp-webauthn-passwordless/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/totp-webauthn-passwordless/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/totp-webauthn-passwordless/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/traefik/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/traefik/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/traefik/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/traefik-in-docker/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/traefik-in-docker/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/traefik-in-docker/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/traefik-in-lxc-part-1/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/traefik-in-lxc-part-1/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/traefik-in-lxc-part-1/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/traefik-in-lxc-part-2/</loc>
+    <lastmod>2026-10-08T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/traefik-in-lxc-part-2/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/traefik-in-lxc-part-2/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/traefik-in-lxc-part-3/</loc>
+    <lastmod>2026-10-09T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/traefik-in-lxc-part-3/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/traefik-in-lxc-part-3/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/traefik-middlewares-overview/</loc>
+    <lastmod>2026-10-08T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/traefik-middlewares-overview/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/traefik-middlewares-overview/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/trilium/</loc>
+    <lastmod>2026-08-15T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/trilium/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/trilium/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/trilium-vs-obsidian/</loc>
+    <lastmod>2026-08-17T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/trilium-vs-obsidian/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/trilium-vs-obsidian/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/update-linux-server/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/update-linux-server/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/update-linux-server/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/upgrade-proxmox8-to-proxmox9/</loc>
+    <lastmod>2026-08-14T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/upgrade-proxmox8-to-proxmox9/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/upgrade-proxmox8-to-proxmox9/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/vaultwarden/</loc>
+    <lastmod>2026-09-28T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/vaultwarden/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/vaultwarden/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/vinchin-backup-proxmox/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/vinchin-backup-proxmox/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/vinchin-backup-proxmox/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/what-is-podman/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/what-is-podman/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/what-is-podman/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/zerobyte/</loc>
+    <lastmod>2026-10-09T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/zerobyte/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/zerobyte/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/zimaboard-2-overview/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/zimaboard-2-overview/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/zimaboard-2-overview/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/posts/zitadel-iam-overview/</loc>
+    <lastmod>2026-11-19T00:00:00.000Z</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/zitadel-iam-overview/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/zitadel-iam-overview/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/privacy/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/privacy/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/privacy/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/authentik/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/authentik/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/authentik/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/automating-prohomelab-publishing/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/backup/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/backup/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/backup/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/crowdsec/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/crowdsec/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/crowdsec/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/docker-management-panels/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/docker-ui-panels/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/homelab-hardware/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/iam-solutions/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/iam-%D1%80%D0%B5%D1%88%D0%B5%D0%BD%D0%B8%D1%8F/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/iam-%D1%80%D0%B5%D1%88%D0%B5%D0%BD%D0%B8%D1%8F/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/iam-%D1%80%D0%B5%D1%88%D0%B5%D0%BD%D0%B8%D1%8F/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/media-servers/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/network/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/network/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/network/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/news/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/news/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/news/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/nextcloud/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/nextcloud/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/nextcloud/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/pkm--notes/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/podman/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/podman/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/podman/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/proxmox/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/proxmox/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/proxmox/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/proxmox-automation/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/self-hosting/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/self-hosting/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/self-hosting/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/traefik/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/series/traefik/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/series/traefik/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/series/working-with-opnsense/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/adguard/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/adguard/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/adguard/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/apache/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/apache/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/apache/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/arcane/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/arcane/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/arcane/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/astro/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/astro/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/astro/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/audiobookshelf/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/audiobookshelf/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/audiobookshelf/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/authelia/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/authelia/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/authelia/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/authentik/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/authentik/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/authentik/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/automation/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/backup/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/backup/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/backup/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/blowfish/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/blowfish/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/blowfish/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/booklore/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/booklore/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/booklore/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/books/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/books/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/books/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/ceph/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/ceph/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/ceph/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/ci/cd/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/ci/cd/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/ci/cd/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/ci-cd/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/ci-cd/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/ci-cd/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/cloudflare/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/cloudflare/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/cloudflare/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/cloudinit/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/cloudinit/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/cloudinit/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/cluster/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/cluster/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/cluster/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/community/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/community/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/community/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/crowdsec/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/crowdsec/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/crowdsec/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/devops/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/devops/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/devops/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/diun/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/diun/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/diun/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/dns-over-https/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/dns-over-https/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/dns-over-https/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/dns-over-tls/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/dns-over-tls/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/dns-over-tls/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/docker/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/docker/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/docker/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/dockhand/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/dockhand/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/dockhand/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/dozzle/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/dozzle/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/dozzle/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/duplicati/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/duplicati/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/duplicati/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/fedora/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/fedora/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/fedora/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/firewall/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/firewall/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/firewall/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/forgejo/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/forgejo/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/forgejo/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/git/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/git/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/git/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/gitea/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/gitea/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/gitea/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/github-actions/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/github-actions/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/github-actions/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/github-pages/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/github-pages/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/github-pages/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/gitlab/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/gitlab/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/gitlab/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/gitops/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/gitops/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/gitops/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/gotify/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/gotify/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/gotify/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/grimmory/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/grimmory/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/grimmory/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/hardware/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/hardware/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/hardware/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/homelab/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/homelab/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/homelab/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/hugo/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/hugo/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/hugo/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/iac/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/iac/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/iac/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/iam/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/iam/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/iam/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/idp/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/idp/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/idp/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/import-substitution/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/it/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/it/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/it/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/karakeep/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/karakeep/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/karakeep/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/kea-dhcp/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/kea-dhcp/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/kea-dhcp/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/keycloak/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/keycloak/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/keycloak/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/komodo/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/komodo/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/komodo/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/kubernetes/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/kubernetes/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/kubernetes/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/linkwarden/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/linkwarden/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/linkwarden/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/linux/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/linux/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/linux/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/lxc/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/lxc/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/lxc/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/mariadb/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/mariadb/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/mariadb/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/matrix/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/matrix/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/matrix/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/mealie/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/mealie/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/mealie/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/memos/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/memos/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/memos/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/mikrotik/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/mikrotik/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/mikrotik/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/mini-server/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/mini-server/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/mini-server/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/monitoring/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/monitoring/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/monitoring/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/nas/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/nas/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/nas/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/netbird/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/netbird/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/netbird/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/network/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/network/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/network/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/networking/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/networking/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/networking/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/nextcloud/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/nextcloud/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/nextcloud/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/obsidian/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/obsidian/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/obsidian/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/ollama/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/ollama/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/ollama/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/open-source/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/open-source/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/open-source/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/openclaw/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/openclaw/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/openclaw/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/opnsense/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/opnsense/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/opnsense/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/pangolin/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/pangolin/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/pangolin/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/pbs/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/pbs/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/pbs/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/pfsense/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/pfsense/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/pfsense/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/pi-hole/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/pi-hole/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/pi-hole/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/pkm/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/pkm/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/pkm/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/podman/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/podman/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/podman/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/portainer/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/portainer/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/portainer/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/postgresql/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/postgresql/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/postgresql/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/postiz/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/postiz/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/postiz/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/proxmox/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/proxmox/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/proxmox/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/push-notifications/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/renovate/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/renovate/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/renovate/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/reverse-proxy/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/reverse-proxy/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/reverse-proxy/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/rutube/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/rutube/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/rutube/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/security/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/security/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/security/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/self-hosting/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/self-hosting/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/self-hosting/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/seo/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/seo/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/seo/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/server/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/server/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/server/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/software-development/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/software-development/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/software-development/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/sso/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/sso/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/sso/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/storage/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/storage/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/storage/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/synapse/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/synapse/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/synapse/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/terraform/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/terraform/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/terraform/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/terramaster/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/terramaster/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/terramaster/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/traefik/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/traefik/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/traefik/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/trilium/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/trilium/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/trilium/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/troubleshooting/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/troubleshooting/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/troubleshooting/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/vaultwarden/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/vaultwarden/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/vaultwarden/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/vinchin/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/vinchin/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/vinchin/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/virtualization/</loc>
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/vk/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/vk/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/vk/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/vlan/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/vlan/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/vlan/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/youtube/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/youtube/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/youtube/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/zerobyte/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/zerobyte/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/zerobyte/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tags/zitadel/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tags/zitadel/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tags/zitadel/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tools/compose-quadlet/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tools/compose-quadlet/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tools/compose-quadlet/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tools/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tools/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tools/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tools/opnsense-vlan-planner/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tools/opnsense-vlan-planner/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tools/opnsense-vlan-planner/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tools/proxmox-quorum/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tools/proxmox-quorum/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tools/proxmox-quorum/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tools/rackplan/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tools/rackplan/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tools/rackplan/" />
+  </url>
+  <url>
+    <loc>https://prohomelab.com/en/tools/traefik-compose/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://prohomelab.com/en/tools/traefik-compose/" />
+    <xhtml:link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/tools/traefik-compose/" />
+  </url>
+</urlset>

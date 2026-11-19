@@ -1,0 +1,1245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Proxmox | ProHomeLab</title>
+    <link>https://prohomelab.com/posts/proxmox/</link>
+    <description>Сайт про homelab, self-hosting и IT: инструкции по установке серверов, виртуализация, Docker, Proxmox, безопасность и автоматизация.</description>
+    <language>ru-RU</language>
+    <lastBuildDate>Thu, 09 Oct 2025 00:00:00 GMT</lastBuildDate>
+    <generator>ProHomeLab theme for Astro</generator>
+    <atom:link href="https://prohomelab.com/posts/proxmox/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Как объединить local-lvm и local в единое хранилище в Proxmox</title>
+      <link>https://prohomelab.com/posts/merge-local-lvm-and-local/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/merge-local-lvm-and-local/</guid>
+      <pubDate>Thu, 09 Oct 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Storage</category>
+      <description>Пошаговое руководство по объединению хранилищ local-lvm и local в Proxmox в единое логическое хранилище. Рассмотрены команды и настройки, которые помогут эффективно использовать пространство и упростить управление виртуальными машинами и контейнерами.</description>
+      <content:encoded><![CDATA[<h2 id="зачем-объединять-local-lvm-и-local">Зачем объединять local-lvm и local?</h2>
+<p>После установки <strong>Proxmox VE</strong> по умолчанию создаются два локальных хранилища:</p>
+<ul>
+<li><code>local</code> - папка <code>/var/lib/vz</code>, предназначенная для ISO-образов, шаблонов и бэкапов.</li>
+</ul>
+<p><img alt="Хранилище local" loading="lazy" decoding="async" width="2522" height="399" src="https://prohomelab.com/_astro/local.C769oLLl_ZSnB99.webp"></p>
+<ul>
+<li><code>local-lvm</code> - LVM-пул, где хранятся диски виртуальных машин и контейнеров.</li>
+</ul>
+<p><img alt="Хранилище local-lvm" loading="lazy" decoding="async" width="2543" height="508" src="https://prohomelab.com/_astro/local-lvm.DoJUGBDh_Z1octWH.webp"></p>
+<p>На первый взгляд это удобно, но у такого разделения есть минусы:</p>
+<ul>
+<li>Размер <code>local-lvm</code> фиксирован, и освободить место под ISO или бэкапы сложно.</li>
+<li>Файлы в <code>local-lvm</code> не видны напрямую в файловой системе.</li>
+<li>Расширить пул или перенести его проблематично.</li>
+</ul>
+<p>Поэтому многие администраторы предпочитают <strong>объединить local-lvm и local в единое файловое хранилище</strong>, где все будет храниться в виде обычных файлов.</p>
+<hr>
+<h2 id="варианты-решения">Варианты решения</h2>
+<p>Есть два подхода:</p>
+<ol>
+<li><strong>Удалить LVM-пул и использовать все пространство под ext4 (или ZFS)</strong>.</li>
+<li><strong>Перенести диски с local-lvm на local, а затем удалить LVM-пул.</strong></li>
+</ol>
+<p>Рассмотрим первый вариант, так как он проще, если у вас установка Proxmox c нуля, так безопаснее - вы не потеряете данные.</p>
+<hr>
+<h2 id="шаг-1-удаляем-lvm-хранилище-из-списка-storage-в-разделе-datacenter-нашего-proxmox">Шаг 1. Удаляем lvm хранилище из списка Storage в разделе Datacenter нашего Proxmox</h2>
+<p>Идем в меню <strong>Datacenter</strong>, выбираем <strong>Storage</strong>, выбираем ненужный нам <em>local-lvm storage</em> и жмем кнопку remove</p>
+<p><img alt="Удаление local-lvm" loading="lazy" decoding="async" width="2495" height="382" src="https://prohomelab.com/_astro/storage.DjK2Ndyn_Z28wiw8.webp"></p>
+<p>Как итог, у нас остается только хранилище <code>local</code>.
+Однако проблема заключается в том, что "вроде бы" освобожденное дисковое пространство еще не освобождено.</p>
+<h2 id="шаг-2-освобождаем-место">Шаг 2. Освобождаем место</h2>
+<p>Идем в shell нашей ноды и начинаем сеанс магии.</p>
+<p>Сначала реально удалим логический том командой</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">lvremove /dev/pve/data</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="lvremove /dev/pve/data"><div></div></button></div></figure></div>
+<p><img alt="Удаление local-lvm" loading="lazy" decoding="async" width="1993" height="438" src="https://prohomelab.com/_astro/lvremove.B5um3fF7_Z1BvJjf.webp"></p>
+<p>и подтверждаем действие.</p>
+<h2 id="шаг-3-увеличиваем-размер-логического-тома">Шаг 3. Увеличиваем размер логического тома</h2>
+<p>Теперь следующей командой увеличим размер логического тома (LVM), чтобы он занял все доступное нераспределенное пространство на физическом томе (PV).</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">lvresize -l +100%FREE /dev/pve/root</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="lvresize -l +100%FREE /dev/pve/root"><div></div></button></div></figure></div>
+<p><img alt="увеличение lvm" loading="lazy" decoding="async" width="2494" height="509" src="https://prohomelab.com/_astro/lvresize.CTgGDy8C_Z1rqqpT.webp"></p>
+<p>Что значат вышеприведенная команда, спросишь ты меня, мой маленький пытливый друг. Хороший вопрос.</p>
+<p>Что происходит по шагам</p>
+<ul>
+<li><code>lvresize</code> - это утилита для изменения размера логического тома (Logical Volume) в LVM.</li>
+<li><code>-l +100%FREE</code> - ключ, который говорит:
+"Добавь к этому логическому тому все оставшееся свободное место из группы томов (VG)."</li>
+</ul>
+<p>То есть, если в нашей группе pve осталось, например, 50 ГБ неиспользованного пространства, эта команда добавит их все в /dev/pve/root.</p>
+<p>/dev/pve/root - путь к логическому тому, где установлена основная файловая система (обычно /).</p>
+<p>И, наконец, последняя на сегодня команда</p>
+<h2 id="шаг-4-расширяем-нашу-файловую-систему">Шаг 4. Расширяем нашу файловую систему</h2>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">resize2fs /dev/mapper/pve-root</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="resize2fs /dev/mapper/pve-root"><div></div></button></div></figure></div>
+<p>расширяет нашу файловую систему ext4 внутри указанного раздела.</p>
+<p><img alt="расширяем local" loading="lazy" decoding="async" width="2175" height="745" src="https://prohomelab.com/_astro/resize2fs.DpLizB55_2haGDz.webp"></p>
+<p>Давай теперь проверим что же мы все натворили</p>
+<p><img alt="тест" loading="lazy" decoding="async" width="2513" height="545" src="https://prohomelab.com/_astro/test1.C7IUYnYm_Z11HUzD.webp">
+<img alt="тест2" loading="lazy" decoding="async" width="2542" height="616" src="https://prohomelab.com/_astro/test2.DSCVe87T_Z19ws21.webp"></p>
+<p>Как вы можете видеть - теперь у нас используется все дисковое пространство в одном <code>local storage</code>.</p>
+<p>Но нужен еще один, финальный и обязательный, штрих</p>
+<h2 id="шаг-5-финальный-штрих">Шаг 5. Финальный штрих</h2>
+<p>Мы должны сказать системе, что хранилище <code>local</code> теперь надо использовать подо все типы данных, в том числе и под тот тип, который раньше использовал только <code>local-lvm</code></p>
+<p><img alt="Storage" loading="lazy" decoding="async" width="2555" height="972" src="https://prohomelab.com/_astro/content.KDfxBQ0x_94gls.webp"></p>
+<h2 id="post-scriptum">Post scriptum</h2>
+<p>Если тебе понравилась эта статья или эти знания оказались полезными для тебя, то рассмотри вопрос поддержки канала на boosty по ссылке в контактах.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Хранилище для HA в кластере Proxmox</title>
+      <link>https://prohomelab.com/posts/proxmox-cluster-types/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/proxmox-cluster-types/</guid>
+      <pubDate>Mon, 29 Sep 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Cluster</category>
+      <description>Обзор основных типов хранилищ в Proxmox с поддержкой высокой доступности (HA). Рассмотрены local-lvm, Ceph, NFS, iSCSI, DRBD9/LINSTOR и другие решения, их преимущества и ограничения, а также рекомендации по выбору для надежного и масштабируемого кластера.</description>
+      <content:encoded><![CDATA[<h2 id="хранилище-для-ha-в-proxmox-ve">Хранилище для HA в Proxmox VE</h2>
+<p>Если вы уже прошли <a href="https://prohomelab.com/posts/proxmox-cluster/">статью про сборку кластера Proxmox</a> - QDevice, кворум, разное железо в нодах - у вас, скорее всего, возник следующий закономерный вопрос: а где, собственно, должны лежать диски виртуальных машин, чтобы вся эта конструкция с автоматическим перезапуском VM реально работала, а не просто красиво выглядела в интерфейсе? Вопрос не праздный - я сам не раз видел, как люди настраивают HA, проверяют "работает же!", а потом теряют данные ровно в тот момент, когда падает нужный узел, потому что диск VM физически лежал только на нем одном.</p>
+<p>В этой статье и видео разбираю, какие типы хранилищ в Proxmox вообще годятся для HA, какие только выглядят похожими на shared storage, но подведут в решающий момент, и что выбрать в зависимости от количества нод в кластере.</p>
+<p>Если вам понравилась эта статья, то можете поддержать автора, став спонсором на <a href="https://boosty.to/stilicho2011">бусти</a> (ссылка есть и в разделе контактов).</p>
+<h3 id="оглавление">Оглавление</h3>
+<ol>
+<li><a href="#1-%D1%80%D0%BE%D0%BB%D1%8C-%D1%85%D1%80%D0%B0%D0%BD%D0%B8%D0%BB%D0%B8%D1%89%D0%B0-%D0%B2-high-availability">Роль хранилища в High Availability</a></li>
+<li><a href="#2-%D0%BE%D0%B4%D0%B8%D0%BD-%D1%83%D0%B7%D0%B5%D0%BB--%D1%82%D1%80%D0%B5%D0%B1%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5-ha">Один узел + требование HA</a></li>
+<li><a href="#3-%D0%B4%D0%B2%D0%B0-%D1%83%D0%B7%D0%BB%D0%B0--quorum--witness">Два узла + quorum / witness</a></li>
+<li><a href="#4-%D1%82%D1%80%D0%B8-%D0%B8-%D0%B1%D0%BE%D0%BB%D0%B5%D0%B5-%D1%83%D0%B7%D0%BB%D0%BE%D0%B2-%D1%81-%D0%BE%D0%B1%D1%89%D0%B8%D0%BC-%D1%85%D1%80%D0%B0%D0%BD%D0%B8%D0%BB%D0%B8%D1%89%D0%B5%D0%BC">Три и более узлов с общим хранилищем</a></li>
+<li><a href="#5-hyperconverged-storage-ceph-%D0%B8-%D0%B0%D0%BB%D1%8C%D1%82%D0%B5%D1%80%D0%BD%D0%B0%D1%82%D0%B8%D0%B2%D1%8B">Hyperconverged storage, Ceph и альтернативы</a></li>
+<li><a href="#6-%D0%B2%D0%BD%D0%B5%D1%88%D0%BD%D0%B8%D0%B5-sannas-%D1%80%D0%B5%D1%88%D0%B5%D0%BD%D0%B8%D1%8F">Внешние SAN/NAS решения</a></li>
+<li><a href="#7-%D1%87%D1%82%D0%BE-%D0%B4%D0%BB%D1%8F-ha-%D0%BD%D0%B5-%D0%B3%D0%BE%D0%B4%D0%B8%D1%82%D1%81%D1%8F-%D0%B2%D0%BE%D0%BE%D0%B1%D1%89%D0%B5">Что для HA не годится вообще</a></li>
+<li><a href="#8-%D1%80%D0%B5%D0%BA%D0%BE%D0%BC%D0%B5%D0%BD%D0%B4%D0%B0%D1%86%D0%B8%D0%B8">Рекомендации</a></li>
+<li><a href="#9-%D0%B7%D0%B0%D0%BA%D0%BB%D1%8E%D1%87%D0%B5%D0%BD%D0%B8%D0%B5">Заключение</a></li>
+</ol>
+<hr>
+<h3 id="1-роль-хранилища-в-high-availability">1. Роль хранилища в High Availability</h3>
+<p>В кластере Proxmox VE механизм <strong>High Availability (HA)</strong> должен автоматически перезапускать виртуальные машины и контейнеры на другом узле, если исходный узел вышел из строя. Звучит просто, но все держится ровно на одном условии: тип хранилища, на котором лежит диск VM.</p>
+<p>Когда узел падает, соседний узел должен успеть:</p>
+<ul>
+<li>получить доступ к диску упавшей VM/CT - без переноса файлов, без "подождите, я скопирую";</li>
+<li>прочитать актуальную конфигурацию;</li>
+<li>поднять машину без рассинхронизации данных - то есть без риска запустить VM со старой версией диска, пока где-то параллельно висит новая.</li>
+</ul>
+<p>Если хранилище физически привязано к упавшему узлу (обычный локальный диск, LVM-thin на локальном SSD и т.п.) - вот и все, дальше можно даже не настраивать HA, она просто не сработает: сосед физически не может достать диск из мертвого сервера.</p>
+<h4 id="что-должно-уметь-хранилище-для-ha">Что должно уметь хранилище для HA</h4>
+<ol>
+<li><strong>Shared access</strong> - диск VM физически доступен с нескольких узлов одновременно, а не скопирован туда "на всякий случай".</li>
+<li><strong>Кластерная согласованность</strong> - блокировки, защита от split-brain, синхронная или как минимум близкая к синхронной репликация.</li>
+<li><strong>Failover без ручных телодвижений</strong> - Proxmox сам стартует VM на другом узле, без вашего "ну сейчас я быстренько смонтирую диск руками".</li>
+<li><strong>Отдельная сеть под хранилище</strong> - трафик storage и трафик управления/VM лучше не смешивать, желательно 10GbE и выше, особенно для Ceph.</li>
+<li><strong>Надежность на уровне данных</strong> - RAID, репликация Ceph, DRBD, отказоустойчивый NAS/SAN - что-то, что переживет не только падение узла, но и падение одного диска.</li>
+<li><strong>Поддержка в самом Proxmox HA stack</strong> - Ceph, iSCSI, NFS, ZFS replication. GlusterFS в этот список я сознательно не включаю - ниже объясню почему.</li>
+</ol>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Заметка</span></div>
+<div class="phl-callout-content">
+<p>GlusterFS как штатный тип хранилища в Proxmox больше не поддерживается, начиная с Proxmox VE 9 - разработчики Proxmox прямо объяснили это тем, что сам GlusterFS фактически не развивается апстримом. На Proxmox VE 8 плагин пока еще работает (поддержка 8-й ветки продлится примерно год после релиза 9.0), но заводить на нем новую инфраструктуру я бы не рекомендовал. Технически смонтировать Gluster-том и добавить его как directory storage все еще можно - но это уже не нативная интеграция с HA stack, а самодеятельность на свой риск.</p>
+</div>
+</div>
+<hr>
+<h3 id="2-один-узел--требование-ha">2. Один узел + требование HA</h3>
+<p>Периодически встречаю людей, которые искренне удивляются, почему HA не работает на единственном сервере. Разберем, почему так, на четырех вариантах, которые обычно и пробуют:</p>
+<h4 id="21-локальное-хранилище-zfs-raid-или-аппаратный-raid">2.1. Локальное хранилище (ZFS RAID или аппаратный RAID)</h4>
+<p>Плюсы понятны: защита от отказа отдельного диска, простота, хорошая производительность. Минус один, но фатальный для нашей темы: <strong>failover в принципе невозможен</strong>, потому что весь массив физически стоит в одном корпусе. Упал сервер - упал и RAID вместе с ним.</p>
+<h4 id="22-репликация-zfs-на-пассивный-узел">2.2. Репликация ZFS на "пассивный" узел</h4>
+<p>ZFS-репликация в Proxmox копирует снапшоты диска на соседнюю ноду по расписанию (минимальный интервал - минуты, не секунды). Это дает вам "холодный резерв" - в случае аварии можно руками поднять VM на второй ноде с потерей данных за последний интервал репликации. Но это <strong>не HA</strong>: автоматического старта нет, восстановление - ручная операция, и вы теряете все, что записалось после последнего снапшота.</p>
+<h4 id="23-репликация-на-внешний-nas">2.3. Репликация на внешний NAS</h4>
+<p>Годная схема для бэкапов, но сам NAS в этом случае становится <strong>SPOF</strong> (single point of failure, единая точка отказа) - вы просто переносите риск с одного сервера на другой, а не убираете его.</p>
+<h4 id="24-snapshots--vzdump">2.4. Snapshots + vzdump</h4>
+<p>Это резервное копирование, а не HA. Восстановление возможно, но не автоматическое и не мгновенное - пока вы разворачиваете бэкап, сервис уже недоступен, и это никак не соответствует смыслу High Availability.</p>
+<p><strong>Итог по разделу:</strong> на одном узле HA не бывает физически, точка. Минимум - два узла с общим доступом к хранилищу, и даже тут, как сейчас увидим, есть нюанс.</p>
+<hr>
+<h3 id="3-два-узла--quorum--witness">3. Два узла + quorum / witness</h3>
+<h4 id="31-проблема-двух-узлов---split-brain">3.1. Проблема двух узлов - split-brain</h4>
+<p>Если у вас всего два узла и между ними пропадает связь, каждый из них видит ситуацию как "я один живой, второй, видимо, умер" - и оба могут попытаться поднять одну и ту же VM одновременно. Это классический <strong>split-brain</strong>, и именно кластерный кворум должен его предотвращать. Проблема в том, что у двух узлов кворума в чистом виде просто не существует - 1 голос против 1 голоса, большинства нет никогда.</p>
+<p>Подробно про сам механизм кворума и голосов я разбирал в статье про <a href="https://prohomelab.com/posts/proxmox-cluster/">сборку кластера Proxmox</a> - здесь коротко: <strong>нужен третий голос</strong>.</p>
+<h4 id="решение---qdevice">Решение - QDevice</h4>
+<p>QDevice - это внешний "судья", который не хранит и не крутит VM, а просто участвует в голосовании. Вариантов, куда его посадить, много: отдельная легкая VM, мини-ПК, Raspberry Pi, тот же Proxmox Backup Server, если он у вас уже есть. Как только третий голос появляется - у кластера снова есть возможность набрать большинство (2 из 3), и HA начинает работать предсказуемо.</p>
+<h4 id="32-хранилище-для-ha-в-2-узловом-кластере">3.2. Хранилище для HA в 2-узловом кластере</h4>
+<table>
+<thead>
+<tr>
+<th>Storage</th>
+<th>Годится для HA</th>
+<th>SPOF</th>
+<th>Нужен QDevice</th>
+<th>Производительность</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZFS Local + Replication</td>
+<td>Частично (потеря данных за интервал репликации)</td>
+<td>Узел</td>
+<td>Да</td>
+<td>Средняя</td>
+</tr>
+<tr>
+<td>NFS / iSCSI / NAS</td>
+<td>Да</td>
+<td>NAS/SAN</td>
+<td>Да</td>
+<td>Средняя</td>
+</tr>
+<tr>
+<td>Ceph</td>
+<td>Да</td>
+<td>Нет (при 3+ мониторах)</td>
+<td>Да</td>
+<td>Высокая</td>
+</tr>
+<tr>
+<td>DRBD9 (через LINSTOR)</td>
+<td>Да</td>
+<td>Нет</td>
+<td>Да</td>
+<td>Средняя</td>
+</tr>
+</tbody>
+</table>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p><strong>DRBD9 в Proxmox - не встроенный плагин.</strong> Работает он через отдельный продукт LINBIT под названием <strong>LINSTOR</strong> (плюс плагин <code>linstor-proxmox</code>), который нужно ставить и настраивать отдельно от самого Proxmox. Публичный репозиторий пакетов LINBIT можно использовать бесплатно для домашней лаборатории и тестов, но без SLA и гарантий - для продакшена LINBIT прямо рекомендует свои платные клиентские репозитории. Так что строка "DRBD9" в таблицах выше - это не "из коробки", а "еще один компонент инфраструктуры, который вам предстоит поднять и поддерживать".</p>
+<p>Важный нюанс именно для Ceph в 2-узловом кластере: самому Ceph для кворума мониторов (<code>ceph-mon</code>) нужно нечетное количество голосов, а 2 узла этого не дают. На практике для такой схемы третий монитор Ceph поднимают на внешней машине (том же QDevice-хосте, например) - без полноценного узла с OSD, только под голосование мониторов.</p>
+</div>
+</div>
+<hr>
+<h3 id="4-три-и-более-узлов-с-общим-хранилищем">4. Три и более узлов с общим хранилищем</h3>
+<h4 id="41-почему-от-трех-узлов-все-внезапно-проще">4.1. Почему от трех узлов все внезапно проще</h4>
+<p>С тремя узлами кворум работает нативно и без костылей: большинство - это 2 из 3, split-brain при потере одного узла невозможен просто по арифметике голосов, никакого QDevice не требуется. HA-группы настраиваются штатно через интерфейс, без танцев с бубном.</p>
+<h4 id="42-shared-storage---файловый-и-блочный-доступ">4.2. Shared storage - файловый и блочный доступ</h4>
+<h5 id="nfs">NFS</h5>
+<p>Файловое хранилище, подходит и под диски VM/CT, и под ISO/шаблоны. Настраивается за пару минут:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Datacenter → Storage → Add → NFS</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Server: IP вашего NAS</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Export: /volume1/proxmox</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Content: Disk image, ISO image, Backup</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Nodes: все узлы кластера</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Datacenter → Storage → Add → NFSServer: IP вашего NASExport: /volume1/proxmoxContent: Disk image, ISO image, BackupNodes: все узлы кластера"><div></div></button></div></figure></div>
+<p>Минус - сам NAS - SPOF. Если он лежит, ложатся все VM, у которых диск на этом NFS, независимо от того, сколько у вас нод в кластере Proxmox.</p>
+<h5 id="iscsi">iSCSI</h5>
+<p>Блочный доступ, а не файловый - производительность выше, чем у NFS. Для HA обязательно нужен <strong>multipath</strong> (несколько независимых сетевых путей до таргета), иначе один упавший сетевой линк положит доступ к дискам так же надежно, как упавший узел.</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Datacenter → Storage → Add → iSCSI</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Portal: IP вашего SAN</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Target: нужный IQN</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Nodes: все узлы кластера</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Опционально: LVM over iSCSI - если нужны снапшоты и тонкое выделение места</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Datacenter → Storage → Add → iSCSIPortal: IP вашего SANTarget: нужный IQNNodes: все узлы кластераОпционально: LVM over iSCSI - если нужны снапшоты и тонкое выделение места"><div></div></button></div></figure></div>
+<p>Риск тот же, что у NFS - SPOF на стороне SAN, если он не резервирован сам по себе.</p>
+<h5 id="smbcifs">SMB/CIFS</h5>
+<p>Только для ISO-образов и шаблонов контейнеров. <strong>Диски виртуальных машин на SMB работать не будут</strong> - Proxmox такое даже не даст подключить как storage для дисков.</p>
+<h4 id="43-итоговое-сравнение-по-производительности-и-рискам">4.3. Итоговое сравнение по производительности и рискам</h4>
+<table>
+<thead>
+<tr>
+<th>Архитектура</th>
+<th>SPOF</th>
+<th>Производительность</th>
+<th>Требования</th>
+<th>Масштабируемость</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NFS</td>
+<td>NAS</td>
+<td>Средняя</td>
+<td>Низкие</td>
+<td>Средняя</td>
+</tr>
+<tr>
+<td>iSCSI</td>
+<td>SAN (без резервирования)</td>
+<td>Высокая</td>
+<td>Средние</td>
+<td>Средняя</td>
+</tr>
+<tr>
+<td>Ceph</td>
+<td>Нет</td>
+<td>Высокая</td>
+<td>Высокие (сеть, диски, узлы)</td>
+<td>Отличная</td>
+</tr>
+</tbody>
+</table>
+<p>Ceph здесь выделяется не просто "хорошими цифрами в таблице" - это единственный вариант из трех, где при правильной настройке в принципе нет единой точки отказа: данные размазаны по всем узлам, а не лежат на одном внешнем устройстве.</p>
+<hr>
+<h3 id="5-hyperconverged-storage-ceph-и-альтернативы">5. Hyperconverged storage, Ceph и альтернативы</h3>
+<p><strong>Hyperconverged</strong> в данном контексте означает, что хранилище и вычисления живут на одних и тех же узлах кластера, без отдельного NAS/SAN как самостоятельного устройства.</p>
+<p><strong>Ceph</strong> - самый зрелый вариант такого рода в экосистеме Proxmox: RBD-тома для дисков VM, CephFS - для ISO, шаблонов и бэкапов. Данные распределяются между узлами и умеют "самоисцеляться" (self-healing) при выходе диска или узла из строя. Цена вопроса - минимум 3 узла, отдельная выделенная сеть под Ceph-трафик и желательно SSD/NVMe, а не HDD (Ceph на вращающихся дисках - это боль, о которой знает каждый, кто пробовал).</p>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Совет</span></div>
+<div class="phl-callout-content">
+<p>Если вы читаете это как владелец домашней лаборатории на 2-3 нодах и уже прикидываете, не поднять ли Ceph "чтобы было" - сначала прочитайте мою отдельную статью <a href="https://prohomelab.com/posts/proxmox-ceph-home/">«Почему мне не нужен Ceph storage в Proxmox для домашнего сервера»</a>. Ceph - это осознанный выбор для инфраструктуры, где HA действительно критична, а не универсальный "правильный" ответ по умолчанию.</p>
+</div>
+</div>
+<p>Альтернативы Ceph по духу (не по конкретной реализации) - тот же DRBD9/LINSTOR, разобранный в разделе про 2-узловые кластеры, только он масштабируется и на 3+ узлов.</p>
+<hr>
+<h3 id="6-внешние-sannas-решения">6. Внешние SAN/NAS решения</h3>
+<table>
+<thead>
+<tr>
+<th>Тип</th>
+<th>Описание</th>
+<th>Годится для HA</th>
+<th>Примечание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NAS (NFS)</td>
+<td>Файловое хранилище</td>
+<td>Да</td>
+<td>Годится и под диски VM, и под ISO</td>
+</tr>
+<tr>
+<td>NAS (SMB/CIFS)</td>
+<td>Файловое хранилище</td>
+<td>Только для ISO/шаблонов</td>
+<td>Диски VM через SMB не подключить</td>
+</tr>
+<tr>
+<td>SAN (iSCSI/Fibre Channel)</td>
+<td>Блочный доступ</td>
+<td>Да</td>
+<td>Multipath строго обязателен</td>
+</tr>
+<tr>
+<td>Unified Storage (NFS + iSCSI)</td>
+<td>Комбинированный</td>
+<td>Да</td>
+<td>Сам NAS/SAN должен быть отказоустойчивым (кластеризация на его стороне)</td>
+</tr>
+</tbody>
+</table>
+<p>Ключевая мысль этого раздела повторяется третий раз не случайно: <strong>HA вашего кластера Proxmox никогда не будет надежнее, чем то единственное устройство, на котором лежат диски VM</strong>, если это устройство - одна коробка без собственного резервирования. Кластер Proxmox из пяти нод с единственным несбойным NAS позади - это HA с одним большим, жирным SPOF.</p>
+<hr>
+<h3 id="7-что-для-ha-не-годится-вообще">7. Что для HA не годится вообще</h3>
+<table>
+<thead>
+<tr>
+<th>Storage</th>
+<th>Годится для HA</th>
+<th>Причина</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local LVM / Directory</td>
+<td>Нет</td>
+<td>Виден только одному узлу</td>
+</tr>
+<tr>
+<td>CIFS/SMB</td>
+<td>Нет</td>
+<td>Только ISO/шаблоны, не диски VM</td>
+</tr>
+<tr>
+<td>ZFS локальный без репликации</td>
+<td>Нет</td>
+<td>Нужна как минимум репликация, а лучше - shared storage</td>
+</tr>
+<tr>
+<td>Rsync / ручная репликация</td>
+<td>Нет</td>
+<td>Нет автоматического failover, все руками</td>
+</tr>
+</tbody>
+</table>
+<p>Если что-то из этой таблицы - основа вашего текущего хранилища, а HA в интерфейсе Proxmox при этом "включена" - она включена только формально. Реального failover не будет, вы узнаете об этом в самый неподходящий момент.</p>
+<hr>
+<h3 id="8-рекомендации">8. Рекомендации</h3>
+<p>Если сводить всю статью до практических советов:</p>
+<ul>
+<li>Минимум <strong>3 узла</strong> для нормального кворума без QDevice - двумя узлами можно обойтись, но с явным пониманием, что третий голос все равно нужен откуда-то.</li>
+<li>Используйте <strong>shared или hyperconverged storage</strong> - никаких "локальных дисков + надежда".</li>
+<li>Отдельная сеть под хранилище, желательно 10GbE, особенно если это Ceph.</li>
+<li>Настройте HA-группы в самом Proxmox осознанно, а не "включил галочку и забыл".</li>
+<li>Регулярные бэкапы через <a href="https://prohomelab.com/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server</a> - HA защищает от падения узла, а не от человеческой ошибки внутри VM или от повреждения данных.</li>
+<li>Периодически <strong>проверяйте failover руками</strong> - выключите ноду намеренно и посмотрите, что произойдет. Лучше неприятный сюрприз на тесте, чем ночью на проде.</li>
+<li>Для критичных VM - синхронная репликация, а не "раз в час снапшотом".</li>
+<li>Документируйте архитектуру - через полгода вы сами не вспомните, почему настроили именно так.</li>
+</ul>
+<hr>
+<h3 id="9-заключение">9. Заключение</h3>
+<p>Если резюмировать: один узел - HA не бывает физически, два узла - нужен QDevice (и, если это Ceph, отдельный третий монитор), три и более - кворум работает сам, и именно с этой точки начинается по-настоящему предсказуемый HA. Конкретный тип хранилища - Ceph, DRBD9/LINSTOR, NAS/SAN - выбирается под бюджет и задачи, а не по принципу "у всех так, значит и мне надо" (GlusterFS как раз показал, к чему приводит ставка на угасающий проект - начиная с Proxmox VE 9 его штатно уже не будет).</p>
+<p>Здесь показана база. Дальше - тестирование failover на живом кластере, мониторинг и постепенное усложнение схемы по мере роста инфраструктуры.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Кластер Proxmox - настройка, QDevice и разное оборудование в нодах</title>
+      <link>https://prohomelab.com/posts/proxmox-cluster/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/proxmox-cluster/</guid>
+      <pubDate>Fri, 12 Sep 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Cluster</category>
+      <description>Подробная инструкция по созданию и настройке кластера в Proxmox. Рассмотрены шаги по объединению нескольких узлов, настройке высокодоступных виртуальных машин и контейнеров, а также базовые рекомендации по управлению и мониторингу кластера.</description>
+      <content:encoded><![CDATA[<h2 id="что-такое-кластер-в-proxmox">Что такое кластер в Proxmox</h2>
+<p>Кластер в Proxmox VE - это объединение нескольких физических узлов (нод) в единую систему управления.<br>
+Благодаря этому можно централизованно управлять виртуальными машинами и контейнерами, выполнять миграции между хостами, настраивать <strong>HA (High Availability)</strong> и распределять нагрузку.</p>
+<p>Основная цель - повысить отказоустойчивость и удобство администрирования.</p>
+<hr>
+<h2 id="что-такое-quorum">Что такое Quorum</h2>
+<p><strong>Quorum (кворум)</strong> - это механизм голосования внутри кластера Proxmox, который определяет, может ли кластер работать.</p>
+<ul>
+<li>Каждый узел кластера имеет <strong>один голос</strong>.</li>
+<li>Для работы кластера необходимо больше <strong>половины голосов</strong>.</li>
+<li>Если кворума нет, операции с виртуальными машинами и контейнерами блокируются, чтобы избежать <strong>split-brain</strong> (ситуации, когда узлы начинают работать независимо и конфликтуют).</li>
+</ul>
+<h3 id="примеры">Примеры</h3>
+<ul>
+<li><strong>2 ноды</strong> → нужно 2/2 голосов. Если одна падает, кворума нет.</li>
+<li><strong>3 ноды</strong> → достаточно 2/3 голосов.</li>
+<li><strong>4 ноды</strong> → нужно 3/4.</li>
+<li><strong>5 нод</strong> → достаточно 3/5.</li>
+</ul>
+<p>Эти примеры можно проверить в <a href="https://prohomelab.com/tools/proxmox-quorum/">симуляторе кворума Proxmox</a>: выключите узлы, добавьте QDevice или разделите сеть и посмотрите, у какой части кластера остается кворум.</p>
+<h3 id="проверка-кворума">Проверка кворума</h3>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">pvecm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">status</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="pvecm status"><div></div></button></div></figure></div>
+<p>Вывод покажет:</p>
+<ul>
+<li>
+<p><strong>Quorate</strong>: Yes/No - есть ли кворум,</p>
+</li>
+<li>
+<p><strong>Nodes</strong> - количество узлов,</p>
+</li>
+<li>
+<p><strong>Expected votes</strong> - сколько голосов нужно,</p>
+</li>
+<li>
+<p><strong>Total votes</strong> - сколько сейчас есть.</p>
+</li>
+</ul>
+<hr>
+<h2 id="кластер-из-двух-нод">Кластер из двух нод</h2>
+<p>Минимально возможная конфигурация - кластер из <strong>двух нод</strong>.<br>
+Однако стоит учитывать, что для корректной работы системы голосования (quorum) лучше использовать нечетное количество участников.</p>
+<p>В кластере из двух нод возможны ситуации, когда при потере связи между узлами Proxmox не сможет определить, кто "прав".<br>
+В таком случае включается <strong>split-brain</strong>, и это рискованно для данных.</p>
+<p>Такой вариант подходит для тестовых стендов или лаборатории, но <strong>не рекомендуется для продакшена</strong>.</p>
+<hr>
+<h2 id="кластер-из-двух-нод--qdevice">Кластер из двух нод + QDevice</h2>
+<p>Чтобы стабилизировать работу кластера из двух нод, используют <strong>QDevice</strong> (Quorum Device).<br>
+Это отдельный сервер или виртуальная машина, которая не выполняет роль гипервизора, но участвует в голосовании. Если более по простому, то выступает в качестве арбитра, чтобы исключить возникновение ситуации со <strong>split-brain</strong>.</p>
+<p>Схема работы:</p>
+<ul>
+<li>Нода 1</li>
+<li>Нода 2</li>
+<li>QDevice</li>
+</ul>
+<p>Теперь общее количество голосов - три, и система может правильно определять, кто "жив".<br>
+Этот вариант уже подходит для боевых сред, если у вас всего два сервера.</p>
+<hr>
+<h2 id="кластер-из-трех-и-более-нод">Кластер из трех и более нод</h2>
+<p>Классический и наиболее стабильный сценарий - кластер из <strong>трех нод</strong>.</p>
+<p>Преимущества:</p>
+<ul>
+<li>Всегда есть нечетное число голосов.</li>
+<li>Отказ одной ноды не ломает работу кластера.</li>
+<li>Можно использовать миграцию и HA.</li>
+</ul>
+<p>При расширении до 5, 7 или более узлов, вы получаете гибкость и масштабируемость.</p>
+<p>Главное помнить:</p>
+<ul>
+<li>для работы quorum достаточно, чтобы было доступно больше половины от количества нод;</li>
+<li>рекомендуется иметь хотя бы три сервера для надежного кластера.</li>
+</ul>
+<hr>
+<h2 id="кластер-из-разного-железа">Кластер из разного железа</h2>
+<p>Proxmox не требует одинакового оборудования для кластера.<br>
+Вы можете объединить:</p>
+<ul>
+<li>серверные машины с ECC-памятью,</li>
+<li>домашние мини-ПК (например, Intel NUC или китайские «поделки»),</li>
+<li>даже старые рабочие станции.</li>
+</ul>
+<p>Однако есть нюансы:</p>
+<ol>
+<li><strong>Миграция ВМ</strong>: если процессоры сильно отличаются (Intel ↔ AMD), потребуется настройка CPU-compatibility или миграция не будет возможна.</li>
+<li><strong>Производительность</strong>: слабые ноды не смогут выдержать ту же нагрузку, что и серверные. То есть, если с "мощной" ноды разом мигрируют много вм-ок, то маломощная нода просто станет неработоспособной из-за нагрузки.</li>
+<li><strong>Сеть и диски</strong>: лучше обеспечить единый быстрый канал (1/10/25 Гбит) и одинаковые хранилища для оптимальной работы.</li>
+</ol>
+<p>Такой гибридный кластер часто применяют для домашнего лабораторного окружения.</p>
+<hr>
+<h2 id="вывод">Вывод</h2>
+<ul>
+<li><strong>2 ноды</strong> - только для тестов или домашнего окружения. Сам таким пользуюсь.</li>
+<li><strong>2 ноды + QDevice</strong> - рабочий вариант для малого кластера.</li>
+<li><strong>3+ нод</strong> - оптимальное решение для отказоустойчивости.</li>
+<li><strong>Разное железо</strong> можно использовать, но важно учитывать ограничения по CPU и производительности.</li>
+</ul>
+<p>Proxmox делает процесс создания кластера простым и доступным - даже для небольших домашних сетапов.</p>
+<p>Кластер и кворум - это только половина дела для реальной отказоустойчивости. Вторая половина - правильный выбор хранилища, потому что HA не заработает, если диски VM физически привязаны к одному узлу. Разбор того, какие типы хранилищ реально годятся для HA, я подробно сделал в статье <a href="https://prohomelab.com/posts/proxmox-cluster-types/">«Хранилище для HA в кластере Proxmox»</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Почему мне не нужен Ceph storage в Proxmox для домашнего сервера</title>
+      <link>https://prohomelab.com/posts/proxmox-ceph-home/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/proxmox-ceph-home/</guid>
+      <pubDate>Wed, 10 Sep 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Ceph</category>
+      <description>Разбор причин, почему Ceph может быть избыточным для домашнего использования. Рассмотрены сложности в настройке и обслуживании, затраты ресурсов и рекомендации по более простым и эффективным альтернативам для домашнего сервера и Proxmox.</description>
+      <content:encoded><![CDATA[<p>Если вам понравилась настоящая статья, то можете поддержать автора став спонсором на бусти (ссылка в разделе контакты).</p>
+<p>Если вы увлекаетесь хоумлаббингом и начинаете собирать домашний сервер на базе Proxmox, то наверняка рано или поздно сталкивались с вопросом: <em>а не поднять ли сразу Ceph для хранения данных?</em> Идея выглядит заманчиво - отказоустойчивый кластер, автоматическая репликация, модный распределенный storage, тот же движок, который используют в датацентрах. У меня самого в какой-то момент чесались руки его попробовать.</p>
+<p>Но если честно ответить себе на вопрос, зачем он нужен именно дома, в 9 случаях из 10 ответа не находится. У меня в итоге один сервер под Proxmox и отдельная машина под Proxmox Backup Server с NAS по NFS для долгосрочного хранения - и этого с запасом хватает. Ceph я не поднимал и пока не жалею. Давайте разберусь, почему для домашнего сценария это чаще всего лишняя сложность - и не только потому, что сама технология не самая простая в освоении.</p>
+<h2 id="что-такое-ceph-и-зачем-он-вообще-нужен">Что такое Ceph и зачем он вообще нужен</h2>
+<p>Ceph - это распределенное хранилище с открытым исходным кодом, которое объединяет диски нескольких серверов в единый отказоустойчивый пул. Данные автоматически реплицируются между узлами: если один сервер выходит из строя, данные остаются доступны на остальных, а кластер сам перераспределяет нагрузку без вмешательства администратора.</p>
+<p>Именно это и делает Ceph золотым стандартом для дата-центров и enterprise-инфраструктуры, где простой в принципе недопустим, а серверов и так уже десятки. Но у homelab, при всем уважении, задачи обычно совсем другие.</p>
+<h2 id="почему-ceph-избыточен-для-домашнего-proxmox">Почему Ceph избыточен для домашнего Proxmox</h2>
+<h3 id="1-минимальные-требования-не-про-homelab">1. Минимальные требования не про homelab</h3>
+<p>Официальная рекомендация для рабочего Ceph-кластера - <strong>минимум три ноды</strong>, а для по-настоящему production-уровня отказоустойчивости - и вовсе пять. На каждую ноду желательно иметь минимум 4 диска под OSD, отдельную сеть под кластерный трафик со скоростью <strong>10GbE и выше</strong> (на 2.5GbE еще можно жить с оговорками, а вот 1 Гбит/с превращает Ceph в мучение), плюс SSD/NVMe под журналы, если хочется приемлемой производительности.</p>
+<p>Дома же типичная картина - один сервер, максимум два. Городить три-четыре железки ради того, чтобы хранить медиатеку и пару десятков контейнеров - решение сомнительное, особенно если посчитать расходы на дополнительное железо, управляемые свитчи под 10GbE, кабели и шум от лишних вентиляторов в квартире.</p>
+<h3 id="2-сложность-настройки-и-обслуживания">2. Сложность настройки и обслуживания</h3>
+<p>Ceph - это не диск, который просто примонтировали. Это мониторы (MON), менеджеры (MGR), OSD-демоны на каждом диске, отдельная сеть для служебного трафика (public и cluster network) и своя логика распределения данных (CRUSH map). Даже если удастся развернуть все это на домашнем железе, обслуживание превращается в отдельную постоянную задачу: следить за состоянием OSD, вовремя обновлять компоненты, разбираться, почему кластер вдруг ушел в <code>HEALTH_WARN</code>.</p>
+<p>Для энтузиаста, который просто хочет, чтобы его Jellyfin и пара контейнеров стабильно работали по вечерам, это заметно больше мороки, чем пользы.</p>
+<h3 id="3-производительность-в-маленьких-масштабах">3. Производительность в маленьких масштабах</h3>
+<p>Ceph раскрывает свой потенциал только при достаточном количестве нод, дисков и высокой скорости сети - вся архитектура заточена под горизонтальное масштабирование, а не под один-два сервера. В маленьких конфигурациях он, наоборот, часто оказывается медленнее локального ZFS-пула: репликация и сетевые накладные расходы съедают то преимущество в скорости, которое дают локальные NVMe-диски.</p>
+<h3 id="4-электричество-и-шум">4. Электричество и шум</h3>
+<p>Каждая дополнительная нода - это не только деньги на само железо, но и постоянная статья расходов на электричество. Три-четыре сервера, которые круглосуточно крутятся только ради того, чтобы обслуживать Ceph-кластер, для домашнего использования почти никогда не окупаются - ни по деньгам, ни по уровню шума в квартире или гараже.</p>
+<h2 id="альтернативы-ceph-для-домашнего-proxmox">Альтернативы Ceph для домашнего Proxmox</h2>
+<table>
+<thead>
+<tr>
+<th>Решение</th>
+<th>Преимущества</th>
+<th>Недостатки</th>
+<th>Оптимально для</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ZFS</strong></td>
+<td>Простая настройка, снапшоты, RAID-Z, самовосстановление данных (scrub)</td>
+<td>Требует больше RAM</td>
+<td>Один сервер с надежным локальным хранилищем</td>
+</tr>
+<tr>
+<td><strong>NAS (TrueNAS, Unraid, OMV)</strong></td>
+<td>Централизованное хранение, удобный веб-интерфейс, NFS/iSCSI/SMB</td>
+<td>Отдельное устройство, дополнительные расходы на железо</td>
+<td>Отдельный сервер для данных + Proxmox для вычислений</td>
+</tr>
+<tr>
+<td><strong>Локальные диски</strong></td>
+<td>Простота, минимальная стоимость</td>
+<td>Нет отказоустойчивости на уровне узла</td>
+<td>Маленькие тестовые стенды</td>
+</tr>
+</tbody>
+</table>
+<p>Я в итоге пришел именно к связке "локальный SSD под быстрые данные + отдельный NAS по сети под бэкапы и архив" - и для домашнего сценария она закрывает 95% задач без единой строчки настроек Ceph.</p>
+<h2 id="когда-ceph-все-таки-имеет-смысл-даже-дома">Когда Ceph все-таки имеет смысл даже дома</h2>
+<p>Справедливости ради, есть сценарии, где Ceph оправдан и в домашних условиях:</p>
+<ul>
+<li>у вас уже есть три и более сервера не только под Proxmox, но и просто "лежат без дела";</li>
+<li>вам действительно важна миграция ВМ между нодами без общего хранилища на базе NFS/iSCSI;</li>
+<li>вы сознательно хотите потренироваться на Ceph, потому что работаете с ним на основной работе и homelab - для вас учебный полигон.</li>
+</ul>
+<p>Если ни один из пунктов не про вас - Ceph можно смело отложить и не грузить себя лишней сложностью.</p>
+<h2 id="итог">Итог</h2>
+<p>Ceph - отличная технология, но она раскрывает себя в крупных инфраструктурах, где нужна настоящая отказоустойчивость и горизонтальное масштабирование на десятках дисков. В домашнем Proxmox это почти всегда избыточно. Лучше вложиться в качественные диски, продуманное резервное копирование (я, например, использую для этого отдельный Proxmox Backup Server - писал об этом отдельно) и UPS, чем тратить вечера на развертывание и последующее обслуживание кластера Ceph ради одного-двух домашних серверов.</p>
+<hr>
+<h2 id="faq">FAQ</h2>
+<h3 id="можно-ли-поднять-ceph-на-одном-сервере">Можно ли поднять Ceph на одном сервере?</h3>
+<p>Технически можно, но смысла в этом немного. Ceph задуман как кластерная система, и на одном узле он не даст никаких преимуществ перед ZFS или локальными дисками - только лишние накладные расходы.</p>
+<h3 id="что-лучше-для-домашнего-proxmox---zfs-или-ceph">Что лучше для домашнего Proxmox - ZFS или Ceph?</h3>
+<p>Для подавляющего большинства домашних сценариев ZFS проще, надежнее в эксплуатации и дешевле по железу. Ceph оправдан только при наличии как минимум трех, а лучше пяти серверов.</p>
+<h3 id="как-хранить-виртуальные-машины-proxmox-дома-без-ceph">Как хранить виртуальные машины Proxmox дома без Ceph?</h3>
+<p>Самый практичный вариант - локальные диски с ZFS на самом сервере Proxmox, либо отдельный NAS, подключенный по NFS или iSCSI, для данных, которые не обязаны жить на самом быстром хранилище.</p>
+<hr>
+<h2 id="также-по-теме">Также по теме</h2>
+<ul>
+<li><a href="https://prohomelab.com/posts/proxmox-cluster-types/">Хранилище для HA в кластере Proxmox</a></li>
+<li><a href="https://prohomelab.com/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server - установка и настройка</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>Как настроить Firewall в Proxmox VE | Пошаговая инструкция</title>
+      <link>https://prohomelab.com/posts/proxmox-firewall/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/proxmox-firewall/</guid>
+      <pubDate>Sun, 07 Sep 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Firewall</category>
+      <description>Подробная инструкция по настройке встроенного фаерволла Proxmox для защиты виртуальных машин и контейнеров. Рассмотрены создание правил, настройка сетевых зон, управление трафиком и рекомендации по обеспечению безопасности кластера.</description>
+      <content:encoded><![CDATA[<h2 id="настройка-firewall-в-proxmox">Настройка Firewall в Proxmox</h2>
+<p>Proxmox VE - это мощная платформа виртуализации, которая объединяет в себе возможности KVM и LXC, а также средства для кластеризации и управления хранилищами. Одним из ключевых инструментов обеспечения безопасности в Proxmox является <strong>встроенный firewall</strong>.</p>
+<p>В этой статье мы разберем:</p>
+<ul>
+<li>что такое firewall и зачем он нужен в Proxmox,</li>
+<li>его плюсы и минусы,</li>
+<li>как настроить базовые правила для защиты узла и виртуальных машин.</li>
+</ul>
+<hr>
+<h3 id="что-такое-firewall-в-proxmox">Что такое Firewall в Proxmox</h3>
+<p>Firewall (межсетевой экран) - это система фильтрации сетевого трафика, которая позволяет управлять входящими и исходящими соединениями. В Proxmox используется <strong>iptables/nftables</strong> как backend, а управление правилами осуществляется через веб-интерфейс или CLI.</p>
+<p>Firewall в Proxmox может работать на трех уровнях:</p>
+<ol>
+<li><strong>Datacenter</strong> - глобальные правила для всего кластера.</li>
+<li><strong>Node (узел)</strong> - правила, которые применяются к конкретному серверу.</li>
+<li><strong>VM/CT (виртуальная машина или контейнер)</strong> - отдельные правила для каждой виртуальной машины.</li>
+</ol>
+<hr>
+<p>Если у вас не включен firewall на уровне <strong>Datacenter</strong>, то и на других уровнях (ноды или вм/lxc) он тоже не работает. Поэтому необязательно снимать соответствующую галку в настройках вновь создаваемых виртуальных машинах.</p>
+<h3 id="зачем-нужен-firewall-в-proxmox">Зачем нужен Firewall в Proxmox</h3>
+<p>В принципе в домашних условиях я не вижу смысла в использовании встроенного firewall в Proxmox, потому что дома вы скорее всего настраиваете правила на глобальном уровне (на уровне маршрутизатора). В домашних условиях, если конечно вы не живете в датацентре, нет необходимости настраивать firewall на уровне Proxmox. Но раз уж мы с вами полезли в кроличью нору <a href="https://prohomelab.com/posts/proxmox-sdn-guide/"><strong>SDN</strong> в <strong>Proxmox</strong></a>, то давайте разберем, что может firewall в Proxmox - в частности, как его правила помогают сегментировать сеть между такими SDN-зонами.</p>
+<p>Использование встроенного firewall позволяет:</p>
+<ul>
+<li>ограничить доступ к управляющему интерфейсу Proxmox,</li>
+<li>защитить виртуальные машины и контейнеры от нежелательного трафика,</li>
+<li>сегментировать сеть и контролировать взаимодействие сервисов,</li>
+<li>снизить риск атак (DDoS, brute-force, сканирование портов и т. д.).</li>
+</ul>
+<hr>
+<h3 id="плюсы-и-минусы-использования-firewall-в-proxmox">Плюсы и минусы использования Firewall в Proxmox</h3>
+<h4 id="плюсы">Плюсы</h4>
+<ul>
+<li>Централизованное управление правилами через веб-интерфейс.</li>
+<li>Возможность задавать правила на уровне кластера, ноды (узла) и VM.</li>
+<li>Поддержка групп правил (Firewall Groups), что упрощает масштабирование.</li>
+<li>Интеграция с Proxmox - не нужно настраивать отдельные правила firewall внутри каждой VM.</li>
+</ul>
+<h4 id="минусы">Минусы</h4>
+<ul>
+<li>Требует понимания логики iptables/nftables.</li>
+<li>Ограниченные возможности мониторинга в сравнении с внешними системами.</li>
+<li>Ошибочные правила могут заблокировать доступ к самому Proxmox.</li>
+<li>Не заменяет полноценные решения вроде pfSense или OPNsense (но хорошо дополняет их в случае необходимости).</li>
+</ul>
+<hr>
+<h3 id="настройка-firewall-в-proxmox-1">Настройка Firewall в Proxmox</h3>
+<p>Как указано выше, по умолчанию firewall в <strong>Datacenter</strong> отключен.</p>
+<p><img alt="Включение Firewall на уровне Datacenter" loading="lazy" decoding="async" width="1533" height="355" src="https://prohomelab.com/_astro/firewall-1.C_-OU_U5_Z1dKcW9.webp"></p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p>Ни в коем случае не активируйте firewall в Datacenter, пока не настроите первые <strong>три</strong> правила о которых ниже. По умолчанию в firewall отсутствуют сконфигурированные правила. Это означает, что все запрещено. Включение firewall без предварительно сконфигурированных правил лишит вас доступа к web интерфейсу Proxmox. А значит выпадет тебе, милАй, дорога дальная с клавиатурой и монитором к физическому устройству.</p>
+</div>
+</div>
+<h4 id="включение-firewall-в-datacenter-и-настройка-трех-основных-правил">Включение Firewall в Datacenter и настройка трех основных правил</h4>
+<ol>
+<li>Перейдите в <strong>Datacenter → Firewall → Options</strong> и нажмите <strong>Add</strong>.</li>
+</ol>
+<h5 id="правило-1-разрешить-доступ-к-веб-интерфейсу-proxmox">Правило 1. Разрешить доступ к веб-интерфейсу Proxmox</h5>
+<ol>
+<li>В разделе <strong>Rules</strong> добавьте правило:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>IN</code></li>
+<li>Interface: <code>vmbr0</code></li>
+<li>Protocol: <code>tcp</code></li>
+<li>Destination Port: <code>8006</code></li>
+<li>Comment: <code>Allow WebGUI from home</code></li>
+</ul>
+</li>
+</ol>
+<p>Жмем <strong>add</strong></p>
+<p><img alt="Правило для доступа к WebGUI (порт 8006)" loading="lazy" decoding="async" width="1449" height="516" src="https://prohomelab.com/_astro/firewall-2.BulEEHTe_CPdNp.webp"></p>
+<p>В разделе <strong>Firewall</strong> идем подменю <strong>Options</strong> и включаем <code>firewall</code></p>
+<p><img alt="Включение firewall" loading="lazy" decoding="async" width="1474" height="805" src="https://prohomelab.com/_astro/firewall-3.XPjfjHl0_ZVVaqt.webp"></p>
+<p>Сейчас нам надо проверить, что мы не потеряли доступ к веб-интерфейсу нашего Proxmox. Просто обновим страницу, и если доступ на месте, то мы в игре. Ура!</p>
+<hr>
+<p>Теперь надо добавить еще два правила: нужно разрешить запросы от <strong>DHCP</strong> и запросы по протоколу <strong>http</strong> или <strong>dns</strong>, так как сейчас единственное что разрешено, это доступ к веб-интерфейсу.</p>
+<h5 id="правило-2-разрешить-запросы-по-dhcp">Правило 2. Разрешить запросы по DHCP</h5>
+<ol>
+<li>В разделе <strong>Rules</strong> добавьте правило:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>IN</code></li>
+<li>Macro: <code>DHCPfwd</code></li>
+<li>Comment: <code>Allow DHCP requests</code></li>
+</ul>
+</li>
+</ol>
+<p>Жмем <strong>add</strong></p>
+<p><img alt="Разрешить запросы по DHCP" loading="lazy" decoding="async" width="1474" height="805" src="https://prohomelab.com/_astro/firewall-4.DhLPNp8q_e3IU4.webp"></p>
+<h5 id="правило-3-разрешить-запросы-по-dns">Правило 3. Разрешить запросы по DNS</h5>
+<ol>
+<li>В разделе <strong>Rules</strong> добавьте правило:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>IN</code></li>
+<li>Macro: <code>DNS</code></li>
+<li>Comment: <code>Allow DNS requests</code></li>
+</ul>
+</li>
+</ol>
+<p>Жмем <strong>add</strong></p>
+<p><img alt="Разрешить запросы по DNS" loading="lazy" decoding="async" width="1474" height="805" src="https://prohomelab.com/_astro/firewall-5.BO6U8WTK_24LIfv.webp"></p>
+<hr>
+<p>Сейчас мы с вами сконфигурировали три базовых правила для <strong>firewall</strong> на уровне <strong>Datacenter</strong>. Если вы хотите использовать firewall в Proxmox по полной, то это базовые и обязательные правила. Обсуждению этот момент не подлежит.</p>
+<p>Так как firewall обрабатывает правила в порядке очередности сверху вниз, то правило для веб-интерфейса у нас должно идти первым, потом правило с DHCP, а потом правило про DNS. Я так думаю(с) Мимино</p>
+<p><img alt="Очередность правил в firewall" loading="lazy" decoding="async" width="1762" height="309" src="https://prohomelab.com/_astro/firewall-6.BA6wedQk_ne36p.webp"></p>
+<p>В тоже время, так как эти правила сформированы на уровне Datacenter, то они применяются даже в случае, если у вас есть кластер из двух или трех нод <strong>Proxmox</strong></p>
+<hr>
+<h4 id="создание-alias-и-security-groups-в-proxmox">Создание alias и security groups в Proxmox</h4>
+<p>Мы с вами настроили правила на уровне Datacenter и там же активировали firewall.</p>
+<p>Однако, если мы с вами спустимся на уровень ноды и зайдем в раздел firewall, то увидим, что несмотря на то, что мы еще не настраивали правила на уровне ноды, firewall там уже активирован.</p>
+<p><img alt="firewall на уровне ноды" loading="lazy" decoding="async" width="749" height="519" src="https://prohomelab.com/_astro/firewall-7.Ckqx183K_ZTl4bs.webp"></p>
+<p>Тут есть один очень важный момент. Если у вас кластер, то firewall, как вы понимаете, включается автоматом на всех нодах кластера. А так как у нас, в настоящий момент, никаких правил еще не настроено, то трафик между нодами по умолчанию запрещен. Может конечно оно вам так и надо, но предположим, что у вас есть ceph хранилище, оно у вас тут же отвалится без правильной настройки правил firewall.
+Давайте это поправим. Сначала создадим пару, тройку <strong>alias</strong>, чтобы нам было проще работать с правилами.</p>
+<ol>
+<li>Перейдите в <strong>Datacenter → Firewall → Alias</strong> и нажмите <strong>Add</strong>.</li>
+</ol>
+<h5 id="создаем-alias-для-локальной-сети">Создаем <code>alias для локальной сети</code></h5>
+<p><img alt="создаем alias" loading="lazy" decoding="async" width="1349" height="796" src="https://prohomelab.com/_astro/firewall-8.52NGhvIR_WVYnv.webp"></p>
+<ol>
+<li>В разделе <strong>alias</strong> пишем следующее:
+<ul>
+<li>Name: <code>local-network</code></li>
+<li>IP/CIDR: <code>192.168.1.0/24</code></li>
+<li>Comment: <code>по желанию</code></li>
+</ul>
+</li>
+</ol>
+<p>Если с именем все понятно, то что касается сети, - я указал всю свою локальную сеть. У вас и диапазон может быть другим, так и требования могут соответствующие. Меняйте их исходя из ваших потребностей. Например, вы хотите разрешить трафик только между нодами и все. Но так как я показываю простые и базовые вещи, то и действую соответственно.</p>
+<p>Создаем <code>Alias для виртуальной сети</code></p>
+<p><img alt="создаем alias" loading="lazy" decoding="async" width="1349" height="796" src="https://prohomelab.com/_astro/firewall-9.CYKFie9F_1SvONk.webp"></p>
+<ol>
+<li>В разделе <strong>alias</strong> пишем следующее:
+<ul>
+<li>Name: <code>virt-network</code></li>
+<li>IP/CIDR: <code>10.11.11.0/24</code></li>
+<li>Comment: <code>по желанию</code></li>
+</ul>
+</li>
+</ol>
+<p>Но в данном случае я указываю диапазон VNET сети. В <a href="https://prohomelab.com/posts/proxmox-sdn-guide/">предыдущей статье</a> мы с вами задали ей адрес в диапазон 10.11.11.0/24</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p>В видео здесь фигурирует диапазон 11.11.11.0/24 - он попал туда по моему недосмотру. Это публичный, а не приватный диапазон, и для внутренней сети его использовать нельзя, подробнее - в <a href="https://prohomelab.com/posts/proxmox-sdn-guide/">статье про SDN</a>. В тексте статьи используется приватный 10.11.11.0/24.</p>
+</div>
+</div>
+<p>Создаем <code>alias для шлюза</code> нашей физической локальной сети</p>
+<ol>
+<li>В разделе <strong>alias</strong> пишем следующее:
+<ul>
+<li>Name: <code>gateway</code></li>
+<li>IP/CIDR: <code>192.168.1.1</code></li>
+<li>Comment: <code>по желанию</code></li>
+</ul>
+</li>
+</ol>
+<hr>
+<p>После того, как мы с вами для облегчения дальнейшей работы создали три <code>alias</code>, теперь создадим <strong>Security Groups</strong></p>
+<ol>
+<li>Перейдите в <strong>Datacenter → Firewall → Security Groups</strong> и нажмите <strong>Create</strong>.</li>
+</ol>
+<h5 id="создаем-security-groups">Создаем <code>Security Groups</code></h5>
+<p>Создаем группу для локальной сети</p>
+<p><img alt="создаем группу для локальной сети" loading="lazy" decoding="async" width="1208" height="868" src="https://prohomelab.com/_astro/firewall-10.BBQBpcac_gwQNc.webp"></p>
+<p>Теперь переходим в окошко нашей группы и создаем правило</p>
+<ol>
+<li>Перейдите в <strong>Datacenter → Firewall → Security Groups - Rules</strong> и нажмите <strong>Add</strong>.</li>
+</ol>
+<p>Создадим правило для нашей Security Group, куда входит наша локальная сеть.</p>
+<h5 id="правило-1-разрешить-входящий-трафик-из-нашей-локальной-сети">Правило 1. Разрешить входящий трафик из нашей локальной сети</h5>
+<ol>
+<li>В разделе <strong>Rules</strong> добавьте правило:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>IN</code></li>
+<li>Source: <code>local-network</code></li>
+<li>Comment: <code>по желанию</code></li>
+</ul>
+</li>
+</ol>
+<p>Жмем <strong>Enable</strong>, а затем <strong>Add</strong></p>
+<p><img alt="создаем правило для локальной сети" loading="lazy" decoding="async" width="2283" height="913" src="https://prohomelab.com/_astro/firewall-11.R8wmtntK_2amo4T.webp"></p>
+<h5 id="правило-2-разрешить-исходящий-трафик-в-нашу-локальную-сеть">Правило 2. Разрешить исходящий трафик в нашу локальную сеть</h5>
+<ol>
+<li>В разделе <strong>Rules</strong> добавьте правило:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>OUT</code></li>
+<li>Destination: <code>local-network</code></li>
+<li>Comment: <code>по желанию</code></li>
+</ul>
+</li>
+</ol>
+<p>Жмем <strong>Enable</strong>, а затем <strong>Add</strong></p>
+<p><img alt="создаем правило для локальной сети" loading="lazy" decoding="async" width="2283" height="913" src="https://prohomelab.com/_astro/firewall-12.DORlIL3M_Z1ljXA7.webp"></p>
+<p>То есть, мы с вами разрешили любой трафик от наших устройств из локальной сети к ноде и обратно.</p>
+<h4 id="настройка-основных-правил-на-уровне-ноды-proxmox">Настройка основных правил на уровне ноды Proxmox</h4>
+<ol>
+<li>Перейдите в <strong>Datacenter → Название вашей ноды → Firewall → Insert Security Groups</strong> и нажмите <strong>Add</strong>.</li>
+</ol>
+<p>В ниспадающем окошке выбираете нашу группу, ставим галку напротив <strong>Enable</strong> и жмем <strong>Add</strong></p>
+<p><img alt="создаем правило для локальной группы" loading="lazy" decoding="async" width="2283" height="913" src="https://prohomelab.com/_astro/firewall-13.DSgCWX0V_ZmqDjg.webp"></p>
+<p>Соответственно, если у вас несколько нод, то на каждой ноде повторите соответствующее действие.</p>
+<p>Теперь у нас в меру открытый <code>firewall</code>.</p>
+<p>Если же вам нужны более тонкие настройки, то руки у вас развязаны, дерзайте.</p>
+<h4 id="настройка-основных-правил-на-уровне-vm-или-lxc-в-proxmox">Настройка основных правил на уровне VM или LXC в Proxmox</h4>
+<p>Давайте перейдем к настройками firewall на уровне создаваемых машин или контейнеров в Proxmox</p>
+<ol>
+<li>Переходим в <strong>Datacenter → Название вашей ноды → Firewall → Insert Security Groups</strong> и нажмите <strong>Add</strong>.</li>
+</ol>
+<p>Создаем <strong>Security Group</strong>, как в предыдущем пункте, но в отношении виртуальной сети. Я ее назвал <strong>virt-network</strong></p>
+<p>Выбираем вновь созданную группу, переходим в раздел <strong>Rules</strong> и создаем первое правило.</p>
+<p>Например мы хотим запретить доступ от наших виртуальных машин или контейнеров в нашу локальную сеть</p>
+<ol>
+<li>В разделе <strong>Rules</strong> добавьте правило:
+<ul>
+<li>Action: <code>DROP</code></li>
+<li>Direction: <code>OUT</code></li>
+<li>Destination: <code>local-network</code></li>
+<li>Comment: <code>по желанию</code></li>
+</ul>
+</li>
+</ol>
+<p><img alt="создаем правило для виртуальной группы" loading="lazy" decoding="async" width="2283" height="913" src="https://prohomelab.com/_astro/firewall-14.Cx4ICpDf_jpvGP.webp"></p>
+<p>Но, но, запретив доступ нашим ВМ или контейнерам к локальной сети, мы одновременно запретили доступ им и во внешний мир, так как наш шлюз находится в том же диапазоне адресов, что и диапазон к которому мы запретили доступ.
+Поэтому мы с Вами создаем еще одно правило.</p>
+<ol>
+<li>В разделе <strong>Rules</strong> добавьте правило:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>OUT</code></li>
+<li>Destination: <code>gateway</code></li>
+<li>Comment: <code>по желанию</code></li>
+</ul>
+</li>
+</ol>
+<p><img alt="создаем правило для доступа во внешний мир" loading="lazy" decoding="async" width="2283" height="913" src="https://prohomelab.com/_astro/firewall-15.BhxhwwXn_19xBio.webp"></p>
+<p>Обратите внимание на порядок правил. Разрешающее правило должно быть выше запрещающего</p>
+<p><img alt="порядок правил" loading="lazy" decoding="async" width="1470" height="903" src="https://prohomelab.com/_astro/firewall-16.BKK6A3Bp_Z1sHmej.webp"></p>
+<p>Ну и опционально, просто для наглядности, давайте добавим еще одно, дополнительное правило. Что называется для закрепления материала.</p>
+<ol>
+<li>В разделе <strong>Rules</strong> добавьте правило:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>in</code></li>
+<li>Source: <code>local-network</code></li>
+<li>Comment: <code>по желанию</code></li>
+</ul>
+</li>
+</ol>
+<p><img alt="создаем правило для доступа из внешнего мира" loading="lazy" decoding="async" width="1470" height="903" src="https://prohomelab.com/_astro/firewall-17.DogkuE4Z_1W2V5u.webp"></p>
+<p>То есть мы разрешили входящий трафик из локальной сети в нашу виртуальную сеть.
+Да, какого-то смысла все запретить и тут же все разрешить нет. Но, как я и сказал выше, - это просто для наглядности и понимания принципов работы firewall</p>
+<p>В итоге у нас сейчас три правила</p>
+<p><img alt="Три правила firewall" loading="lazy" decoding="async" width="1981" height="909" src="https://prohomelab.com/_astro/firewall-18.CAu1QgqG_uEefu.webp"></p>
+<p>Мы разрешаем входящий трафик из локальной сети.
+Мы разрешаем трафик во внешний мир, потому что мы разрешили исходящий трафик на адрес нашего шлюза.
+Мы запретили исходящий трафик из нашей виртуальной сети в нашу локальную сеть. Так что никакие виртуальные машины или контейнеры не имеют доступа к нашим устройствам в нашей физической локальной сети.</p>
+<p>Но пока эти правила не работают.</p>
+<p>Что я имею в виду.</p>
+<p>Идем с вами в командную строку, в моем случае, контейнера на базе Ubuntu и пропингуем машину, с которой я сейчас пишу настоящую статью</p>
+<p><img alt="пинг локальной машины" loading="lazy" decoding="async" width="1981" height="909" src="https://prohomelab.com/_astro/firewall-19.BpzFU-1t_Zsj6xH.webp"></p>
+<p>Как вы видите пинг проходит. Это из-за того, что мы не включили firewall на уровне контейнера.
+Поэтому в меню нашего контейнера идем в <strong>Firewall → Options</strong> и включаем firewall</p>
+<p><img alt="Включаем firewall в контейнере" loading="lazy" decoding="async" width="2074" height="905" src="https://prohomelab.com/_astro/firewall-20.DKMenaTJ_1aUUng.webp"></p>
+<p>Поднимаемся в меню <strong>firewall</strong> нашего контейнера и активируем нашу security group для виртуальной сети.</p>
+<p><img alt="Активируем нашу security group" loading="lazy" decoding="async" width="2074" height="905" src="https://prohomelab.com/_astro/firewall-21.D3rDG5Ds_1YiWKq.webp"></p>
+<p>И теперь когда мы с вами опять попробуем пропинговать нашу машину, то ответом нам будет тишина, так как машина в локальной сети не входит в группу для виртуальной сети</p>
+<p><img alt="пинг локальной машины" loading="lazy" decoding="async" width="2074" height="905" src="https://prohomelab.com/_astro/firewall-22.BxvQypPc_1bcORW.webp"></p>
+<p>Но если мы например решим выйти во внешний мир и пропингуем что-то типа ya.ru, то сигнал пройдет</p>
+<p><img alt="пинг внешнего мира" loading="lazy" decoding="async" width="2074" height="905" src="https://prohomelab.com/_astro/firewall-23.DfC_9GD5_19djac.webp"></p>
+<p>Но как известно, во всем всегда виноват dns, и чтобы избежать ситуации, когда мы можем пропинговать какой-то айпи во внешний мир, но не можем пропинговать доменное имя, создадим еще одно правило для <strong>Security Group</strong> на уровне <strong>Datacenter</strong>, которым мы разрешим доступ к DNS</p>
+<p><img alt="разрешаем доступ к DNS" loading="lazy" decoding="async" width="2295" height="926" src="https://prohomelab.com/_astro/firewall-24.DWAuLOww_ujNhj.webp"></p>
+<p>На этом я хотел бы закончить первоначальную настройку firewall в Proxmox.
+Но напоследок хотел бы повторить про лучшие практики настройки правил в <strong>firewall</strong></p>
+<h3 id="лучшие-практики-настройки-правил-firewall-для-начинающих">Лучшие практики настройки правил firewall для начинающих</h3>
+<ul>
+<li>Всегда начинайте с <strong>ALLOW правил</strong>, затем переходите к блокировке (<code>DROP</code>).</li>
+<li>Используйте <strong>Firewall Groups</strong> для удобства управления (например, <code>ssh-access</code>, <code>web-access</code>).</li>
+<li>Тестируйте правила пошагово, чтобы случайно не заблокировать доступ.</li>
+<li>Для продакшн-окружения используйте firewall Proxmox <strong>вместе с внешним firewall (pfSense, OPNsense, iptables на роутере)</strong>.</li>
+</ul>
+<hr>
+<h3 id="выводы">Выводы</h3>
+<p>Firewall в Proxmox - это мощный инструмент для повышения безопасности вашего кластера и виртуальных машин. Он позволяет централизованно управлять доступом, фильтровать трафик и минимизировать риски атак. Несмотря на некоторые ограничения, встроенный firewall отлично подходит для большинства сценариев в homelab и малых продакшн-системах.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Proxmox SDN - Полное руководство по настройке и использованию</title>
+      <link>https://prohomelab.com/posts/proxmox-sdn-guide/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/proxmox-sdn-guide/</guid>
+      <pubDate>Sun, 31 Aug 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Firewall</category>
+      <description>Подробная инструкция по настройке SDN в Proxmox для централизованного управления виртуальными сетями. Рассмотрены создание виртуальных сетевых сегментов, настройка VXLAN, интеграция с фаерволлом и рекомендации по управлению сетевыми ресурсами.</description>
+      <content:encoded><![CDATA[<p>В <strong>Proxmox VE</strong> <strong>SDN (Software Defined Networking)</strong> - это подсистема для управления виртуальными сетями, добавленная начиная с версии <strong>7</strong>. Она упрощает работу с сетевой инфраструктурой внутри кластера и позволяет организовывать гибкие, изолированные и масштабируемые сети для виртуальных машин и контейнеров.</p>
+<hr>
+<h2 id="основные-моменты-про-sdn-в-proxmox">Основные моменты про SDN в Proxmox</h2>
+<h3 id="1-зачем-нужно-sdn">1. Зачем нужно SDN</h3>
+<ul>
+<li>Упрощает создание частных сетей внутри кластера Proxmox.</li>
+<li>Позволяет изолировать трафик разных пользователей или проектов.</li>
+<li>Дает возможность масштабировать сеть на несколько узлов кластера.</li>
+<li>Автоматизирует настройку маршрутизации, NAT, DHCP и DNS.</li>
+</ul>
+<h3 id="2-компоненты-sdn-в-proxmox">2. Компоненты SDN в Proxmox</h3>
+<ul>
+<li><strong>Zones (зоны)</strong> - логические сегменты сети (например, для разных проектов или клиентов).</li>
+<li><strong>VNet (виртуальные сети)</strong> - создаются внутри зон и определяют топологию L2/L3.</li>
+<li><strong>Controllers (контроллеры)</strong> - управляют сетевыми настройками (например, через EVPN, VXLAN, BGP).</li>
+<li><strong>IPAM/DNS</strong> - встроенная система для управления IP-адресами и именами.</li>
+</ul>
+<h3 id="3-поддерживаемые-типы-зон">3. Поддерживаемые типы зон</h3>
+<ul>
+<li><strong>Simple (VLAN-aware bridge)</strong> - обычная сеть на базе bridge + VLAN.</li>
+<li><strong>VXLAN</strong> - оверлейная сеть с туннелированием поверх IP.</li>
+<li><strong>EVPN</strong> - продвинутый вариант для интеграции с "датацентровой" сетью через BGP.</li>
+<li><strong>QoS zones</strong> - поддержка ограничений пропускной способности.</li>
+</ul>
+<h3 id="4-пример-использования">4. Пример использования</h3>
+<ol>
+<li>У вас есть кластер Proxmox на 3 узла.</li>
+<li>Вы создаете SDN-зону типа <strong>VXLAN</strong>, чтобы виртуалки на разных хостах оказались в одной L2-сети.</li>
+<li>Proxmox сам поднимает туннели между узлами, и ВМ/контейнеры видят друг друга, как будто они в одной локальной сети.</li>
+</ol>
+<hr>
+<h2 id="конкуренты">Конкуренты</h2>
+<p>SDN в Proxmox позволяет строить облачные сценарии наподобие <strong>OpenStack/VMware NSX</strong>, но в более простом виде.</p>
+<h2 id="особенности-статьи">Особенности статьи</h2>
+<p>В данной статье, которая идет как дополнение к видео в начале текста, я постараюсь рассмотреть базовую конфигурацию SDN, которая даст нам понимание как работает SDN в Proxmox</p>
+<h3 id="вводные">Вводные</h3>
+<p>SDN в Proxmox по умолчанию появилась начиная с версии <code>Proxmox</code> 8.1. В случае если у вас система более старая, то сначала вам надо будет ввести в шелле вашей ноды следующую команду, чтобы установить необходимые пакеты:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt update</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt install libpve-network-perl</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt updateapt install libpve-network-perl"><div></div></button></div></figure></div>
+<p>После установки необходимо убедиться, что следующая строка присутствует в конце файла конфигурации <code>/etc/network/interfaces</code> на всех нодах (в случае если у вас кластер), чтобы конфигурация SDN была включена и активирована</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">source /etc/network/interfaces.d/*</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="source /etc/network/interfaces.d/*"><div></div></button></div></figure></div>
+<p>Интеграция DHCP во встроенный стек управления IP-адресами PVE в настоящее время использует dnsmasq для выдачи DHCP-аренды.
+Чтобы использовать эту функцию, вам необходимо установить пакет dnsmasq на каждой ноде.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt update</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt install dnsmasq</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># disable default instance</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">systemctl disable --now dnsmasq</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6">#отключаем dhcp сервер, чтобы он не конфликтовал с вашим роутером</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt updateapt install dnsmasq# disable default instancesystemctl disable --now dnsmasq #отключаем dhcp сервер, чтобы он не конфликтовал с вашим роутером"><div></div></button></div></figure></div>
+<h2 id="первоначальная-настройка-sdn">Первоначальная настройка SDN</h2>
+<p>В меню <strong>Datacenter</strong> кликаете на вкладку <strong>SDN</strong>. Там вы видите список сетей, которые существуют на данный момент. Количество сетей будет зависеть от количество нод. В моем случае будет только одна локальная сеть.</p>
+<p><img alt="Список сетей" loading="lazy" decoding="async" width="841" height="199" src="https://prohomelab.com/_astro/initial-network-list.DvkfeBZN_uCdO.webp"></p>
+<p>Теперь давайте создадим свою первую (так-то она конечно вторая по счету) локальную сеть. Идем в раздел <strong>Zones</strong>, жмем кнопку <strong>add</strong> и видим, что можем выбрать разные типы зон.</p>
+<p><img alt="Выбор сетей" loading="lazy" decoding="async" width="268" height="294" src="https://prohomelab.com/_astro/network-variants.IXSGzG-h_1l45co.webp"></p>
+<p>Так как у нас с вами будет базовая/простая конфигурация, - то выбираем <strong>simple</strong>.</p>
+<p>В качестве ID я указываю название <code>youtube</code>. Значения MTU я оставлю по умолчанию. Обратите внимание, иногда регионы рапортуют, что с дефолтным значением MTU, которое равняется 1500, могут быть проблемы. Можете попробовать значение 1460 как вариант. В этом же меню в качестве DHCP я выбираю автонастройку. Жмем <strong>add</strong>.
+<img alt="Настройка простой сети" loading="lazy" decoding="async" width="863" height="642" src="https://prohomelab.com/_astro/simple-network.Bhw5jiQn_ZntxGl.webp"></p>
+<p>В итоговом окошке видим настройки нашей зоны.
+Теперь идем в раздел VNET, жмем кнопку create.</p>
+<p><img alt="Настройка VNET" loading="lazy" decoding="async" width="953" height="482" src="https://prohomelab.com/_astro/Vnet-create.CmNwyvaf_ZVGb5b.webp"></p>
+<p>Выбираем имя и alias который вы хотите. Теперь выбираете вновь созданную зону. Все остальное оставляем по умолчанию, потому что в этой статье, как сказано выше, мы делаем только базовую настройку, никаких vlan и прочего.
+Мы с вами создали нашу первую виртуальную сеть. После того как мы с вами ее создали, у нас появилось новое меню подсеть. В меню vnet выбираем нашу вновь созданную сеть, переходим в меню подсеть <code>subnet</code>.
+Жмем создать. Сейчас мы с вами создадим нашу подсеть, которая будет изолирована от нашей домашней сети.</p>
+<p><img alt="Создание подсети" loading="lazy" decoding="async" width="701" height="481" src="https://prohomelab.com/_astro/create-subnet.CoT1WibP_Z1hmbj.webp"></p>
+<p>Задаем адрес нашей подсети. Я люблю нечетные числа, поэтому задам адрес 10.11.11.0/24. Адрес шлюза - 10.11.11.1. Нам нужно поставить галку в разделе snat. Это позволит всем устройствам подсети иметь единый внешний айпи адрес, чтобы они имели выход во внешний мир. Днс не трогаем.</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p>В видео к этой статье для подсети используется диапазон 11.11.11.0/24 - он попал туда по моему недосмотру. Диапазон 11.0.0.0/8 не приватный, а публичный: он принадлежит Министерству обороны США. Если взять его для внутренней сети, реальные адреса из этого диапазона в интернете станут для ваших машин недоступны, а сам такой выбор противоречит правилам адресации. Для внутренних сетей используйте только приватные диапазоны - 10.0.0.0/8, 172.16.0.0/12 или 192.168.0.0/16. Поэтому в тексте статьи используется 10.11.11.0/24.</p>
+</div>
+</div>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p>Правильно создавать сети в пределах диапазона частных сетей для избежания разных неприятных сюрпризов! Поэтому лучше создавать все в пределах 10.10.10.0/24. Но так как наша вновь созданная подсеть должна быть изолирована от доступа из внешнего мира без отдельного на то разрешения, то и так сойдет.</p>
+</div>
+</div>
+<p>Теперь нам надо задать диапазон адресов в меню DHCP. Не будем изобретать велосипед, зададим диапазон от 100 до 199. Жмем create.</p>
+<p><img alt="Создание диапазона DHCP" loading="lazy" decoding="async" width="725" height="458" src="https://prohomelab.com/_astro/dhcp-ranges.Dkqgn6PY_ZGRwUA.webp"></p>
+<p>Мы с вами создали зону, vnet, subnet. Теперь чтобы изменения были применены идем в меню <strong>SDN</strong> и жмем <strong>apply</strong>. Теперь когда вы перейдете в список сетей вашей ноды, вы увидите что рядом с <strong>localnetwork</strong> появилась вновь созданная сеть.
+Все, мы с вами сделали первые шаги, чтобы создать основу для нашей маленькой SDN.</p>
+<p>Чтобы проверить как все оно работает в реальности - создадим для тестовых задач простой и пустой LXC контейнер на базе <code>Ubuntu</code>. Все делаем как обычно, кроме одного маленького, но очень важного, момента.
+Когда мы с вами выбираем мост (bridge) который будет использовать наш контейнер в разделе <code>bridge</code></p>
+<p><img alt="Выбор bridge" loading="lazy" decoding="async" width="1009" height="601" src="https://prohomelab.com/_astro/bridge-variants.CSYJjv_n_1wjKhY.webp"></p>
+<p>выбираем не vmbr0, к которому мы с вами привыкли, а вновь созданную сеть. Все остальное оставляем как обычно.
+Уже сейчас вы можете вернуться в <strong>Datacenter</strong>, и в подменю <strong>IPAM</strong> увидеть сетевые данные вновь созданного контейнера.</p>
+<p><img alt="IP адрес контейнера" loading="lazy" decoding="async" width="1332" height="405" src="https://prohomelab.com/_astro/vmid-ipam.vQQ6XSrI_Z1DEJ6Y.webp"></p>
+<p>В нашем случае у него теперь ip адрес 10.11.11.100
+После создания и запуска контейнера мы должны проверить - имеет ли наш контейнер выход во внешний мир. Вы конечно можете это сделать простой командой ping <code>нужный ресурс</code>, но достаточно будет просто запустить apt update, и в случае если все в порядке, то контейнер проверит наличие обновлений и выдаст вам результат. Уже это подтверждает, что у вас полностью рабочий контейнер, который имеет доступ во внешний мир.
+Теперь удостоверимся, что наш контейнер не доступен из внешнего мира.
+С любой машины внутри вашей локальной сети, но не из шелла Proxmox пропингуем наш контейнер <code>ping 10.11.11.100</code> и ответом нам будет тишина. Все потому, что, как я и указывал в начале статьи, наш с вами контейнер находится в изолированной от внешнего мира сети (SDN). Необходимо отметить, что если вы будете пинговать контейнер из шелла вашей ноды, то в данном случае контейнер будет доступен. Это связано с тем, что сеть создана внутри нашей ноды, каких-либо правил firewall мы еще не настраивали, поэтому с ноды наш контейнер замечательно пингуется.
+Однако настройка <a href="https://prohomelab.com/posts/proxmox-firewall/">firewall внутри Proxmox</a> - это тема уже другой статьи.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Обновление с Proxmox VE 8 до Proxmox VE 9 - пошаговое руководство</title>
+      <link>https://prohomelab.com/posts/upgrade-proxmox8-to-proxmox9/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/upgrade-proxmox8-to-proxmox9/</guid>
+      <pubDate>Wed, 06 Aug 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Cluster</category>
+      <description>Пошаговое руководство по безопасной миграции с Proxmox 8 на версию 9. Рассмотрены подготовка серверов, резервное копирование, обновление пакетов и проверка совместимости виртуальных машин и контейнеров для минимизации простоев.</description>
+      <content:encoded><![CDATA[<h2 id="введение">Введение</h2>
+<p><strong>Proxmox VE 9.0</strong> вышла <strong>5 августа 2025 года</strong>, получив надежную основу на <strong>Debian 13 «Trixie»</strong> и <strong>ядро Linux 6.14.8‑2</strong>.
+В этой статье разберем процесс обновления Proxmox 8 до 9 (Proxmox 8 to 9 upgrade) пошагово - от проверки совместимости до финальной команды <code>apt dist-upgrade</code>.
+Данная версия знаменует собой качественный шаг вперед в возможностях виртуализации, хранилищ и сетевой инфраструктуры.</p>
+<hr>
+<h2 id="1-обновленное-ядро-и-базовая-система">1. Обновленное ядро и базовая система</h2>
+<ul>
+<li>Переход на <strong>Debian 13 “Trixie”</strong> обеспечивает актуальные пакеты, улучшенную безопасность и совместимость с современным железом: PCIe 5.0, NVMe, новые чипсеты.</li>
+<li><strong>Linux kernel 6.14.8‑2</strong> оптимизирован для современных CPU и сетевых интерфейсов.</li>
+<li>Доступны обновленные версии <strong>QEMU 10.0.2</strong> и <strong>LXC 6.0.4</strong>, что улучшает миграцию VMs, изоляцию и поддержку cgroup v2. Старый cgroup v1 больше не поддерживается.</li>
+</ul>
+<hr>
+<h2 id="2-хранение-и-снапшоты">2. Хранение и снапшоты</h2>
+<ul>
+<li><strong>Поддержка LVM‑снэпшотов на thick‑provisioned общих хранилищах</strong> (iSCSI, Fibre‑Channel), что позволяет делать snapshot с минимальным уровнем дисков и откатом без внешних инструментов.</li>
+<li>Включен <strong>ZFS 2.3.3</strong> с поддержкой <strong>RAID‑Z expansion</strong> - можно добавлять диски в RAID‑Z без простоя.</li>
+<li>Хранилище Ceph теперь по умолчанию разворачивается на версии <strong>Ceph Squid 19.2.3</strong>, с LZ4‑сжатием по умолчанию и улучшенной производительностью для многопользовательских сценариев. Кстати, для домашнего кластера Ceph чаще всего избыточен - подробнее разбирал это <a href="https://prohomelab.com/posts/proxmox-ceph-home/">в отдельной статье</a>.</li>
+</ul>
+<hr>
+<h2 id="3-сетевая-инфраструктура-и-sdn">3. Сетевая инфраструктура и SDN</h2>
+<ul>
+<li><strong>SDN Fabrics</strong> позволяют строить маршрутизируемые overlay-сети между узлами (OpenFabric, OSPF), без внешних коммутаторов - поддержка spine-leaf и full-mesh топологий для кластеров Proxmox и Ceph.</li>
+<li>Новый инструмент <strong>proxmox‑network‑interface‑pinning</strong> позволяет привязывать MAC‑адреса к стабильным именам <code>nic0</code>, <code>nic1</code> и т. д., а также автоматически корректировать конфигурацию при переименовании NIC после обновлений.</li>
+</ul>
+<hr>
+<h2 id="4-ha-политики-размещения-и-мобильный-ui">4. HA, политики размещения и мобильный UI</h2>
+<ul>
+<li>Новые <strong>правила HA‑аффинности</strong> позволяют задавать размещение ресурсов (VM/CT) по узлам или группам для минимизации задержек или повышения отказоустойчивости. Если кластер еще не настроен - <a href="https://prohomelab.com/posts/proxmox-cluster/">смотрите гайд по кластеризации Proxmox</a>.</li>
+<li>Новый <strong>мобильный интерфейс</strong>, построенный на Rust (фреймворк Yew), обеспечивает удобное управление через браузер смартфона: управление VM, задачи HA, мониторинг и т. д.</li>
+</ul>
+<hr>
+<h2 id="5-интерфейс-удобство-и-удаление-уязвимостей">5. Интерфейс, удобство и удаление уязвимостей</h2>
+<ul>
+<li><strong>Dark mode по умолчанию</strong> - интерфейс теперь запускается в ночной теме; светлая тема доступна при явном выборе пользователя.</li>
+<li>Улучшено отображение ошибок, уведомлений и логов, исправлены проблемы с UI, OIDC‑окно и загрузкой шаблонов ISO - особенно в web-интерфейсе и уведомлениях backup‑задач.</li>
+<li><strong>Удалена поддержка GlusterFS</strong>: если вы используете GlusterFS, необходимо мигрировать на Ceph, ZFS или NFS до обновления.</li>
+</ul>
+<hr>
+<h2 id="6-совместимость-и-миграция">6. Совместимость и миграция</h2>
+<ul>
+<li>Контейнеры на <strong>cgroup v1</strong> (CentOS 7, Ubuntu 16.04) не поддерживаются - рекомендуется заранее мигрировать на современные ОС.</li>
+<li>Для пользователей <strong>NVIDIA GRID/vGPU</strong> требуется драйвер <strong>GRID 18.3+</strong> (версия 570.158.02 или новее), совместимый с kernel ≥ 6.0. Без этого поддержка vGPU будет прервана.</li>
+</ul>
+<hr>
+<h2 id="7-команды-из-ролика">7. Команды из ролика</h2>
+<p><strong>Запуск pve8to9 чек-лист скрипта</strong></p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">pve8to9 --full</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="pve8to9 --full"><div></div></button></div></figure></div>
+<p>Если у вас никаких проблем не выявлено, то переходим к обновлению</p>
+<p><strong>Обновление APT репозиториев</strong></p>
+<p>Сначала обновим текущую конфигурацию до самой последней версии пакетов на текущем релизе</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt update</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt dist-upgrade</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">pveversion</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt updateapt dist-upgradepveversion"><div></div></button></div></figure></div>
+<p><strong>Обновление Debian Base Repositories до версии Trixie</strong></p>
+<p>Обновляем списки для энтерпайзного и обычного репозитория</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sed -i 's/bookworm/trixie/g' /etc/apt/sources.list</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sed -i 's/bookworm/trixie/g' /etc/apt/sources.list.d/pve-enterprise.list</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sed -i &#x27;s/bookworm/trixie/g&#x27; /etc/apt/sources.listsed -i &#x27;s/bookworm/trixie/g&#x27; /etc/apt/sources.list.d/pve-enterprise.list"><div></div></button></div></figure></div>
+<p><strong>Добавление пакетных репозиториев Proxmox VE 9</strong></p>
+<p>Сначала обновляем данные энтерпрайзного репозитория</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">cat > /etc/apt/sources.list.d/pve-enterprise.sources &#x3C;&#x3C; EOF</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Types</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">deb</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">URIs</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">https://enterprise.proxmox.com/debian/pve</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Suites</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">trixie</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Components</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">pve-enterprise</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Signed-By</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/usr/share/keyrings/proxmox-archive-keyring.gpg</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">EOF</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cat > /etc/apt/sources.list.d/pve-enterprise.sources << EOFTypes: debURIs: https://enterprise.proxmox.com/debian/pveSuites: trixieComponents: pve-enterpriseSigned-By: /usr/share/keyrings/proxmox-archive-keyring.gpgEOF"><div></div></button></div></figure></div>
+<p>Теперь то же самое, но для нормальных людей</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">cat > /etc/apt/sources.list.d/proxmox.sources &#x3C;&#x3C; EOF</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Types</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">deb</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">URIs</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">http://download.proxmox.com/debian/pve</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Suites</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">trixie</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Components</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">pve-no-subscription</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Signed-By</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/usr/share/keyrings/proxmox-archive-keyring.gpg</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">EOF</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cat > /etc/apt/sources.list.d/proxmox.sources << EOFTypes: debURIs: http://download.proxmox.com/debian/pveSuites: trixieComponents: pve-no-subscriptionSigned-By: /usr/share/keyrings/proxmox-archive-keyring.gpgEOF"><div></div></button></div></figure></div>
+<p><strong>Обновление Ceph Package репозитория</strong></p>
+<p>Сначала обновляем энтерпрайзный репозиторий</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">cat > /etc/apt/sources.list.d/ceph.sources &#x3C;&#x3C; EOF</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Types</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">deb</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">URIs</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">https://enterprise.proxmox.com/debian/ceph-squid</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Suites</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">trixie</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Components</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">enterprise</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Signed-By</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/usr/share/keyrings/proxmox-archive-keyring.gpg</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">EOF</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cat > /etc/apt/sources.list.d/ceph.sources << EOFTypes: debURIs: https://enterprise.proxmox.com/debian/ceph-squidSuites: trixieComponents: enterpriseSigned-By: /usr/share/keyrings/proxmox-archive-keyring.gpgEOF"><div></div></button></div></figure></div>
+<p>Теперь для простых смертных</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">cat > /etc/apt/sources.list.d/ceph.sources &#x3C;&#x3C; EOF</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Types</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">deb</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">URIs</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">http://download.proxmox.com/debian/ceph-squid</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Suites</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">trixie</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Components</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">no-subscription</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Signed-By</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/usr/share/keyrings/proxmox-archive-keyring.gpg</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">EOF</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cat > /etc/apt/sources.list.d/ceph.sources << EOFTypes: debURIs: http://download.proxmox.com/debian/ceph-squidSuites: trixieComponents: no-subscriptionSigned-By: /usr/share/keyrings/proxmox-archive-keyring.gpgEOF"><div></div></button></div></figure></div>
+<p><strong>Обновляем данные репозиториев</strong></p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt update</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt update"><div></div></button></div></figure></div>
+<p><strong>Обновляем ядро Proxmox</strong></p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt dist-upgrade</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt dist-upgrade"><div></div></button></div></figure></div>
+<h2 id="вывод">Вывод</h2>
+<p>Proxmox VE 9.0 - это важный шаг вперед: новая стабильная база Debian 13, мощные возможности хранения (ZFS, LVM, Ceph), гибкие SDN-настройки, контроль HA-размещения и современный мобильный UI. Однако перед обновлением обратите внимание на требования к контейнерам, сетевой конфигурации и совместимости vGPU.</p>
+<p>После самого обновления не забудьте перепроверить, что выпуск и обновление SSL-сертификатов через встроенный ACME-клиент все еще работает как ожидается - смена базовой системы иногда влияет на такие вещи. Как это настроено и как проверить, я разбирал в статье про <a href="https://prohomelab.com/posts/ssl-termination-in-proxmox/">SSL-сертификаты в Proxmox через ACME</a>.</p>
+<hr>
+<h2 id="также-по-теме">Также по теме</h2>
+<ul>
+<li><a href="https://prohomelab.com/posts/proxmox-cluster/">Кластер Proxmox - настройка, QDevice и разное оборудование в нодах</a></li>
+<li><a href="https://prohomelab.com/posts/merge-local-lvm-and-local/">Объединение local-lvm и local в Proxmox</a></li>
+<li><a href="https://prohomelab.com/posts/cloud-init-install-in-proxmox/">Установка через Cloud-Init в Proxmox</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>Установка и настройка Cloud-Init образа в Proxmox</title>
+      <link>https://prohomelab.com/posts/cloud-init-install-in-proxmox/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/cloud-init-install-in-proxmox/</guid>
+      <pubDate>Sun, 20 Jul 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Cloudinit</category>
+      <description>Подробная инструкция по настройке CloudInit для автоматической конфигурации серверов. Рассмотрены ключевые файлы, параметры и примеры для быстрого развертывания Linux-систем с минимальными усилиями.</description>
+      <content:encoded><![CDATA[<p>Если вам понравилась настоящая статья, то можете поддержать автора став спонсором на бусти (ссылка в разделе контакты).</p>
+<h2 id="что-такое-cloud-init-и-зачем-он-нужен">Что такое Cloud-Init и зачем он нужен?</h2>
+<p><strong>Cloud-Init</strong> - это инструмент автоматизации начальной настройки виртуальных машин. Он позволяет автоматически конфигурировать:</p>
+<ul>
+<li>имя хоста,</li>
+<li>сетевые интерфейсы,</li>
+<li>пользователей и пароли,</li>
+<li>SSH-ключи,</li>
+<li>запуск скриптов при первом старте.</li>
+</ul>
+<p>В сочетании с <strong>Proxmox VE</strong>, Cloud-Init помогает быстро разворачивать однотипные ВМ с минимальными ручными действиями. Особенно полезен в <strong>homelab</strong>-средах, где важна скорость и воспроизводимость развертывания.</p>
+<hr>
+<h2 id="задачи-решаемые-с-помощью-cloud-init-образов">Задачи, решаемые с помощью Cloud-Init образов</h2>
+<ol>
+<li><strong>Автоматизация</strong>. Убирает необходимость ручной настройки каждой новой ВМ.</li>
+<li><strong>Унификация</strong>. Все машины разворачиваются из одного шаблона по стандарту.</li>
+<li><strong>Безопасность</strong>. Можно сразу задать SSH-ключи и отключить root-пароль.</li>
+<li><strong>Масштабируемость</strong>. Идеально для развертывания десятков ВМ в кластере. Конечно дома такое вряд ли пригодится, но, если на работе вам это нужно, можно потренироваться на кошках.</li>
+<li><strong>Совместимость с CI/CD</strong>. Можно использовать образы для автоматического тестирования и доставки инфраструктуры. Но, как я сказал выше, для домашнего использования - это скорее тестовый полигон.</li>
+</ol>
+<hr>
+<p>В Proxmox VE 8 Cloud-Init интегрирован на уровне GUI и CLI, что значительно упрощает работу.</p>
+<h2 id="как-установить-cloud-init-образ-в-proxmox">Как установить Cloud-Init образ в Proxmox</h2>
+<p>В видеоролике я показываю, как это все сделать с помощью графического интерфейса. Лично я считаю, что это намного удобнее, но ниже я привожу инструкцию в том виде, как это указано в документации на сайте Proxmox. Инструкция на сайте рабочая, но несколько устаревшая. Там в качестве примера используется образ Убунту из далекого 2016 года.</p>
+<h3 id="шаг-1-скачайте-официальный-cloud-init-образ">Шаг 1. Скачайте официальный Cloud-Init образ</h3>
+<p>Перейдите на <a href="https://cloud-images.ubuntu.com/">cloud-images.ubuntu.com</a> или аналогичный ресурс. Например:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">wget https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="wget https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"><div></div></button></div></figure></div>
+<h3 id="шаг-2-импортируйте-образ-в-proxmox">Шаг 2. Импортируйте образ в Proxmox</h3>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># create a new VM with VirtIO SCSI controller</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm create 9000 --memory 2048 --net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# create a new VM with VirtIO SCSI controllerqm create 9000 --memory 2048 --net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># import the downloaded disk to the local-lvm storage, attaching it as a SCSI drive</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm set 9000 --scsi0 local-lvm:0,import-from=/path/to/noble-server-cloudimg-amd64.img</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# import the downloaded disk to the local-lvm storage, attaching it as a SCSI driveqm set 9000 --scsi0 local-lvm:0,import-from=/path/to/noble-server-cloudimg-amd64.img"><div></div></button></div></figure></div>
+<h3 id="шаг-3-добавляем-cloud-init-образ-как-cd-rom-drive">Шаг 3. Добавляем Cloud-Init образ как CD-ROM drive</h3>
+<p>Следующий шаг - настроить привод CD-ROM, который будет использоваться для установки Cloud-Init на виртуальную машину.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm set 9000 --ide2 local-lvm:cloudinit</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm set 9000 --ide2 local-lvm:cloudinit"><div></div></button></div></figure></div>
+<p>Чтобы иметь возможность загружаться напрямую с образа Cloud-Init, установите параметр загрузки order=scsi0, чтобы разрешить BIOS загрузку только с этого диска. Это ускорит загрузку, поскольку BIOS виртуальной машины пропускает проверку наличия загрузочного CD-ROM.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm set 9000 --boot order=scsi0</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm set 9000 --boot order=scsi0"><div></div></button></div></figure></div>
+<p>Для многих образов Cloud-Init требуется настроить serial консоль и использовать ее в качестве дисплея. Если эта конфигурация не подходит для конкретного образа, вернитесь к дисплею по умолчанию.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm set 9000 --serial0 socket --vga serial0</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm set 9000 --serial0 socket --vga serial0"><div></div></button></div></figure></div>
+<p>Ну и последним шагом конвертируем нашу виртуальную машину в шаблон</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm template 9000</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm template 9000"><div></div></button></div></figure></div>
+<p>Все, шаблон готов. Дальше уже вы спокойно можете создавать full клоны из этого шаблона и спокойно с ними работать.</p>
+<h2 id="особенности-сети-в-proxmox-ve-8">Особенности сети в Proxmox VE 8</h2>
+<p>Proxmox VE 8 использует systemd-networkd, поэтому важно корректно задать сетевые параметры:</p>
+<p>Если оставить DHCP, Cloud-Init автоматически получит IP.</p>
+<p>Для статического IP заполните поля IP Address, Gateway, DNS на вкладке Cloud-Init.</p>
+<h2 id="команды-которые-использовались-в-ролике">Команды, которые использовались в ролике</h2>
+<p>Скачиваем образ</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">wget https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="wget https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"><div></div></button></div></figure></div>
+<p>Переименовываем образ</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">mv noble-server-cloudimg-amd64.img noble-server-cloudimg-amd64.qcow2</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="mv noble-server-cloudimg-amd64.img noble-server-cloudimg-amd64.qcow2"><div></div></button></div></figure></div>
+<p>Устанавливаем serial консоль в нужную нам виртуальную машину</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm set 700 --serial0 socket --vga serial0</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm set 700 --serial0 socket --vga serial0"><div></div></button></div></figure></div>
+<p>Укажем рабочий объем cloudinit диска виртуальной машины</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qemu-img resize noble-server-cloudimg-amd64.qcow2 32G</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qemu-img resize noble-server-cloudimg-amd64.qcow2 32G"><div></div></button></div></figure></div>
+<p>Импортируем cloudinit образ в виртуальную машину</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm disk import 700 noble-server-cloudimg-amd64.qcow2 local</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm disk import 700 noble-server-cloudimg-amd64.qcow2 local"><div></div></button></div></figure></div>
+<h2 id="заключение">Заключение</h2>
+<p>Установка Cloud-Init образа в Proxmox VE значительно упрощает развертывание инфраструктуры. Правильная подготовка образа и настройка Cloud-Init позволяют полностью автоматизировать процесс конфигурации виртуальных машин, что особенно актуально для DevOps и корпоративных окружений, но конечно может использоваться и в homelab.</p>
+<p>Дальше логичный шаг - когда вы настроите такую ВМ под себя (пакеты, пользователи, сетевые параметры), сохранить ее как шаблон, чтобы не повторять всю настройку заново. Как это сделать - в статье про <a href="https://prohomelab.com/posts/tempaltes-in-proxmox/">шаблоны и linked clones в Proxmox</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Настройка шаблонов и linked clones в Proxmox VE</title>
+      <link>https://prohomelab.com/posts/tempaltes-in-proxmox/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/tempaltes-in-proxmox/</guid>
+      <pubDate>Sat, 19 Jul 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Cluster</category>
+      <description>Пошаговая инструкция по созданию и настройке шаблонов (Templates) в Proxmox для быстрого развертывания виртуальных машин и контейнеров. Рассмотрены создание шаблонов, сохранение конфигураций и рекомендации по управлению и обновлению образов.</description>
+      <content:encoded><![CDATA[<p>Если вам понравилась настоящая статья, то можете поддержать автора став спонсором на бусти (ссылка в разделе контакты).</p>
+<p>Proxmox VE - мощная платформа для виртуализации с открытым исходным кодом, которая поддерживает создание шаблонов и использование <strong>linked clones</strong> - легких клонов на основе одного базового образа. Это значительно ускоряет развертывание новых виртуальных машин и экономит место на диске.
+Но не подходит для использования в действительно рабочей инфраструктуре.</p>
+<p>В этой статье вы узнаете, как:</p>
+<ul>
+<li>Создать шаблон из виртуальной машины.</li>
+<li>Настроить linked clones.</li>
+<li>Автоматизировать развертывание новых ВМ на базе шаблонов.</li>
+</ul>
+<h2 id="зачем-использовать-шаблоны-и-linked-clones">Зачем использовать шаблоны и linked clones?</h2>
+<p>Если вы часто создаете однотипные виртуальные машины (это же работает и с LXC контейнером на самом деле) - с Ubuntu, Debian или другими ОС, - использование шаблонов и linked clones поможет:</p>
+<ul>
+<li>Сэкономить <strong>дисковое пространство и время</strong>. В основном время конечно</li>
+<li>Стандартизировать развертывание.</li>
+<li>Упростить CI/CD или DevOps-инфраструктуру. Если конечно вам оно надо</li>
+</ul>
+<h2 id="шаг-1-подготовка-виртуальной-машины">Шаг 1. Подготовка виртуальной машины</h2>
+<ol>
+<li>Создайте обычную ВМ через веб-интерфейс Proxmox (или <code>командную строку, если вы мизантроп</code>).</li>
+<li>Установите нужную ОС (например, Ubuntu Server).</li>
+<li>Установите базовый набор пакетов, проведите настройку сети и др.</li>
+<li><strong>Обязательно</strong> установите qemu-guest-agent</li>
+</ol>
+<h2 id="шаг-2-преобразование-вм-в-шаблон">Шаг 2. Преобразование ВМ в шаблон</h2>
+<ol>
+<li>Выключите виртуальную машину:</li>
+</ol>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">qm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">shutdown</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">100</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm shutdown 100"><div></div></button></div></figure></div>
+<ol>
+<li>Преобразуйте ее в шаблон:</li>
+</ol>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">qm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">template</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">100</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm template 100"><div></div></button></div></figure></div>
+<p>Теперь ВМ 100 больше нельзя запускать <strong>напрямую</strong> - это шаблон.</p>
+<h2 id="шаг-3-создание-linked-clone">Шаг 3. Создание linked clone</h2>
+<p>Linked clone - это ВМ, которая использует копию только для изменений, а основная система хранится в шаблоне. Это позволяет:</p>
+<ul>
+<li>Мгновенно создавать ВМ.</li>
+<li>Экономить место.</li>
+</ul>
+<p>Создание linked clone через CLI (в видео я показываю как это сделать из под графического интерфейса):</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">qm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">clone</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">100</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">200</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--name</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">ubuntu-clone</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--full</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">0</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm clone 100 200 --name ubuntu-clone --full 0"><div></div></button></div></figure></div>
+<p>Где 100 - это номер вм-шаблона, а 200 - это id вновь создаваемой вм. <code>ubuntu-clone</code> - это имя (name) новой вм. <code>--full 0</code> означает linked clone.</p>
+<p>После этого можете поменять свойства вновь создаваемой ВМ.</p>
+<p><strong>Когда не стоит использовать linked clones?</strong></p>
+<p>Если шаблон удален - все linked clones станут нерабочими.
+Нельзя переместить linked clone в другой storage без преобразования в full clone.
+Миграция между узлами требует shared storage (например, <a href="https://prohomelab.com/posts/proxmox-ceph-home/">Ceph</a> или NFS).</p>
+<h2 id="заключение">Заключение</h2>
+<p>Шаблоны и linked clones в Proxmox - отличная возможность автоматизировать и ускорить развертывание ВМ. Это особенно полезно в тестовых средах, DevOps-сценариях и при работе с облачными образами.</p>
+<h3 id="ссылки">Ссылки</h3>
+<ul>
+<li><a href="https://pve.proxmox.com/wiki/Installation">Proxmox VE: Установка и базовая настройка</a></li>
+<li><a href="https://pve.proxmox.com/wiki/Cloud-Init_Support">Автоматизация с cloud-init в Proxmox</a></li>
+<li><a href="https://pve.proxmox.com/wiki/Linux_Container">LXC-контейнеры в Proxmox VE: Гайд для новичков</a></li>
+</ul>
+<p>Подписывайтесь на <a href="https://www.youtube.com/@stilicho2011">stilicho2011</a> на YouTube - еще больше видео по Proxmox и системному администрированию!</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Установка SSL-сертификатов в Proxmox с помощью встроенного ACME</title>
+      <link>https://prohomelab.com/posts/ssl-termination-in-proxmox/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/ssl-termination-in-proxmox/</guid>
+      <pubDate>Mon, 14 Jul 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Автоматизация</category>
+      <description>Подробная инструкция по настройке SSL в Proxmox для безопасного доступа к веб-интерфейсу и API. Рассмотрены генерация и установка сертификатов, настройка HTTPS и рекомендации по поддержанию безопасности кластера.</description>
+      <content:encoded><![CDATA[<p>Proxmox VE имеет встроенную поддержку <strong>ACME-клиента</strong>, что позволяет автоматически получать и обновлять SSL-сертификаты от <a href="https://letsencrypt.org/">Let's Encrypt</a>. Это значительно упрощает защиту веб-интерфейса и API Proxmox.</p>
+<p>Если вам понравилась настоящая статья, то можете поддержать автора став спонсором на бусти (ссылка в разделе контакты).</p>
+<h2 id="-требования">📋 Требования</h2>
+<ul>
+<li><strong>Публичный домен</strong>, привязанный к IP-адресу сервера с Proxmox.</li>
+<li><strong>Доступ к DNS-записям</strong> (DNS challenge).</li>
+<li><strong>Proxmox VE</strong> версии <strong>6.2 и выше</strong>.</li>
+</ul>
+<h2 id="-почему-стоит-использовать-acme">🔐 Почему стоит использовать ACME</h2>
+<ul>
+<li>Автоматическое обновление сертификатов.</li>
+<li>Бесплатно.</li>
+<li>Устраняет предупреждения браузера о небезопасном соединении.</li>
+<li>Увеличивает безопасность доступа к веб-интерфейсу Proxmox.</li>
+</ul>
+<hr>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Заметка</span></div>
+<div class="phl-callout-content">
+<p>Достаточно иметь публичный домен, размещенный на доступных dns серверах. Не нужно никаких белых ip. Нам просто нужен сертификат для локального разрешения доменных имен</p>
+</div>
+</div>
+<h2 id="введение">Введение</h2>
+<p>Proxmox VE с версии 6.2 включает встроенную поддержку <strong>ACME</strong> - автоматического получения SSL-сертификатов от Let's Encrypt. Одним из надежных и универсальных способов верификации домена является <strong>DNS Challenge</strong>, особенно если вы не хотите или не можете открывать порты 80/443 в интернет.</p>
+<p>В этой статье мы пошагово рассмотрим настройку ACME-клиента в Proxmox для получения SSL-сертификата с использованием <strong>DNS API-провайдера</strong>.</p>
+<hr>
+<h2 id="требования">Требования</h2>
+<ul>
+<li><strong>Публичный домен</strong>, привязанный к IP-адресу сервера с Proxmox.</li>
+<li><strong>Доступ к DNS-записям</strong> (DNS challenge).</li>
+<li><strong>Proxmox VE</strong> версии <strong>6.2 и выше</strong>.</li>
+<li><strong>DNS-провайдер</strong>, поддерживающий API (например, Cloudflare, DuckDNS, DigitalOcean и др.)</li>
+<li>Доступ к <strong>Proxmox</strong> по SSH или через веб-интерфейс</li>
+</ul>
+<hr>
+<h2 id="шаг-1-включение-acme-в-proxmox">Шаг 1. Включение ACME в Proxmox</h2>
+<h3 id="создание-аккаунта">Создание аккаунта</h3>
+<p>Откройте веб-интерфейс Proxmox и перейдите в <strong>Datacenter</strong> → <strong>ACME</strong> - <strong>Accounts</strong></p>
+<p>В разделе <strong>Accounts</strong> создайте аккаунт, заполнив все необходимые поля.</p>
+<h3 id="регистрация-плагина">Регистрация плагина</h3>
+<p>В разделе <strong>Datacenter</strong> → <strong>ACME</strong> → <strong>DNS Plugin</strong> нажмите Add и выберите нужный DNS-хостинг, например Cloudflare.
+В ниспадающем меню внести необходимые данные, которые вы получили от своего dns хостера</p>
+<h2 id="шаг-2-выпуск-сертификата">Шаг 2. Выпуск сертификата</h2>
+<p>Перейдите в:</p>
+<p><strong>Datacenter</strong> → <strong>node_name</strong> → <strong>System</strong> → <strong>Certificates</strong></p>
+<p>Нажмите <strong>ACME</strong> → <strong>Add</strong></p>
+<p>Параметры:</p>
+<p><strong>Domains</strong>: proxmox.example.com</p>
+<p><strong>ACME Account</strong>: имя вашего аккаунта, который вы создали в шаге 1
+<strong>Plugin</strong>: имя, которое вы присвоили вашему плагину
+Нажмите <strong>Create</strong></p>
+<p>Proxmox автоматически запустит верификацию и, при успешном завершении процесса, установит сертификат.</p>
+<h2 id="заключение">Заключение</h2>
+<p>Использование DNS Challenge для выпуска SSL-сертификата - безопасный и гибкий способ защитить интерфейс Proxmox, особенно если он не доступен извне. Интеграция ACME в Proxmox делает этот процесс простым и полностью автоматическим.</p>
+<p>Если вы используете публичные DNS-провайдеры с поддержкой API, настройка займет не более 5 минут.</p>
+<h2 id="полезные-ссылки">Полезные ссылки</h2>
+<ul>
+<li><a href="https://pve.proxmox.com/wiki/Certificate_Management">Документация Proxmox ACME</a></li>
+<li><a href="https://github.com/acmesh-official/acme.sh/wiki/dnsapi">Список поддерживаемых DNS-плагинов</a></li>
+<li><a href="https://letsencrypt.org/">Let's Encrypt</a></li>
+</ul>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

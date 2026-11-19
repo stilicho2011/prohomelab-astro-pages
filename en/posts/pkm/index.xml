@@ -1,0 +1,912 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>PKM | ProHomeLab</title>
+    <link>https://prohomelab.com/en/posts/pkm/</link>
+    <description>Сайт про homelab, self-hosting и IT: инструкции по установке серверов, виртуализация, Docker, Proxmox, безопасность и автоматизация.</description>
+    <language>en</language>
+    <lastBuildDate>Mon, 09 Nov 2026 00:00:00 GMT</lastBuildDate>
+    <generator>ProHomeLab theme for Astro</generator>
+    <atom:link href="https://prohomelab.com/en/posts/pkm/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>How I Run Obsidian - From a Quick Note to a Published Post</title>
+      <link>https://prohomelab.com/en/posts/obsidian-workflow-publishing/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/obsidian-workflow-publishing/</guid>
+      <pubDate>Mon, 09 Nov 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Personal Knowledge Base</category>
+      <category>Obsidian</category>
+      <category>PKM</category>
+      <category>Hugo</category>
+      <category>Forgejo</category>
+      <category>Self-Hosting</category>
+      <description>How my Obsidian vault is put together - PARA folders, device sync through Nextcloud, manual git backups to Forgejo, and a separate content repo that publishes itself to prohomelab.com. Plus the rules I picked up from broken builds and the plan for getting everything back when the cluster dies.</description>
+      <content:encoded><![CDATA[<p>My first note-taking app was actually Trilium, and I still think it's a great piece of software - I wrote about it <a href="https://prohomelab.com/en/posts/trilium/">here</a>. The problem was publishing. Trilium has no convenient way to automate posting to a blog, so I moved to Obsidian, partly by choice and partly because I had to. The full story is in my <a href="https://prohomelab.com/en/posts/trilium-vs-obsidian/">Obsidian vs TriliumNext comparison</a>.</p>
+<p>Given my job and my hobbies, Obsidian stopped being "just a notes app" a long time ago. It holds work material, my vinyl reference notes, homelab docs, video scripts, and every post on this site. It's also where publishing happens. I write or edit a post right in Obsidian, and a few minutes later it shows up on prohomelab.com on its own.</p>
+<p>I've already covered <a href="https://prohomelab.com/en/posts/obsidian-plugins/">the Obsidian plugins I use</a> in a separate post. This one is about the whole workflow - how the folders are laid out, how the vault syncs to my other devices, where the backups live, how a draft turns into a web page, and what happens when the homelab goes down.</p>
+<h2 id="the-big-picture">The big picture</h2>
+<pre class="phl-mermaid">flowchart LR
+    PC["Obsidian on the PC"] -- Remotely Save --> NC["Nextcloud"]
+    NC -- Remotely Save --> DEV["Other devices"]
+    PC -- "git, by hand" --> VR["Forgejo, vault repo"]
+    PC -- "Obsidian Git, every 10 minutes" --> CR["Forgejo, prohomelab-content"]
+    CR -- "notify.yml" --> SR["Forgejo, prohomelab-site"]
+    SR -- "deploy.yml, Hugo + Blowfish" --> GH["GitHub Pages"]
+    GH --> WEB["prohomelab.com"]</pre>
+<p>There are three separate flows here. Nextcloud keeps my devices in sync, Forgejo holds a backup of the entire vault, and the site's posts live in their own repo and get pushed out to GitHub Pages without me touching anything. That split is deliberate, and I'll explain why further down.</p>
+<h2 id="vault-layout---para-with-numbers">Vault layout - PARA, with numbers</h2>
+<p>The folders loosely follow PARA (Projects, Areas, Resources, Archive). I say loosely because my take on it is a bit different, and the number prefixes are only there to keep the order fixed in the file explorer.</p>
+<ul>
+<li><code>00-Inbox</code> - quick notes, drafts, Web Clipper grabs, and daily notes. Those are less about the day and more about "I don't know where this goes yet, but I don't want to lose the thought".</li>
+<li><code>01-Projects</code> - active projects. The main one is <code>Prohomelab</code>, which is the site's posts. Next to it are video scripts. There's also my rack project, which has been going for six months now with no end in sight. It already has enough notes to fill a blog of its own.</li>
+<li><code>02-Areas</code> - ongoing areas of responsibility. For me that's the homelab (right down to custom CSS for various services that I repaint in my brand colors), my day job, and my personal knowledge base.</li>
+<li><code>03-Resources</code> - reference material and the library - books, authors, saved copies of other people's articles, professional reading, and so on.</li>
+<li><code>04-Archive</code> - everything that's finished. Which, it turns out, is nothing. That pretty much proves my point that my PARA isn't really PARA.</li>
+<li><code>05-Templates</code> - templates for Templater and QuickAdd.</li>
+<li><code>06-Attachments</code> - attachments.</li>
+<li><code>99-Meta</code> - housekeeping. This is also where all the Bases dashboards live, along with various stats about the vault and the site.</li>
+</ul>
+<p>I don't rename the numbered folders, because templates, bases and file paths all depend on them. Inside a folder, navigation comes down to a simple combo - a base (the core Bases plugin) built straight from the folder, plus a folder note that acts as its table of contents.</p>
+<h2 id="what-holds-it-all-together">What holds it all together</h2>
+<p>The full plugin list is in <a href="https://prohomelab.com/en/posts/obsidian-plugins/">its own post</a>. Here are just the load-bearing ones.</p>
+<ul>
+<li><strong>Bases</strong> - tables and dashboards. Dataview is switched off, Bases replaced it completely.</li>
+<li><strong>Notebook Navigator</strong> - my main file explorer, with two panes, folder icons and folder notes. This one plugin can stand in for a surprising number of others, Templater included.</li>
+<li><strong>Templater and QuickAdd</strong> - every new note comes from a template, including drafts of site posts.</li>
+<li><strong>Obsidian Git</strong> - only handles the posts folder, not the whole vault.</li>
+<li><strong>Remotely Save</strong> - sync between devices through Nextcloud.</li>
+<li><strong>Local Images Plus</strong> - downloads images from pasted links and stores them next to the note. Be careful with this one. It tends to grab every image from every note, including the ones in my own site posts. I only want local copies of images from articles I clip with Web Clipper.</li>
+<li><strong>Omnisearch with Text Extractor</strong> - full-text search, including text inside PDFs and images.</li>
+</ul>
+<h2 id="sync-and-backup-are-two-different-jobs">Sync and backup are two different jobs</h2>
+<p><strong>Syncing between devices</strong> goes through Remotely Save and my own <a href="https://prohomelab.com/en/posts/nextcloud-aio/">Nextcloud</a>. The plugin is showing its age - the last release came out in fall 2024 - but it still does the job. I don't use Obsidian Sync. No subscription, it's too expensive. The vault physically sits in a OneDrive folder, but OneDrive sync is turned off for it so two sync tools never fight over the same files. I also made a conscious decision to stop paying for OneDrive anyway.</p>
+<p><strong>Backing up the whole vault</strong> is a git repo on my own <a href="https://prohomelab.com/en/posts/forgejo-komodo-gitops/">Forgejo</a>. The vault root is never committed automatically. I commit and push by hand once I've finished a meaningful chunk of work, so the history actually reads like a history and not like a hundred "vault backup" commits. There's one more catch. Obsidian Git works with a single repo per vault, and mine is already taken by the posts folder. Sure, I could split things into several vaults, but I'd rather not multiply entities for no reason.</p>
+<p>A few setup details:</p>
+<ul>
+<li><code>.gitignore</code> excludes the posts folder (it has its own repo, more on that below) and the Text Extractor cache</li>
+<li><code>core.longpaths</code> is on, because Local Images Plus can produce very long paths, and without this setting git on Windows can't handle paths longer than 260 characters</li>
+<li>files holding plugin API keys and exports with secrets never go into git at all</li>
+</ul>
+<p>Forgejo authentication goes through Git Credential Manager with OAuth, with a personal access token as the fallback. Obsidian Git and every other repo on this machine pick up the same login.</p>
+<h2 id="how-a-post-gets-onto-the-site">How a post gets onto the site</h2>
+<h3 id="where-a-post-lives">Where a post lives</h3>
+<p>Each post is its own folder (a page bundle, in Hugo terms) inside its category.</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">01-Projects/Prohomelab/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">  </span></span><span style="--0:#24292e;--1:#e1e4e8">&#x3C;Категория>/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">    </span></span><span style="--0:#24292e;--1:#e1e4e8">_index.md          - страница категории</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">    </span></span><span style="--0:#24292e;--1:#e1e4e8">&#x3C;папка статьи>/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">      </span></span><span style="--0:#24292e;--1:#e1e4e8">index.md         - статья на русском (имя файла строго index.md)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">      </span></span><span style="--0:#24292e;--1:#e1e4e8">index.en.md      - английская версия</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">      </span></span><span style="--0:#24292e;--1:#e1e4e8">featured.png     - обложка</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">      </span></span><span style="--0:#24292e;--1:#e1e4e8">0.png, 1.png     - картинки, ссылки только относительно папки статьи</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="01-Projects/Prohomelab/  <Категория>/    _index.md          - страница категории    <папка статьи>/      index.md         - статья на русском (имя файла строго index.md)      index.en.md      - английская версия      featured.png     - обложка      0.png, 1.png     - картинки, ссылки только относительно папки статьи"><div></div></button></div></figure></div>
+<p>In that tree, <code>_index.md</code> is the category page, <code>index.md</code> is the Russian post (the file name has to be exactly that), <code>index.en.md</code> is the English version, <code>featured.png</code> is the cover, and the numbered images are referenced relative to the post folder.</p>
+<p>A new post starts from the draft template and gets renamed to <code>index.md</code> right away. Hugo won't publish any other <code>.md</code> file in that folder as a page.</p>
+<h3 id="from-edit-to-live-site">From edit to live site</h3>
+<ol>
+<li>I write and edit the post in Obsidian.</li>
+<li>Every 10 minutes Obsidian Git commits and pushes the posts folder to the <code>prohomelab-content</code> repo on Forgejo by itself. There's no "publish" button. The <code>draft</code> field in the frontmatter is effectively my publish switch.</li>
+<li>The push triggers the <code>notify.yml</code> workflow in that repo, which kicks off a build in the site repo.</li>
+<li>In <code>prohomelab-site</code>, <code>deploy.yml</code> runs - a clean checkout with the Blowfish theme, a script that pulls in fresh content and converts Obsidian-style image embeds <code>![[file.png]]</code> into regular markdown, and then <code>hugo --minify</code>.</li>
+<li>The resulting <code>public</code> folder is pushed to the <code>gh-pages</code> branch of the GitHub Pages repo, and the site is updated.</li>
+</ol>
+<p>How I got to this setup, and how many times I rebuilt it along the way, is covered in my series on automation - <a href="https://prohomelab.com/en/posts/automation-publishing/">the first version on Forgejo Actions</a>, <a href="https://prohomelab.com/en/posts/smartape-to-github-pages-migration/">moving from shared hosting to GitHub Pages</a>, <a href="https://prohomelab.com/en/posts/github-actions-self-hosted-runner/">trying to squeeze everything into one repo with self-hosted GitHub Actions</a>, and <a href="https://prohomelab.com/en/posts/forgejo-two-repos-revert/">going back to two repos</a>. If you want to set up Hugo with Blowfish yourself, there's a <a href="https://prohomelab.com/en/posts/install-hugo-blowfish/">separate guide</a> for that.</p>
+<p>The source of truth for the site is the Forgejo repos, not the working copy on the build server. Site settings (<code>hugo.toml</code>, menus, templates) live in the <code>prohomelab-site</code> repo, outside the vault.</p>
+<h3 id="rules-that-are-easier-to-follow-than-to-debug-later">Rules that are easier to follow than to debug later</h3>
+<p>The build is fully automated, so any mistake in a post turns straight into either a failed build or something broken on the live site.</p>
+<ul>
+<li><strong>While a post is in progress, it stays at <code>draft: true</code>.</strong> The auto-push every 10 minutes will ship anything that isn't marked as a draft, including a post that stops mid-sentence.</li>
+<li><strong>Broken YAML kills the whole build.</strong> If <code>title</code>, <code>description</code> or <code>summary</code> contains a colon followed by a space, the value has to be quoted. Otherwise Hugo's YAML parser thinks a nested mapping is starting and bails. Obsidian's preview won't warn you, the error only shows up in the build logs on Forgejo.</li>
+<li><strong><code>published</code> is a date, not true/false.</strong> Hugo treats this field as the publish date. If you're getting an AI to reproduce what's described here, watch out for this one. AI still isn't that bright and may decide it's a boolean flag.</li>
+<li><strong><code>categories</code> takes a single value</strong>, in the singular.</li>
+<li><strong>Changed the slug or moved the post? Put the old URL in <code>aliases</code>.</strong> Otherwise Google Search Console quickly fills up with 404s. I burned a lot of nerves before I figured out what was going on.</li>
+<li><strong>Internal links are always full URLs</strong> like <code>https://prohomelab.com/posts/...</code>, and the English version links to the English version of the target post.</li>
+<li><strong>Images use paths relative to the post folder only.</strong> Obsidian happily renders a path from the vault root, Hugo doesn't, and the image just silently disappears from the site.</li>
+<li><strong>Mermaid diagrams go in the theme's shortcode</strong>, not a markdown code block. Blowfish only loads Mermaid when it sees the shortcode, and a regular block renders as plain code. In Obsidian's preview the shortcode shows up as raw text, and I've made my peace with that.</li>
+</ul>
+<h2 id="looks">Looks</h2>
+<p>The Minimal theme plus my own CSS snippet in the ProHomeLab brand colors - a graphite background, a calm mint for links and checkboxes, a short gradient bar under the note title, and the Unbounded, Onest and JetBrains Mono fonts. The fonts load from Google Fonts and fall back to system fonts when I'm offline. I haven't gotten around to downloading everything for local storage, and you can't have enough disk space for everything anyway. Have you seen drive prices in 2026?</p>
+<p>There's exactly one bright accent - the selected folder in Notebook Navigator. Everything else is neutral on purpose. In long text, colored headings and tags get tiring fast, and then they get annoying.</p>
+<h2 id="when-the-homelab-goes-down">When the homelab goes down</h2>
+<p>Almost all of this runs on my own services, so I worked out a disaster plan ahead of time.</p>
+<h3 id="what-survives-an-outage">What survives an outage</h3>
+<ul>
+<li><strong>The site keeps working.</strong> It's served from GitHub Pages and doesn't need the cluster at all. I just can't publish anything new. That was a conscious choice, and the reasoning is in the series on the site. Plus, did you hear what happened with Beget? I don't need that kind of thing in my life.</li>
+<li><strong>The vault is fine</strong> on the PC and on the other devices. It's just files, and Obsidian runs without any server.</li>
+<li><strong>What breaks for a while</strong> is sync (no Nextcloud), the post auto-push and the manual root push (no Forgejo), and the site build (no Forgejo, no runner). Obsidian Git errors are expected during this time. Commits pile up locally and go out once things are back.</li>
+</ul>
+<p>So losing any single piece of the workflow doesn't really hurt day-to-day work.</p>
+<h3 id="recovery-order">Recovery order</h3>
+<ol>
+<li><strong>Forgejo first</strong> - both the vault backup and the site depend on it. Once it's up, check that all the repos are there - vault, posts, site and brandbook. Forgejo uses an external PostgreSQL database, which also helps with resilience.</li>
+<li><strong>If Forgejo was rebuilt from scratch with no backup</strong>, no big deal. The repos come back with a regular push from the PC, since the local copies are complete.</li>
+<li><strong>Actions secrets.</strong> A backup restores them, but on a clean install you have to issue new tokens. Forgejo never shows secret values, so there's nothing to copy over. You need three - the token the posts repo uses to trigger the site build, the token the build uses to pull posts, and a GitHub token with write access to the Pages branch. Reissuing them takes a couple of minutes.</li>
+<li><strong>The runner</strong> - check the <code>forgejo-runner</code> service in the build LXC and its registration. On a fresh Forgejo, register it again. That takes about ten seconds.</li>
+<li><strong>Check the site</strong> - run <code>deploy.yml</code> manually. Once, the first run after a migration failed for no obvious reason. I got nervous, but a plain re-run fixed it.</li>
+<li><strong>Git Credential Manager</strong> - on a fresh Forgejo, the old OAuth entry is no longer valid. Delete it and push once by hand, and every repo picks up the new login from there.</li>
+<li><strong>Nextcloud and Remotely Save</strong> - once they're back, just make sure sync goes through. Before the first sync after a long outage I make a copy of the vault, so a conflict between devices can't eat my latest edits. That has happened to me too - every post on the site got overwritten. I was already picturing an early end to my YouTube career, but there's a reason I keep everything in git.</li>
+</ol>
+<p>Here's how to clear the old GCM entry for Forgejo (the host is just an example, use your own):</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#005CC5;--1:#79B8FF">printf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"protocol=https\nhost=forgejo.stilicho.ru\n\n"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">|</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">git</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">credential</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">reject</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="printf &#x22;protocol=https\nhost=forgejo.stilicho.ru\n\n&#x22; | git credential reject"><div></div></button></div></figure></div>
+<h3 id="if-the-pc-itself-gets-reinstalled">If the PC itself gets reinstalled</h3>
+<ul>
+<li>The vault comes back either through Remotely Save from Nextcloud or by cloning the repo from Forgejo. Plugins and their settings live in <code>.obsidian</code>, except the Text Extractor cache (it rebuilds itself) and the files with API keys (those you'll have to enter again).</li>
+<li>The posts folder is excluded from the root repo, so I clone it separately from <code>prohomelab-content</code> into the same spot.</li>
+<li>For long paths, run <code>git config core.longpaths true</code> in the root repo.</li>
+</ul>
+<h2 id="wrapping-up">Wrapping up</h2>
+<p>In short, the whole setup rests on three decisions. Sync and backup are handled by different tools, at least in my case. Posts live in their own repo and publish themselves (well, not literally, but it's automated), and the only publish switch is the <code>draft</code> field. And all the non-obvious rules are written down in one place that only I can read.</p>
+<p>It has weak spots, of course. Remotely Save is getting old, and almost everything except the site itself depends on my home Forgejo. That's exactly why the recovery plan lives right in the vault and is available offline.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Obsidian Plugins I Use</title>
+      <link>https://prohomelab.com/en/posts/obsidian-plugins/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/obsidian-plugins/</guid>
+      <pubDate>Sun, 26 Jul 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Personal Knowledge Base</category>
+      <category>Self-Hosting</category>
+      <category>Obsidian</category>
+      <category>Trilium</category>
+      <category>Homelab</category>
+      <category>PKM</category>
+      <description>A rundown of 36 Obsidian plugins that replaced Trilium Notes' built-in functionality after the move - from Templater and Bases to Excalidraw and Kanban. I compare the philosophy of the two systems and explain why the deciding factor was YAML Front Matter support for publishing articles via Hugo.</description>
+      <content:encoded><![CDATA[<p>Anyone who's ever migrated between note-taking systems knows the feeling: for a week everything's clunky, everything annoys you, you keep getting lost. Then you get used to it, and six months later you can't even imagine it being any other way.</p>
+<p>I use Obsidian not just for articles on this site. In one vault, I keep notes about my homelab, a personal library catalog with a hundred cards (soon to be over a thousand), a work database for day-to-day tasks, and a plain Zettelkasten for ideas I don't want to lose. That's exactly why choosing a tool and configuring it isn't just "which editor is more convenient" - it's a question of architecture that has to withstand a very mixed workload. In my case, it's a very mixed one indeed.</p>
+<hr>
+<h2 id="my-obsidian-plugins">My Obsidian plugins</h2>
+<p>After moving from <a href="https://prohomelab.com/en/posts/trilium/">Trilium</a> Notes to Obsidian, I had to rebuild my familiar working environment from scratch. Unlike Trilium, Obsidian follows a modular philosophy: the core stays as minimal as possible, and the necessary functionality is added through plugins. I covered how I weighed the two systems before making the switch in <a href="https://prohomelab.com/en/posts/trilium-vs-obsidian/">Obsidian vs TriliumNext</a>.</p>
+<p>The reason for my move wasn't a lack of features in Trilium. On the contrary, Trilium Notes 0.104.1 (the current version as of writing) already ships with a huge number of features out of the box. Version 0.103.0 added the ability to write notes in <code>markdown</code>.
+But I needed full support for <strong>Front Matter</strong>. Thanks to it, notes become plain Markdown files with metadata that the Hugo or Astro static site generators can understand. Without front matter, I had to do a lot of dumb, repetitive manual work.</p>
+<p>Today, my vault is a hybrid of two methodologies:</p>
+<ul>
+<li><strong>PARA</strong> - for organizing projects, articles, and work materials.</li>
+<li><strong>Zettelkasten</strong> - for storing and linking a knowledge base.</li>
+</ul>
+<p>I spent quite a lot of time working out the architectural philosophy of my knowledge base, and in my case, a hybrid of the two well-known-in-narrow-circles methodologies above turned out to fit best. In their original, pure forms, neither worked for me - using them as-is only added confusion, and to put it plainly, drove me up the wall.</p>
+<p>To put it simply, the logic is this:</p>
+<ul>
+<li><strong>00-Inbox</strong> - everything new lands here without thinking about where it actually belongs. I go through it every few days (at best).</li>
+<li><strong>Projects</strong> - things with a concrete outcome (unlike the original PARA creator's intent, deadlines don't concern me): an article for the site, a one-off work task/project, etc.</li>
+<li><strong>Areas</strong> - areas of interest, hobbies, and anything without clear boundaries or limits that gets maintained continuously. For me, that's homelab, work, and hobbies (I have more than one).</li>
+<li><strong>Resources</strong> - reference material not tied to any specific project: homelab configs, various documentation, my physical book library catalog, my vinyl record catalog.</li>
+<li><strong>Archive</strong> - things that are finished or turned out to be unneeded (really, truly not needed), but that I feel bad deleting.</li>
+</ul>
+<p>Splitting into Areas and Resources is probably the main reason it was worth building this hybrid in the first place. Pure Zettelkasten is good for linking ideas (probably good - I'm not really sure the method suits anyone besides its creator, or maybe some ghost-writer-employing bestselling novelist), but it's poor for quickly finding "what do I have on this specific task right now." Pure PARA, on the other hand, organizes active work great, but doesn't do a good job linking scattered notes together. The hybrid takes what actually worked for me from each methodology and discards the rest.</p>
+<p>To build a system like this in Obsidian, I use the following plugins.</p>
+<hr>
+<h2 id="database-and-metadata">Database and metadata</h2>
+<h3 id="dataview">Dataview</h3>
+<p>Dataview turns an ordinary collection of Markdown files into a full-fledged database. It can build tables, lists, reports, and queries based on Front Matter fields.
+The plugin is currently barely used, since the core <code>bases</code> plugin covers most of the need, but I'm not removing it (it's just disabled), because it has functionality that <code>bases</code> doesn't have yet, and apparently its developer wants to significantly improve it in the future.</p>
+<hr>
+<h3 id="meta-bind">Meta Bind</h3>
+<p>Lets you turn Front Matter values into interactive interface elements.</p>
+<p>For example:</p>
+<ul>
+<li>toggles;</li>
+<li>dropdown lists;</li>
+<li>input fields;</li>
+<li>buttons.</li>
+</ul>
+<p>This lets you edit note properties without having to manually edit YAML.
+Honestly, having this plugin is more of a whim. I played with it and dropped it. I don't need it for actual work.</p>
+<hr>
+<h2 id="automation">Automation</h2>
+<h3 id="templater">Templater</h3>
+<p>One of the most powerful Obsidian plugins.</p>
+<p>Used for creating and automating work with templates.
+It can automatically:</p>
+<ul>
+<li>create new notes;</li>
+<li>fill in Front Matter;</li>
+<li>insert the current date;</li>
+<li>run JavaScript code;</li>
+<li>build complex templates.</li>
+</ul>
+<hr>
+<h3 id="quickadd">QuickAdd</h3>
+<p>Used to automate repetitive actions.
+Lets you create custom commands that, in a single action, can:</p>
+<ul>
+<li>create a new note;</li>
+<li>pick a template;</li>
+<li>ask for the required parameters;</li>
+<li>automatically fill in metadata.</li>
+</ul>
+<hr>
+<h3 id="auto-link-title">Auto Link Title</h3>
+<p>Automatically fetches a webpage's title and inserts it into a Markdown link.</p>
+<p>Instead of</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">https://example.com</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="https://example.com"><div></div></button></div></figure></div>
+<p>you get</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">[Page Title](https://example.com)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[Page Title](https://example.com)"><div></div></button></div></figure></div>
+<hr>
+<h3 id="paste-url-into-selection">Paste URL into Selection</h3>
+<p>Lets you paste a URL over selected text and immediately get a ready-made markdown link, without manually wrapping it in brackets. Simple and unnoticeable, but it saves seconds on every link you paste.</p>
+<hr>
+<h3 id="linter">Linter</h3>
+<p>Automatically brings notes to a consistent style.</p>
+<p>For example:</p>
+<ul>
+<li>sorts Front Matter;</li>
+<li>fixes formatting;</li>
+<li>removes extra whitespace;</li>
+<li>standardizes list formatting;</li>
+<li>standardizes Markdown styling.</li>
+</ul>
+<hr>
+<h3 id="obsidian-git">Obsidian Git</h3>
+<p><strong>Obsidian Git</strong> is a plugin for automating Git operations directly from Obsidian. It can automatically commit changes to the vault and push them to a remote Git repository.</p>
+<p>In my setup, Obsidian Git is used as the first stage of automated content publishing:</p>
+<p><strong>Obsidian → Obsidian Git → Forgejo → publishing automation → the ProHomeLab site</strong></p>
+<p>I edit articles directly in Obsidian, after which the plugin automatically creates a Git commit and pushes the changes to a private <a href="https://prohomelab.com/en/posts/forgejo-komodo-gitops/">Forgejo</a> repository. Forgejo then runs a configured workflow that pushes the changes to the site's repository and triggers its build and publish process.</p>
+<p>This way, Git remains an intermediate layer between the editor and the site: it simultaneously provides content versioning, a backup of changes, and automatic delivery of published material.</p>
+<p>The full setup, including sync, backups and the recovery plan, is covered in <a href="https://prohomelab.com/en/posts/obsidian-workflow-publishing/">How I Run Obsidian - From a Quick Note to a Published Post</a>.</p>
+<hr>
+<h2 id="vault-organization">Vault organization</h2>
+<h3 id="folder-notes">Folder Notes</h3>
+<p>Lets every folder have its own note.
+Effectively, a folder becomes a full documentation section with its own main page.
+Since I use Notebook Navigator (which has an identical, but built-in, feature), this is currently unused.
+I use this feature as a way to embed a kind of database in the root folders, whose purpose is to index the contents of those folders.</p>
+<hr>
+<h3 id="notebook-navigator">Notebook Navigator</h3>
+<p>Significantly improves navigation through the vault. It's basically a customization of Obsidian's file explorer. The difference is roughly like between vanilla GNOME and KDE Plasma.
+Makes working with a large number of notes much more convenient (though it's a matter of taste).</p>
+<hr>
+<h3 id="homepage">Homepage</h3>
+<p>Automatically opens a chosen note on Obsidian startup.
+Despite having a note that could serve as a dashboard, I don't actually use this.</p>
+<hr>
+<h3 id="icon-folder">Icon Folder</h3>
+<p>Lets you assign custom icons to folders.
+Supposedly makes the note tree much more visually navigable, but in my case it's again just a toy that exists but doesn't get played with.</p>
+<hr>
+<h3 id="file-explorer-note-count">File Explorer Note Count</h3>
+<p>Shows the number of notes inside each folder.
+Very handy for keeping track of a large vault's structure.</p>
+<hr>
+<h2 id="search-and-navigation">Search and navigation</h2>
+<h3 id="omnisearch">Omnisearch</h3>
+<p>Completely replaces Obsidian's built-in search.
+Works significantly faster and provides more convenient search results.
+This becomes especially noticeable when working with a large number of notes.</p>
+<hr>
+<h3 id="commander">Commander</h3>
+<p>Lets you create custom commands and add them to the Obsidian interface.
+Used to speed up frequently performed actions by surfacing them prominently. In practice, it just saves mouse clicks.</p>
+<hr>
+<h3 id="quick-switcher-">Quick Switcher ++</h3>
+<p>Extends the capabilities of the standard Quick Switcher.
+Searching and jumping between notes becomes noticeably more convenient.</p>
+<hr>
+<h2 id="planning">Planning</h2>
+<h3 id="calendar">Calendar</h3>
+<p>Adds a calendar.
+Used for daily notes and navigating between them. But I don't actually use it. Notebook Navigator has its own, more advanced calendar, which I ... also don't use.</p>
+<hr>
+<h3 id="tasks">Tasks</h3>
+<p>Significantly extends task management.
+Supports:</p>
+<ul>
+<li>due dates;</li>
+<li>recurring tasks;</li>
+<li>filtering;</li>
+<li>Dataview queries;</li>
+<li>task reports.</li>
+</ul>
+<hr>
+<h3 id="reminder">Reminder</h3>
+<p>Adds a reminder system.
+Lets you get notifications about important tasks and events.</p>
+<hr>
+<h3 id="kanban">Kanban</h3>
+<p>Adds full-fledged Kanban boards directly inside Obsidian.
+Lets you manage projects without third-party services.</p>
+<hr>
+<h2 id="working-with-text">Working with text</h2>
+<h3 id="better-word-count">Better Word Count</h3>
+<p>Displays extended document statistics:</p>
+<ul>
+<li>word count;</li>
+<li>character count;</li>
+<li>sentences;</li>
+<li>paragraphs.</li>
+</ul>
+<p>Especially useful when writing articles.</p>
+<hr>
+<h3 id="reading-time">Reading Time</h3>
+<p>Automatically calculates the estimated reading time of an article.
+I use it when preparing material for the site. But again, it's more of a decoration than something practically useful in my case.</p>
+<hr>
+<h3 id="editing-toolbar">Editing Toolbar</h3>
+<p>Adds a visual toolbar for the Markdown editor. You work as if in a regular office suite.
+Especially useful for people who don't remember or don't want to memorize all the <code>markdown</code> keyboard shortcuts.</p>
+<hr>
+<h3 id="advanced-tables">Advanced Tables</h3>
+<p>Makes working with Markdown tables as convenient as possible.
+Effectively turns them into a small spreadsheet-like tool. And you don't have to manually type out all the vertical and horizontal dashes.</p>
+<hr>
+<h2 id="working-with-images-and-media">Working with images and media</h2>
+<h3 id="local-images-plus">Local Images Plus</h3>
+<p>Automatically downloads images from the internet and saves them locally.</p>
+<p>Thanks to this, notes become fully self-contained, images included, but it requires additional configuration. The plugin needs to be used carefully, or it can clutter up the whole system.</p>
+<hr>
+<h3 id="image-toolkit">Image Toolkit</h3>
+<p>Extends image viewing capabilities.
+Lets you zoom in on images and makes working with them much more convenient.</p>
+<hr>
+<h3 id="media-extended">Media Extended</h3>
+<p>Adds extended video and audio support directly inside notes. You can paste YouTube links, or whatever else you use, straight into notes and watch/listen right there.</p>
+<hr>
+<h3 id="maps">Maps</h3>
+<p>Lets you insert interactive maps.
+Useful for notes related to travel and geography. I don't use it, but it's installed.</p>
+<hr>
+<h3 id="excalidraw">Excalidraw</h3>
+<p>Adds a full-fledged drawing canvas.</p>
+<p>Used to create:</p>
+<ul>
+<li>diagrams;</li>
+<li>charts;</li>
+<li>mind maps;</li>
+<li>service architecture diagrams.</li>
+</ul>
+<p>Practically indispensable for technical documentation. Actually, it's extremely convenient beyond just technical documentation too, depending on your needs.</p>
+<hr>
+<h3 id="zim-reader">Zim Reader</h3>
+<p>Lets you open ZIM format files directly inside Obsidian.
+For example, a local copy of Wikipedia. That's exactly what I use it for - Wikipedia.</p>
+<hr>
+<h2 id="export-and-formatting">Export and formatting</h2>
+<h3 id="better-export-pdf">Better Export PDF</h3>
+<p>Significantly improves exporting notes to PDF.
+The resulting documents look much more professional.</p>
+<hr>
+<h3 id="admonition">Admonition</h3>
+<p>Adds nice-looking Callout information blocks:</p>
+<ul>
+<li>Note;</li>
+<li>Tip;</li>
+<li>Warning;</li>
+<li>Danger;</li>
+<li>Success;</li>
+<li>Info.</li>
+</ul>
+<p>Basically pure decoration that personally I don't care about.</p>
+<hr>
+<h3 id="code-styler">Code Styler</h3>
+<p>Improves the formatting of code blocks.
+Especially useful when writing technical articles. Obsidian likes to mess up code formatting - everything shifts and you end up wasting time removing extra spaces and so on.</p>
+<hr>
+<h2 id="appearance">Appearance</h2>
+<h3 id="minimal">Minimal</h3>
+<p>The main theme for my vault.
+Minimalist, tidy, and very well configurable.</p>
+<hr>
+<h3 id="style-settings">Style Settings</h3>
+<p>Lets you configure themes and plugins through a convenient graphical interface.
+Many modern themes rely on exactly this plugin, but I've barely used it myself.</p>
+<hr>
+<h3 id="minimal-settings">Minimal Settings</h3>
+<p>Adds additional settings specifically for the Minimal theme. Configure it once and then it just sits quietly in the background.</p>
+<hr>
+<h2 id="maintenance">Maintenance</h2>
+<h3 id="plugin-update-tracker">Plugin Update Tracker</h3>
+<p>Watches for updates to installed plugins.</p>
+<p>Lets you quickly find out about new plugin versions, but there can be problems in Russia, since it needs access to AWS servers.</p>
+<hr>
+<h3 id="brat">BRAT</h3>
+<p>Lets you install beta versions of plugins directly from GitHub.
+Used in cases when a needed feature hasn't made it into an official release yet.</p>
+<hr>
+<h2 id="sync">Sync</h2>
+<h3 id="remotely-save">Remotely Save</h3>
+<p>I use this to sync the vault with <a href="https://prohomelab.com/en/posts/nextcloud-aio/">Nextcloud</a>.</p>
+<p>Lets you avoid paying for Obsidian Sync and choose your own storage location. Plus you don't need an external database or a battery-draining Syncthing instance on your phone.</p>
+<hr>
+<h2 id="what-of-this-already-exists-in-trilium-notes">What of this already exists in Trilium Notes?</h2>
+<p>Interestingly, most of the capabilities listed above are already present in <strong>Trilium Notes 0.104</strong> without installing any additional extensions.</p>
+<p>Available out of the box:</p>
+<ul>
+<li>template support;</li>
+<li>a note attribute system;</li>
+<li>powerful search;</li>
+<li>tasks;</li>
+<li>reminders;</li>
+<li>a calendar;</li>
+<li>Kanban views;</li>
+<li>tables;</li>
+<li>a built-in diagram editor;</li>
+<li>interactive maps;</li>
+<li>document export;</li>
+<li>information blocks;</li>
+<li>an advanced editor;</li>
+<li>note tree navigation;</li>
+<li>automation via JavaScript.</li>
+</ul>
+<p>That's exactly why, after moving from Trilium, it might look like you have to install dozens of plugins in Obsidian (in my case, more than three dozen) just to get back the functionality you're used to.</p>
+<p>However, the philosophy of these two apps is different.</p>
+<p><strong>Trilium</strong> offers maximally rich functionality right after installation.</p>
+<p><strong>Obsidian</strong> provides a minimalist core, letting the user build their own working environment for their specific tasks.</p>
+<p>The ability to use plain Markdown files with Front Matter, along with integration with Bases, Git, and other tools, was the main reason I switched to Obsidian, despite needing to install a large number of plugins.</p>
+<h2 id="comparison-table-of-obsidian-plugins-and-built-in-trilium-features">Comparison table of Obsidian plugins and built-in Trilium features</h2>
+<p>| Feature                | Obsidian                 | Trilium Notes 0.104           |</p>
+<p>| --------------------- | ------------------------ | ----------------------------- |</p>
+<p>| Calendar               | Calendar                 | Built-in                      |</p>
+<p>| Tasks                  | Tasks                    | Built-in                      |</p>
+<p>| Kanban                 | Kanban                   | Built-in                      |</p>
+<p>| Templates               | Templater                | Built-in                      |</p>
+<p>| Note attributes        | Meta Bind + Front Matter | Built-in                      |</p>
+<p>| Maps                   | Maps                     | Built-in                      |</p>
+<p>| Diagrams                | Excalidraw               | Built-in (diagrams and canvas) |</p>
+<p>| Tables                 | Table Editor             | Built-in                      |</p>
+<p>| Reminders               | Reminder                 | Built-in                      |</p>
+<p>| Search                  | Omnisearch               | Built-in                      |</p>
+<p>| PDF export              | Better Export PDF        | Built-in                      |</p>
+<p>| Folder icons            | Icon Folder               | Built-in                      |</p>
+<p>| Home page               | Homepage                 | Built-in                      |</p>
+<p>| Local images             | Local Images Plus        | Built-in                      |</p>
+<p>| Word count               | Better Word Count        | Built-in                      |</p>
+<p>| Reading time             | Reading Time             | Built-in                      |</p>
+<p>| Auto-formatting          | Linter                   | Built-in                      |</p>
+<p>|Note sync                | Remotly Save             | Built-in                      |</p>
+<hr>
+<h2 id="summary">Summary</h2>
+<p>Thirty-six plugins sounds scary, but in practice, most of them are a one-time setup that I forgot about the moment it started working. The core working loop is Templater, Notebook Navigator, Bases, and Front Matter. Everything else is add-ons, some of which I enabled once and never touched again (hi, Meta Bind and Maps).</p>
+<p>If someone asked me whether it was worth it - yes, absolutely. But not because Obsidian is functionally richer than Trilium (it's not, Trilium gives you more, much more, out of the box), but because I specifically needed a plain text file with Front Matter that Hugo understands - and I had to rebuild everything else around that single requirement.</p>
+<h2 id="who-each-one-suits">Who each one suits</h2>
+<p><strong>Trilium</strong> - if you don't need to publish notes on a static site, self-hosting matters to you, and you want maximum out-of-the-box functionality without jumping through hoops trying to make a bunch of plugins work together without conflicts. A powerful tool after one evening (well, maybe two) of setup.</p>
+<p><strong>Obsidian</strong> - if, like me, you specifically need plain-text Markdown with Front Matter, Git integration, and static site generators, and you're willing to spend time (a lot of time, a whole lot of time) assembling your own plugin ecosystem for your specific tasks.</p>
+<p>Neither option is "better" in a general sense - they grew out of different philosophies, and the question is which philosophy fits your task better.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Memos - Setting Up Self-Hosted Notes for Quick Thoughts</title>
+      <link>https://prohomelab.com/en/posts/memos/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/memos/</guid>
+      <pubDate>Tue, 17 Feb 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Personal Knowledge Base</category>
+      <category>PKM</category>
+      <category>Self-Hosting</category>
+      <category>Memos</category>
+      <category>Docker</category>
+      <description>A look at Memos, a lightweight self-hosted note-taking app - basically a self-hosted Google Keep replacement. Who it's for (and who it isn't), plus an up-to-date docker-compose behind Traefik with every variable explained.</description>
+      <content:encoded><![CDATA[<p>If you don't need a full-blown PKM system like Obsidian or <a href="https://prohomelab.com/en/posts/trilium/">Trilium</a>, and just want to jot down a thought before you lose it, Memos fills that exact gap. It's basically a self-hosted Google Keep: lightweight, no bloated interface, but with your own server under the hood and full control over your data.</p>
+<p>I go through it in the video and do a full write-up alongside it - what it is, who it's for, and how to get it running in Docker.</p>
+<h2 id="what-memos-is">What Memos is</h2>
+<p>Memos is an open-source note-taking app built around a timeline. No page hierarchy, no databases inside notes, no block structures like you'd get in Notion or Obsidian - just a chronological feed of short entries written in Markdown, with tags right in the text and fast search.</p>
+<p>If Obsidian or Trilium is a full-on knowledge base, Memos is closer to a technical microblog for yourself: drop a thought, slap a tag on it, move on.</p>
+<h2 id="who-its-for">Who it's for</h2>
+<p>Memos makes sense if you don't need nested structures, links between notes, kanban boards, or full wiki logic.</p>
+<p>What you do need is a fast way to capture a thought, a project idea, or a quick technical note without opening a heavyweight PKM app. It's essentially a self-hosted alternative to Google Keep or Apple Notes, except your notes stay on your own server instead of flying off to someone else's.</p>
+<h3 id="timeline-and-tags">Timeline and tags</h3>
+<p>Every entry lands in a single chronological feed - handy for jotting down ideas as you work through a project. Tags (<code>#docker</code>, <code>#proxmox</code>, <code>#traefik</code>) let you filter down to what you need later without scrolling through everything.</p>
+<h3 id="multiple-users">Multiple users</h3>
+<p>You can set up separate users with isolated data and roles - useful if you want one instance for the whole family or a small team instead of spinning up a Memos instance for each person.</p>
+<h3 id="minimal-requirements">Minimal requirements</h3>
+<p>No external <a href="https://prohomelab.com/en/posts/postgres-p-1/">PostgreSQL</a>, no heavy dependencies, no complicated config out of the box - by default Memos runs on SQLite. That makes it a solid candidate for a mini PC, a single-board computer, or a small VPS where you have no reason to run anything heavier.</p>
+<h2 id="sample-docker-compose-file-from-the-video">Sample docker compose file from the video</h2>
+<p>Here's the config I used in the video - Memos behind <a href="https://prohomelab.com/en/posts/traefik-in-docker/">Traefik</a>, proxied through a domain:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">memos</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">neosmemo/memos:stable</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">memos</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#ports:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "5230:5230"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/user/docker/memos:/var/opt/memos</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">MEMOS_PORT=5230</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">MEMOS_INSTANCE_URL=https://memos.domain.ru</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:                              </span><span style="--0:#616972;--1:#99A0A6"># Attach the container to the external "proxy" network (used by Traefik)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:                               </span><span style="--0:#616972;--1:#99A0A6"># Labels for Traefik integration (reverse proxy)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span><span style="--0:#24292E;--1:#E1E4E8">                                      </span><span style="--0:#616972;--1:#99A0A6"># Turns on Traefik handling for this container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.memos.entrypoints=web"</span><span style="--0:#24292E;--1:#E1E4E8">             </span><span style="--0:#616972;--1:#99A0A6"># Defines the HTTP entrypoint (port 80)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.memos.rule=Host(`memos.domain.ru`)"</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># Traffic for this domain gets routed to this container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.memos-https-redirect.redirectscheme.scheme=https"</span><span style="--0:#24292E;--1:#E1E4E8">         </span><span style="--0:#616972;--1:#99A0A6"># Middleware for the HTTP-to-HTTPS redirect</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.memos.middlewares=memos-https-redirect"</span><span style="--0:#24292E;--1:#E1E4E8">          </span><span style="--0:#616972;--1:#99A0A6"># Apply the redirect middleware to the HTTP route</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.memos-secure.entrypoints=websecure"</span><span style="--0:#24292E;--1:#E1E4E8">          </span><span style="--0:#616972;--1:#99A0A6"># Defines the HTTPS entrypoint (port 443)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.memos-secure.rule=Host(`memos.domain.ru`)"</span><span style="--0:#24292E;--1:#E1E4E8">         </span><span style="--0:#616972;--1:#99A0A6"># Same HTTPS route for the same domain</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.memos-secure.tls=true"</span><span style="--0:#24292E;--1:#E1E4E8">          </span><span style="--0:#616972;--1:#99A0A6"># Turns on TLS (HTTPS)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.memos-secure.service=memos"</span><span style="--0:#24292E;--1:#E1E4E8">     </span><span style="--0:#616972;--1:#99A0A6"># Ties the HTTPS route to the memos service</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.memos.loadbalancer.server.port=5230"</span><span style="--0:#24292E;--1:#E1E4E8">          </span><span style="--0:#616972;--1:#99A0A6"># Internal port memos listens on inside the container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span><span style="--0:#24292E;--1:#E1E4E8">          </span><span style="--0:#616972;--1:#99A0A6"># Tells Traefik to look for the container on the "proxy" network</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:                                  </span><span style="--0:#616972;--1:#99A0A6"># External network definition for talking to Traefik</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span><span style="--0:#24292E;--1:#E1E4E8">                        </span><span style="--0:#616972;--1:#99A0A6"># Network already exists (don't recreate it)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:  memos:    image: neosmemo/memos:stable    container_name: memos    #ports:    #  - &#x22;5230:5230&#x22;    volumes:      - /home/user/docker/memos:/var/opt/memos    environment:      - MEMOS_PORT=5230      - MEMOS_INSTANCE_URL=https://memos.domain.ru    restart: unless-stopped    networks:      proxy:                              # Attach the container to the external &#x22;proxy&#x22; network (used by Traefik)    labels:                               # Labels for Traefik integration (reverse proxy)      - &#x22;traefik.enable=true&#x22;                                      # Turns on Traefik handling for this container      - &#x22;traefik.http.routers.memos.entrypoints=web&#x22;             # Defines the HTTP entrypoint (port 80)      - &#x22;traefik.http.routers.memos.rule=Host(&#x60;memos.domain.ru&#x60;)&#x22;  # Traffic for this domain gets routed to this container      - &#x22;traefik.http.middlewares.memos-https-redirect.redirectscheme.scheme=https&#x22;         # Middleware for the HTTP-to-HTTPS redirect      - &#x22;traefik.http.routers.memos.middlewares=memos-https-redirect&#x22;          # Apply the redirect middleware to the HTTP route      - &#x22;traefik.http.routers.memos-secure.entrypoints=websecure&#x22;          # Defines the HTTPS entrypoint (port 443)      - &#x22;traefik.http.routers.memos-secure.rule=Host(&#x60;memos.domain.ru&#x60;)&#x22;         # Same HTTPS route for the same domain      - &#x22;traefik.http.routers.memos-secure.tls=true&#x22;          # Turns on TLS (HTTPS)      - &#x22;traefik.http.routers.memos-secure.service=memos&#x22;     # Ties the HTTPS route to the memos service      - &#x22;traefik.http.services.memos.loadbalancer.server.port=5230&#x22;          # Internal port memos listens on inside the container      - &#x22;traefik.docker.network=proxy&#x22;          # Tells Traefik to look for the container on the &#x22;proxy&#x22; networknetworks:  proxy:                                  # External network definition for talking to Traefik    external: true                        # Network already exists (don&#x27;t recreate it)"><div></div></button></div></figure></div>
+<p>A couple of nuances if you're building this out for your own domain:</p>
+<ul>
+<li><code>ports</code> is commented out on purpose - the container doesn't publish a port directly, all traffic comes in through Traefik over the <code>proxy</code> network.</li>
+<li>Instead of <code>MEMOS_MODE=prod</code>, which shows up in older examples, I used <code>MEMOS_INSTANCE_URL</code> - the current variable from Memos' documentation that sets the instance's canonical external address. It matters specifically when running behind a reverse proxy: without it, links to shared notes can end up generated incorrectly.</li>
+<li>Port <code>5230</code> here isn't the default (recent versions of Memos listen on <code>8081</code> if no port is set explicitly), but since it's spelled out in both <code>MEMOS_PORT</code> and the Traefik label, everything lines up.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>If Obsidian or Trilium feels like overkill for what's essentially a list of quick notes, Memos fills exactly that gap: self-hosted, lightweight, Markdown and tags, running in five minutes. It won't become a full knowledge base, but as a self-hosted stand-in for Google Keep, it does the job perfectly.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Obsidian vs TriliumNext - A Comparison of Knowledge Management Systems</title>
+      <link>https://prohomelab.com/en/posts/trilium-vs-obsidian/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/trilium-vs-obsidian/</guid>
+      <pubDate>Fri, 31 Oct 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Personal Knowledge Base</category>
+      <category>Obsidian</category>
+      <category>PKM</category>
+      <category>Self-Hosting</category>
+      <category>Trilium</category>
+      <category>Docker</category>
+      <description>A detailed comparison of Obsidian and TriliumNext: two powerful systems for organizing notes and a personal knowledge base. Which one should you choose for your workflow?</description>
+      <content:encoded><![CDATA[<h2 id="obsidian-vs-triliumnext---a-comparison-of-knowledge-management-systems">Obsidian vs TriliumNext - a comparison of knowledge management systems</h2>
+<p>Organizing personal knowledge, notes, and ideas is becoming an increasingly important task - whether you're a developer, a researcher, or just an ordinary person like me who wants to bring order to the information that piles up on us every day.<br>
+Today we're comparing <strong>Obsidian</strong> and <strong>TriliumNext</strong> - two popular solutions for personal knowledge management (PKM).</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p><strong>Update.</strong> At the time this article was written, the community fork lived under the name TriliumNext. In 2025 the project got the original repository and name back from the author of the original Trilium - it's now simply <strong>Trilium</strong> again, not a fork. Below I keep the name TriliumNext as it was at the time of the comparison, but in fact this refers to the current Trilium. More details in <a href="https://prohomelab.com/en/posts/trilium/">a separate article about installing Trilium</a>.</p>
+</div>
+</div>
+<hr>
+<h3 id="what-is-obsidian">What is Obsidian</h3>
+<p>Obsidian is a desktop app for note-taking and knowledge management based on <strong>Markdown files</strong>.<br>
+Each note is a plain <code>.md</code> file stored locally, and links between notes form a network of ideas.</p>
+<p><img alt="Obsidian interface on desktop and mobile - a note, the graph view, and the mobile client" loading="lazy" decoding="async" width="2928" height="1728" src="https://prohomelab.com/_astro/353eed1b4d36384d57fafa0bdd31a980_MD5.DR8LVBLW_2oMsru.webp"></p>
+<h4 id="main-features">Main features</h4>
+<ul>
+<li>Works on Windows, macOS, Linux, Android, and iOS</li>
+<li>Stores data <strong>locally</strong>, with no cloud dependency</li>
+<li>Uses <strong>links between notes</strong> and a graph visualization</li>
+<li>Supports <strong>plugins, themes, and interface customization</strong></li>
+<li>Has paid services - <strong>Obsidian Sync</strong> and <strong>Obsidian Publish</strong></li>
+</ul>
+<h4 id="advantages">Advantages</h4>
+<ul>
+<li>Simple data storage in an open Markdown format</li>
+<li>A huge plugin ecosystem</li>
+<li>Great fit for the <strong>"second brain"</strong> concept (well, since we've sorted out the first one)</li>
+<li>Flexible knowledge organization (tags, links, graph view)</li>
+</ul>
+<h4 id="drawbacks">Drawbacks</h4>
+<ul>
+<li>Some features (sync, publishing) are paid</li>
+<li>Can be complex for beginners due to the sheer number of settings</li>
+<li>Dependency on plugins (risk of incompatibility on updates)</li>
+<li>It can't really be called an open-source solution</li>
+<li>No official Docker image (I used the one from LinuxServer)</li>
+</ul>
+<p>If you're curious exactly which plugins I use to close those gaps, I go through them in detail in <a href="https://prohomelab.com/en/posts/obsidian-plugins/">Obsidian Plugins I Use</a>.</p>
+<hr>
+<h3 id="what-is-triliumnext">What is TriliumNext</h3>
+<p>TriliumNext is an actively developed <strong>fork of Trilium Notes</strong>, focused on <strong>hierarchical knowledge organization</strong>.<br>
+Unlike Obsidian, it uses a database and a tree (not really a fully tree-like structure, but for lack of a better term, let's call it a tree) of notes instead of separate files.</p>
+<p><img alt="Relation map in TriliumNext, shown with a family tree example and relation attributes" loading="lazy" decoding="async" width="941" height="758" src="https://prohomelab.com/_astro/7edc24e9868988b9ca25592266c7dd3c_MD5.ebXvh7tp_ZbU8X4.webp"></p>
+<h4 id="main-features-1">Main features</h4>
+<ul>
+<li>Fully <strong>open-source</strong>, supports <strong>self-hosting</strong></li>
+<li>Web interface + desktop app (clients for all three OSes exist)</li>
+<li>Deep <strong>hierarchical structure</strong> of notes (a tree)</li>
+<li>Support for <strong>attributes, templates, versions, and cloning (which is why it's not quite a tree)</strong></li>
+<li><strong>Sync between devices</strong> out of the box and for free (Obsidian? Never heard of it)</li>
+</ul>
+<h4 id="advantages-1">Advantages</h4>
+<ul>
+<li>Powerful and flexible knowledge base structure</li>
+<li>Lots of built-in features - diagrams, code blocks, formulas</li>
+<li>Can be hosted on your own server (Docker, NAS)</li>
+<li>Suited to advanced scenarios, corporate wikis, and knowledge bases</li>
+</ul>
+<h4 id="drawbacks-1">Drawbacks</h4>
+<ul>
+<li>The learning curve may feel steeper to some</li>
+<li>The interface is less friendly than Obsidian's (though that's subjective). For anyone used to MS Word, it will feel easy to get into.</li>
+<li>No official mobile app. The interface is adapted for use on mobile devices.</li>
+</ul>
+<hr>
+<h3 id="comparison-by-key-parameters">Comparison by key parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th><strong>Obsidian</strong></th>
+<th><strong>TriliumNext</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Storage format</strong></td>
+<td>Local Markdown files</td>
+<td>Built-in database</td>
+</tr>
+<tr>
+<td><strong>Knowledge organization</strong></td>
+<td>Network of notes and graph view</td>
+<td>Tree hierarchy with attributes</td>
+</tr>
+<tr>
+<td><strong>Ease of getting started</strong></td>
+<td>High - simple to start</td>
+<td>Requires setup and understanding the structure</td>
+</tr>
+<tr>
+<td><strong>Extensibility</strong></td>
+<td>Community plugins and themes</td>
+<td>Many built-in features</td>
+</tr>
+<tr>
+<td><strong>Sync</strong></td>
+<td>Via Obsidian Sync (paid) or Git</td>
+<td>Via a built-in server or WebDAV</td>
+</tr>
+<tr>
+<td><strong>Mobile apps</strong></td>
+<td>Full-featured iOS/Android clients</td>
+<td>Browser or experimental app</td>
+</tr>
+<tr>
+<td><strong>Self-Hosting</strong></td>
+<td>Not required</td>
+<td>Recommended for full control</td>
+</tr>
+<tr>
+<td><strong>Best suited for</strong></td>
+<td>Individual notes and ideas, knowledge base</td>
+<td>Knowledge bases, documentation, corporate wikis (though some solutions fit the latter task better)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="feature-table">Feature table</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th><strong>Obsidian</strong></th>
+<th><strong>TriliumNext</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Markdown editor</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Nested notes</td>
+<td>⚙️ via folders</td>
+<td>✅ hierarchically</td>
+</tr>
+<tr>
+<td>Tags and links</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Graph view</td>
+<td>✅</td>
+<td>⚙️ (via the map)</td>
+</tr>
+<tr>
+<td>Embedded images / files</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Note attributes</td>
+<td>⚙️ via plugins</td>
+<td>✅ built-in</td>
+</tr>
+<tr>
+<td>Versioning</td>
+<td>⚙️ via Git / plugins</td>
+<td>✅ built-in</td>
+</tr>
+<tr>
+<td>Templates</td>
+<td>✅ via plugins</td>
+<td>✅ built-in</td>
+</tr>
+<tr>
+<td>API / scripts</td>
+<td>⚙️ via plugins</td>
+<td>✅ built-in JS API</td>
+</tr>
+<tr>
+<td>Diagrams / flowcharts</td>
+<td>⚙️ via plugins</td>
+<td>✅ built-in</td>
+</tr>
+<tr>
+<td>Themes / customization</td>
+<td>✅ many themes</td>
+<td>⚙️ limited</td>
+</tr>
+<tr>
+<td>Web interface</td>
+<td>⚙️ (via Publish)</td>
+<td>✅ out of the box</td>
+</tr>
+<tr>
+<td>Self-Hosting</td>
+<td>⚙️ (via Git/Sync)</td>
+<td>✅ primary scenario</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="choosing---who-should-pick-what">Choosing - who should pick what</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Getting started quickly, just writing notes</td>
+<td>🟩 <strong>Obsidian</strong></td>
+</tr>
+<tr>
+<td>Building a complex knowledge base with hierarchy</td>
+<td>🟩 <strong>TriliumNext</strong></td>
+</tr>
+<tr>
+<td>Working with Markdown and external editors</td>
+<td>🟩 <strong>Obsidian</strong></td>
+</tr>
+<tr>
+<td>Self-Hosting, privacy, control</td>
+<td>🟩 <strong>TriliumNext</strong></td>
+</tr>
+<tr>
+<td>Built-in sync out of the box across all clients</td>
+<td>🟩 <strong>TriliumNext</strong></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="conclusion">Conclusion</h3>
+<p><strong>Obsidian</strong> is ideal for those who want a flexible, aesthetically pleasing, and easy-to-learn note-taking system.<br>
+<strong>TriliumNext</strong> is better suited for those aiming to build a <strong>structured knowledge base</strong> with full control over their data and powerful built-in capabilities.</p>
+<blockquote>
+<p>A tip from prohomelab: if you want to start with a tool that has plenty of videos to learn from, start with Obsidian.<br>
+If you need powerful hierarchy and templates, and the (frankly) unnecessary prettiness just annoys you - switch to TriliumNext.</p>
+</blockquote>
+<hr>
+<h4 id="useful-links">Useful links</h4>
+<ul>
+<li><a href="https://obsidian.md/">Official Obsidian website</a></li>
+<li><a href="https://github.com/TriliumNext/Trilium">TriliumNext repository on GitHub</a></li>
+<li><a href="https://docs.triliumnotes.org/">TriliumNext documentation</a></li>
+<li><a href="https://forum.obsidian.md/">Obsidian community</a></li>
+<li><a href="https://www.androidauthority.com/trilium-next-hands-on-3547267/">TriliumNext review on AndroidAuthority</a></li>
+</ul>
+<hr>]]></content:encoded>
+    </item>
+    <item>
+      <title>Trilium - Installing and Setting Up a Note-Taking System</title>
+      <link>https://prohomelab.com/en/posts/trilium/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/trilium/</guid>
+      <pubDate>Thu, 30 Oct 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Personal Knowledge Base</category>
+      <category>PKM</category>
+      <category>Self-Hosting</category>
+      <category>Trilium</category>
+      <category>Docker</category>
+      <description>A step-by-step guide to installing and configuring Trilium for organizing notes and knowledge bases on a personal server. Covers installation via Docker, web interface setup, users, and recommendations for effective note management.</description>
+      <content:encoded><![CDATA[<h2 id="trilium---a-powerful-personal-knowledge-system-under-your-control">Trilium - a powerful personal knowledge system under your control</h2>
+<h3 id="introduction---why-you-need-trilium-and-why-you-need-pkm-tools-at-all">Introduction - why you need Trilium and why you need PKM tools at all</h3>
+<p>In an age of information overload, we suffer not so much from a <code>lack of knowledge</code> as from the sheer volume of information that piles up on us every day, and from the chaos that this volume creates: scattered ideas, lost connections, forgotten context, and other horrors of digitalization. Not to mention attempts to manipulate you by telling you that your brain wasn't made to hold anything in memory - as if you were some kind of computer with a limited amount of RAM. (Spoiler, spoiler - that's not true.)
+Tools exist to solve this problem, and the community has affectionately dubbed them <strong>Personal Knowledge Management (PKM)</strong> systems - personal knowledge bases.</p>
+<p><img alt="Trilium interface: demo note tree with formatting examples" loading="lazy" decoding="async" width="1295" height="929" src="https://prohomelab.com/_astro/15db259765dcfeebb94a9cbcffac31fc_MD5.y-ynFrdl_ZFhebz.webp"></p>
+<p>Such systems let you:</p>
+<ul>
+<li><strong>collect</strong> scattered notes, ideas, links, and drafts in one place;</li>
+<li><strong>integrate</strong> different formats (text, images, diagrams, tables, code) in a single database;</li>
+<li><strong>find connections</strong> between notes via links, graphs, search, and attributes;</li>
+<li><strong>grow knowledge</strong> - not just record facts, but connect, deepen, and reassemble them;</li>
+<li><strong>export / back up</strong> - so you don't depend on someone else's cloud.</li>
+</ul>
+<p>Classic tools like Obsidian or Notion give you either a "file-based" approach (Markdown + plugins, as with Obsidian) or a cloud ecosystem with limitations. Given everything that's happened recently, being cloud-based is itself a limitation - arguably even a barrier by now. <strong>Obsidian</strong>, <strong>Notion</strong>, and <strong>Joplin</strong> are all good, but Trilium goes further, offering a <strong>hybrid approach</strong>: a powerful tree structure, database flexibility, and the privacy of a self-hosted solution. That said, keep in mind that Obsidian and Notion aren't open-source, and while Joplin is popular, it's also far from perfect.</p>
+<p>The hero of today's article, <a href="https://triliumnotes.org">Trilium</a>, is an actively community-developed successor to the original project started by developer zadam. For a while the community fork lived under the name TriliumNext, but in 2025 the author handed the original repository and name back to it - so it's simply Trilium again, not a fork.</p>
+<p>Trilium is also not "just notes" - it's a system in which a note is a data object with fields, templates, relations, attributes, and visual interfaces. When your database grows to hundreds or thousands of notes, that difference becomes especially noticeable.</p>
+<h3 id="what-trilium-is---a-brief-overview-of-version-01041-the-current-version-as-of-this-articles-update-date">What Trilium is - a brief overview of version 0.104.1 (the current version as of this article's update date)</h3>
+<h4 id="triliums-main-features">Trilium's main features</h4>
+<ul>
+<li>Notes can be organized into a tree of arbitrary depth. One note can be placed in multiple locations in the tree.</li>
+<li>An advanced WYSIWYG note editor, including tables, images, and <a href="https://docs.triliumnotes.org/user-guide/note-types/text.html">math formulas with</a> <a href="https://docs.triliumnotes.org/user-guide/note-types/text/markdown-formatting.html">automatic Markdown formatting</a></li>
+<li>Support for editing <a href="https://docs.triliumnotes.org/user-guide/note-types/code.html">code notes</a>, including syntax highlighting</li>
+<li>Fast and simple <a href="https://docs.triliumnotes.org/user-guide/concepts/navigation.html">navigation between notes</a>, full-text search, and <a href="https://docs.triliumnotes.org/user-guide/concepts/navigation/note-hoisting.html">note hoisting</a></li>
+<li>Seamless <a href="https://docs.triliumnotes.org/user-guide/concepts/notes/note-revisions.html">note revision management</a></li>
+<li>Note <a href="https://docs.triliumnotes.org/user-guide/advanced-usage/attributes.html">attributes</a> can be used to organize notes, build queries, and create advanced <a href="https://docs.triliumnotes.org/user-guide/scripts.html">scripts</a></li>
+<li>Direct <a href="https://docs.triliumnotes.org/user-guide/setup/server/mfa.html">OpenID and TOTP integration</a> for more secure login</li>
+<li><a href="https://docs.triliumnotes.org/user-guide/setup/synchronization.html">Synchronization</a> with your own sync server
+<ul>
+<li>there's a <a href="https://trilium.cc/paid-hosting">third-party hosting service for the sync server</a></li>
+</ul>
+</li>
+<li><a href="https://docs.triliumnotes.org/user-guide/advanced-usage/sharing.html">Publishing</a> notes to a public space</li>
+<li>Reliable <a href="https://docs.triliumnotes.org/user-guide/concepts/notes/protected-notes.html">note encryption</a> with per-note granularity</li>
+<li>Creating diagrams based on <a href="https://excalidraw.com/">Excalidraw</a> (the "canvas" note type)</li>
+<li><a href="https://docs.triliumnotes.org/user-guide/note-types/relation-map.html">Relation maps</a> and <a href="https://docs.triliumnotes.org/user-guide/note-types/note-map.html">link maps</a> (note maps) for visualizing notes and their relationships</li>
+<li>Mind maps based on <a href="https://docs.mind-elixir.com/">Mind Elixir</a></li>
+<li><a href="https://docs.triliumnotes.org/user-guide/collections/geomap.html">Geo maps</a> with location markers and GPX tracks</li>
+<li><a href="https://docs.triliumnotes.org/user-guide/scripts.html">Scripting</a> - see <a href="https://docs.triliumnotes.org/user-guide/advanced-usage/advanced-showcases.html">Advanced Showcases</a></li>
+<li><a href="https://docs.triliumnotes.org/user-guide/advanced-usage/etapi.html">REST API</a> for automation</li>
+<li>Scales well both in terms of usability and performance when handling more than 100,000 notes.</li>
+<li>A touch-optimized <a href="https://docs.triliumnotes.org/user-guide/setup/mobile-frontend.html">mobile interface</a> for smartphones and tablets</li>
+<li>A built-in <a href="https://docs.triliumnotes.org/user-guide/concepts/themes.html">dark theme</a> with support for custom themes</li>
+<li><a href="https://docs.triliumnotes.org/user-guide/concepts/import-export/import-from-apps/evernote.html">Evernote</a> and <a href="https://docs.triliumnotes.org/user-guide/concepts/import-export/markdown.html">Markdown</a> import/export</li>
+<li>A <a href="https://docs.triliumnotes.org/user-guide/setup/web-clipper.html">Web Clipper</a> for conveniently saving web content</li>
+<li>A customizable UI (sidebar buttons, custom widgets, ...)</li>
+<li><a href="https://docs.triliumnotes.org/user-guide/advanced-usage/metrics.html">Metrics</a> together with a Grafana dashboard</li>
+</ul>
+<p>For more information about Trilium, you can also read:</p>
+<ul>
+<li><a href="https://github.com/Nriver/awesome-trilium">awesome-trilium</a> for third-party themes, scripts, plugins, and more.</li>
+<li><a href="https://trilium.rocks/">TriliumRocks!</a> - learning materials, guides, and more.</li>
+</ul>
+<p><img alt="Note Map of the Trilium demo database - visualization of connections between notes" loading="lazy" decoding="async" width="1068" height="814" src="https://prohomelab.com/_astro/72fa734a275f592d16bec5cfd7a41a5e_MD5.BpyHAWL3_ZNTaIC.webp"></p>
+<p>Trilium turns notes into <strong>data objects</strong> - each entry can have attributes, relations, a template, and visualizations. This makes the system feel closer to a knowledge base than a simple set of files.</p>
+<p>---</p>
+<h3 id="installing-and-configuring-trilium">Installing and configuring Trilium</h3>
+<p>Below is my docker-compose file, assuming I'm using the <a href="https://prohomelab.com/en/posts/traefik-in-docker/">Traefik</a> reverse proxy</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">trilium</span><span style="--0:#24292E;--1:#E1E4E8">:                                </span><span style="--0:#616972;--1:#99A0A6"># Define a service named "trilium"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">trilium</span><span style="--0:#24292E;--1:#E1E4E8">               </span><span style="--0:#616972;--1:#99A0A6"># Docker container name (for convenience)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">triliumnext/trilium:v0.104.1</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Official Trilium image, pinning a specific version. Don't use latest - the official docs explicitly warn that the tag can silently bump the minor version and break sync</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">always</span><span style="--0:#24292E;--1:#E1E4E8">                       </span><span style="--0:#616972;--1:#99A0A6"># The container will restart automatically on failure or Docker reboot</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:                          </span><span style="--0:#616972;--1:#99A0A6"># Environment variables passed into the container</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">TRILIUM_NETWORK_TRUSTEDREVERSEPROXY</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">172.18.0.0/16</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Trusted network for the reverse proxy</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">TRILIUM_DATA_DIR</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/home/node/trilium-data</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># Path to the directory where Trilium stores its data inside the container</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">TZ</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${TZ}</span><span style="--0:#24292E;--1:#E1E4E8">                                   </span><span style="--0:#616972;--1:#99A0A6"># Set the timezone from an environment variable (usually defined in .env)</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHBASEURL</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"https://trilium.domain.ru"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6"># Base URL for OIDC callbacks (Trilium needs to know its public address)</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHCLIENTID</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${TRILIUM_CLIENT_ID}</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6"># OAuth client ID (taken from .env or a secret)</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHCLIENTSECRET</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${TRILIUM_CLIENT_SECRET}</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6"># OAuth client secret (also from .env)</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERBASEURL</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"https://auth.domain.ru/application/o/trilium"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6"># Identity Provider address (Authentik in this case)</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERNAME</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"Authentik"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6"># Name of the auth provider shown in the Trilium UI</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERICON</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"https://cdn.jsdelivr.net/gh/selfhst/icons/svg/authentik.svg"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6"># Auth provider icon (a nice UI touch)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:                              </span><span style="--0:#616972;--1:#99A0A6"># Mount local directories into the container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/user/docker/trilium:/home/node/trilium-data</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6"># Main data volume (replaces Trilium's built-in directory)</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># If you want the container to inherit the system timezone, uncomment:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># - /etc/localtime:/etc/localtime:ro</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6"># Mount the system's local time into the container (read-only)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:                              </span><span style="--0:#616972;--1:#99A0A6"># Attach the container to the external "proxy" network (used by Traefik)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:                               </span><span style="--0:#616972;--1:#99A0A6"># Labels for Traefik integration (reverse proxy)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span><span style="--0:#24292E;--1:#E1E4E8">                                      </span><span style="--0:#616972;--1:#99A0A6"># Enable Traefik processing for the container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.trilium.entrypoints=web"</span><span style="--0:#24292E;--1:#E1E4E8">             </span><span style="--0:#616972;--1:#99A0A6"># Define the HTTP entrypoint (port 80)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.trilium.rule=Host(`trilium.domain.ru`)"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Traffic to this domain is routed to this container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.trilium-https-redirect.redirectscheme.scheme=https"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Middleware to redirect HTTP to HTTPS</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.trilium.middlewares=trilium-https-redirect"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Apply the redirect middleware to the HTTP route</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.trilium-secure.entrypoints=websecure"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Define the HTTPS entrypoint (port 443)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.trilium-secure.rule=Host(`trilium.domain.ru`)"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># HTTPS route for the same domain</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.trilium-secure.tls=true"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Enable TLS (HTTPS)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.trilium-secure.service=trilium"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Bind the HTTPS route to the Trilium service</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.trilium.loadbalancer.server.port=8080"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Specify the internal port Trilium listens on in the container</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Tell Traefik to look for the container in the "proxy" network</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:                                  </span><span style="--0:#616972;--1:#99A0A6"># Definition of the external network for talking to Traefik</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span><span style="--0:#24292E;--1:#E1E4E8">                        </span><span style="--0:#616972;--1:#99A0A6"># The network was already created earlier (don't recreate)</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:  trilium:                                # Define a service named &#x22;trilium&#x22;    container_name: trilium               # Docker container name (for convenience)    image: triliumnext/trilium:v0.104.1   # Official Trilium image, pinning a specific version. Don&#x27;t use latest - the official docs explicitly warn that the tag can silently bump the minor version and break sync    restart: always                       # The container will restart automatically on failure or Docker reboot    environment:                          # Environment variables passed into the container      TRILIUM_NETWORK_TRUSTEDREVERSEPROXY: 172.18.0.0/16 # Trusted network for the reverse proxy      TRILIUM_DATA_DIR: /home/node/trilium-data   # Path to the directory where Trilium stores its data inside the container      TZ: ${TZ}                                   # Set the timezone from an environment variable (usually defined in .env)      TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHBASEURL: &#x22;https://trilium.domain.ru&#x22;        # Base URL for OIDC callbacks (Trilium needs to know its public address)      TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHCLIENTID: ${TRILIUM_CLIENT_ID}        # OAuth client ID (taken from .env or a secret)      TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHCLIENTSECRET: ${TRILIUM_CLIENT_SECRET}        # OAuth client secret (also from .env)      TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERBASEURL: &#x22;https://auth.domain.ru/application/o/trilium&#x22;        # Identity Provider address (Authentik in this case)      TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERNAME: &#x22;Authentik&#x22;        # Name of the auth provider shown in the Trilium UI      TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERICON: &#x22;https://cdn.jsdelivr.net/gh/selfhst/icons/svg/authentik.svg&#x22;        # Auth provider icon (a nice UI touch)    volumes:                              # Mount local directories into the container      - /home/user/docker/trilium:/home/node/trilium-data        # Main data volume (replaces Trilium&#x27;s built-in directory)      # If you want the container to inherit the system timezone, uncomment:      # - /etc/localtime:/etc/localtime:ro        # Mount the system&#x27;s local time into the container (read-only)    networks:      proxy:                              # Attach the container to the external &#x22;proxy&#x22; network (used by Traefik)    labels:                               # Labels for Traefik integration (reverse proxy)      - &#x22;traefik.enable=true&#x22;                                      # Enable Traefik processing for the container      - &#x22;traefik.http.routers.trilium.entrypoints=web&#x22;             # Define the HTTP entrypoint (port 80)      - &#x22;traefik.http.routers.trilium.rule=Host(&#x60;trilium.domain.ru&#x60;)&#x22; # Traffic to this domain is routed to this container      - &#x22;traefik.http.middlewares.trilium-https-redirect.redirectscheme.scheme=https&#x22; # Middleware to redirect HTTP to HTTPS      - &#x22;traefik.http.routers.trilium.middlewares=trilium-https-redirect&#x22; # Apply the redirect middleware to the HTTP route      - &#x22;traefik.http.routers.trilium-secure.entrypoints=websecure&#x22; # Define the HTTPS entrypoint (port 443)      - &#x22;traefik.http.routers.trilium-secure.rule=Host(&#x60;trilium.domain.ru&#x60;)&#x22; # HTTPS route for the same domain      - &#x22;traefik.http.routers.trilium-secure.tls=true&#x22; # Enable TLS (HTTPS)      - &#x22;traefik.http.routers.trilium-secure.service=trilium&#x22; # Bind the HTTPS route to the Trilium service      - &#x22;traefik.http.services.trilium.loadbalancer.server.port=8080&#x22; # Specify the internal port Trilium listens on in the container      - &#x22;traefik.docker.network=proxy&#x22; # Tell Traefik to look for the container in the &#x22;proxy&#x22; networknetworks:  proxy:                                  # Definition of the external network for talking to Traefik    external: true                        # The network was already created earlier (don&#x27;t recreate)"><div></div></button></div></figure></div>
+<p>and also the variables file</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Timezone</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">TZ=Europe/Moscow</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># OAuth2 (Authentik)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">TRILIUM_CLIENT_ID=client-id</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">TRILIUM_CLIENT_SECRET=client-secret</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# TimezoneTZ=Europe/Moscow# OAuth2 (Authentik)TRILIUM_CLIENT_ID=client-idTRILIUM_CLIENT_SECRET=client-secret"><div></div></button></div></figure></div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Trilium is also supported on <a href="https://prohomelab.com/en/posts/docker-podman-kubernetes/">Kubernetes</a>, via Cloudron, HomelabOS, a NixOS module, and others.</p>
+</div>
+</div>
+<p>Keep in mind that <strong>Traefik</strong> versions 3.6.4 and above had some minor breaking changes. If you use <strong>Traefik</strong> as your reverse proxy, you need to add the following block to your static configuration file</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">websecure</span><span style="--0:#24292E;--1:#E1E4E8">:                              </span><span style="--0:#616972;--1:#99A0A6"># Entrypoint for HTTPS (port 443)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">address</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">":443"</span><span style="--0:#24292E;--1:#E1E4E8">                       </span><span style="--0:#616972;--1:#99A0A6"># Listen on port 443</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">http</span><span style="--0:#24292E;--1:#E1E4E8">:                                 </span><span style="--0:#616972;--1:#99A0A6"># HTTP settings for HTTPS</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">encodedCharacters</span><span style="--0:#24292E;--1:#E1E4E8">:                  </span><span style="--0:#616972;--1:#99A0A6"># Allowed encoded characters (important for Trilium)</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">allowEncodedSlash</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span><span style="--0:#24292E;--1:#E1E4E8">           </span><span style="--0:#616972;--1:#99A0A6"># Allow %2F</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">allowEncodedPercent</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span><span style="--0:#24292E;--1:#E1E4E8">         </span><span style="--0:#616972;--1:#99A0A6"># Allow %25</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">allowEncodedHash</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span><span style="--0:#24292E;--1:#E1E4E8">            </span><span style="--0:#616972;--1:#99A0A6"># Allow %23</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="  websecure:                              # Entrypoint for HTTPS (port 443)    address: &#x22;:443&#x22;                       # Listen on port 443    http:                                 # HTTP settings for HTTPS      encodedCharacters:                  # Allowed encoded characters (important for Trilium)        allowEncodedSlash: true           # Allow %2F        allowEncodedPercent: true         # Allow %25        allowEncodedHash: true            # Allow %23"><div></div></button></div></figure></div>
+<h4 id="configuration-location">Configuration location</h4>
+<p>By default, <code>config.ini</code>, the database, and other important Trilium files are stored in the data directory. If you want to use a different location, you can set the <code>TRILIUM_DATA_DIR</code> environment variable, for example:</p>
+<p><code>export TRILIUM_DATA_DIR=/home/myuser/data/my-trilium-data</code></p>
+<h4 id="disabling--changing-the-upload-limit">Disabling / changing the upload limit</h4>
+<p>If you run into the default 250 MB upload limit and want to raise it, you can set the <code>TRILIUM_NO_UPLOAD_LIMIT=true</code> environment variable to disable the limit entirely:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">export TRILIUM_NO_UPLOAD_LIMIT=true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="export TRILIUM_NO_UPLOAD_LIMIT=true"><div></div></button></div></figure></div>
+<p>Or, if you just want to raise the limit to something bigger than 250 MB, you can use the <code>MAX_ALLOWED_FILE_SIZE_MB</code> variable, for example:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">export MAX_ALLOWED_FILE_SIZE_MB=450</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="export MAX_ALLOWED_FILE_SIZE_MB=450"><div></div></button></div></figure></div>
+<h3 id="synchronization">Synchronization</h3>
+<p>Trilium is an "offline-first" note-taking app: it stores all data locally on the desktop client, or on the so-called server installation described above. However, Trilium also lets you set up synchronization with a server instance, allowing multiple desktop clients to sync with a central server and vice versa. This creates a "star" topology. More details are in the <a href="https://docs.triliumnotes.org/user-guide/setup/synchronization.html">synchronization documentation</a></p>
+<p><img alt="Diagram of Trilium&#39;s &quot;star&quot; sync topology: sync server and multiple clients" loading="lazy" decoding="async" width="150" height="150" src="https://prohomelab.com/_astro/5.DebQu7ps_Z2sV3ob.webp"></p>
+<p>In this configuration, a central server (called the sync server) and several client (or desktop) instances synchronize with the sync server. Once configured, synchronization becomes automatic and continuous, requiring no manual intervention.</p>
+<div class="phl-callout phl-callout-alert" data-callout="warning">
+<div class="phl-callout-content">
+<span class="phl-callout-icon" aria-hidden="true"></span>
+<p><strong>Note!</strong> Obsidian? Never heard of it</p>
+</div>
+</div>
+<h4 id="setting-up-synchronization">Setting up synchronization</h4>
+<h5 id="security-considerations">Security considerations</h5>
+<p>Secure server setup is critically important and may seem complicated at first. To ensure security and prevent potential vulnerabilities, it's important to use a valid SSL certificate (HTTPS) rather than an unencrypted HTTP connection.</p>
+<h5 id="syncing-a-desktop-instance-with-the-sync-server">Syncing a desktop instance with the sync server</h5>
+<p>This method is used when you already have a desktop instance of Trilium and want to set up a sync server on your web hosting or simply on a Docker machine.</p>
+<ol>
+<li><strong>Deploy the server</strong>: make sure the server instance is deployed but not initialized.</li>
+<li><strong>Desktop configuration</strong>: open the desktop instance, go to "Options" -> the "Sync" tab -> "Sync Configuration," and enter your sync server's address in the "Server instance address" field. Click "Save."</li>
+</ol>
+<p><img alt="Sync tab in Trilium settings - entering the sync server address" loading="lazy" decoding="async" width="933" height="668" src="https://prohomelab.com/_astro/0.CILgRC2R_Z3ABmD.webp"></p>
+<p><strong>3. Testing the sync</strong>: click the "Test Sync" button to check the connection to the sync server. On success, the client will start transferring all data to the server. This may take a while, but you can keep using Trilium in the meantime. Periodically check the server to confirm sync has completed. Once done, you'll see the server login screen.</p>
+<h4 id="syncing-the-sync-server-with-a-desktop-app-instance">Syncing the sync server with a desktop app instance</h4>
+<p>This method is used when you already have a sync server (our instance, set up in our homelab) and want to configure a new desktop instance to sync with it.</p>
+<ol>
+<li><strong>Desktop setup</strong>: follow the instructions <a href="https://docs.triliumnotes.org/user-guide/setup/desktop.html">on the desktop installation page</a>.</li>
+<li><strong>Initial configuration</strong>: when prompted, choose the option to sync with the sync server.</li>
+</ol>
+<p><img alt="Initial setup screen of desktop Trilium: sync with server" loading="lazy" decoding="async" width="852" height="632" src="https://prohomelab.com/_astro/1.Q3CweDD6_JOhcB.webp"></p>
+<ol>
+<li><strong>Server details</strong>: configure the Trilium server address and enter the correct username and password for authentication.</li>
+<li><strong>Finish setup</strong>: click "Finish Setup." On success, you'll see the following screen:</li>
+</ol>
+<p><img alt="Sync startup screen after finishing server setup" loading="lazy" decoding="async" width="854" height="630" src="https://prohomelab.com/_astro/3.DF32_C___1hBNFo.webp"></p>
+<h4 id="mobile-frontend">Mobile frontend</h4>
+<p>Trilium (<a href="https://docs.triliumnotes.org/user-guide/setup/server.html">server version</a>) has a mobile web interface optimized for touch devices - smartphones and tablets. It activates automatically upon login, based on browser detection.</p>
+<p>The mobile interface has limited functionality compared to the full-featured desktop interface.</p>
+<p>Note that this isn't an Android/iOS app, just a mobile-friendly web page hosted on the <a href="https://docs.triliumnotes.org/user-guide/setup/server.html">server</a>.</p>
+<h5 id="limitations">Limitations</h5>
+<p>The mobile interface provides only some of the full desktop interface's features:</p>
+<ul>
+<li>you can browse the entire note tree, read and edit all note types, but can only create text notes</li>
+<li>reading and editing <a href="https://docs.triliumnotes.org/user-guide/concepts/notes/protected-notes.html">protected notes</a> is possible, but creating them is not supported</li>
+<li>editing options are not supported</li>
+<li>note cloning is not supported</li>
+<li>uploading attachments is not supported</li>
+</ul>
+<h3 id="web-clipper">Web clipper</h3>
+<p><img alt="Trilium Web Clipper browser extension popup" loading="lazy" decoding="async" width="316" height="263" src="https://prohomelab.com/_astro/2.Cbknm4B2_2s7gt0.webp"></p>
+<p>Trilium Web Clipper is a browser extension that lets you clip text, screenshots, entire pages, and short notes and save them directly into Trilium Notes.</p>
+<p>The project is hosted <a href="https://github.com/TriliumNext/web-clipper">here</a>.</p>
+<p>Firefox and Chrome are supported, but the Chrome build should also work in other Chromium-based browsers.</p>
+<p>I use <a href="https://github.com/Nriver/trilium-web-clipper-plus">this</a> version</p>
+<h4 id="functionality">Functionality</h4>
+<ul>
+<li>select text and clip it via the right-click context menu</li>
+<li>click an image or link and save it via the context menu</li>
+<li>save an entire page from the popup or context menu</li>
+<li>save a screenshot (with a crop tool) from the popup or context menu</li>
+<li>create a short text note from the popup</li>
+</ul>
+<p>Trilium will save these clippings as a new child note under the "Clipper Inbox" note.</p>
+<p>By default this is a <a href="https://docs.triliumnotes.org/user-guide/advanced-usage/advanced-showcases/day-notes.html">day note</a>, but you can override this.</p>
+<p>If there are multiple clippings from the same page (and on the same day), they'll be added to the same note.</p>
+<h5 id="configuration">Configuration</h5>
+<p>The extension needs to connect to a running Trilium instance. By default it scans a port range on the local machine to find a Trilium desktop instance.</p>
+<p>You can also configure the <a href="https://docs.triliumnotes.org/user-guide/setup/server.html">server</a> address if you're not running the desktop app, or want it to work without the desktop app running.</p>
+<p>Since this article has already gotten quite long, I'll probably continue covering the app's features in a separate article.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

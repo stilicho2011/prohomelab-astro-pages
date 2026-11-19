@@ -1,0 +1,598 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-scheme="prohomelab" data-theme="light" data-mode="system" data-default-mode="system" data-mode-switch="1" data-fluid="1" data-social-colors="hover" style="--phl-content-width: 48rem"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){const cur = "en";
+const alts = {"ru":"/posts/authentik-enrollment-invitation/"};
+
+      try {
+        const p = localStorage.getItem('phl-lang');
+        if (p && p !== cur && alts[p]) location.replace(alts[p] + location.hash);
+      } catch (e) {}
+    })();</script><title>Setting Up User Enrollment and Invitation Processes in Authentik | ProHomeLab</title><meta name="description" content="A detailed guide to setting up user registration and invitation processes in Authentik, covering the enrollment flow, invitation flow, and related stages."><link rel="canonical" href="https://prohomelab.com/en/posts/authentik-enrollment-invitation/"><link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/authentik-enrollment-invitation/"><link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/authentik-enrollment-invitation/"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32"><link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"><link rel="manifest" href="/site.webmanifest"><meta property="og:site_name" content="ProHomeLab"><meta property="og:title" content="Setting Up User Enrollment and Invitation Processes in Authentik"><meta property="og:description" content="A detailed guide to setting up user registration and invitation processes in Authentik, covering the enrollment flow, invitation flow, and related stages."><meta property="og:type" content="article"><meta property="og:url" content="https://prohomelab.com/en/posts/authentik-enrollment-invitation/"><meta property="og:locale" content="en"><meta property="og:image" content="https://prohomelab.com/_astro/featured.DQEOtAgV_EogRd.jpg"><meta property="og:image:alt" content="Setting Up User Enrollment and Invitation Processes in Authentik"><meta property="article:published_time" content="2026-01-13T00:00:00.000Z"><meta property="article:modified_time" content="2026-10-10T00:00:00.000Z"><meta property="article:section" content="Authentik"><meta property="article:tag" content="SSO"><meta property="article:tag" content="Docker"><meta property="article:tag" content="Self-Hosting"><meta property="article:tag" content="Authentik"><meta name="twitter:card" content="summary_large_image"><meta name="yandex-verification" content="103870927"><link rel="alternate" type="application/rss+xml" title="ProHomeLab" href="https://prohomelab.com/en/index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","articleSection":"Authentik","name":"Setting Up User Enrollment and Invitation Processes in Authentik","headline":"Setting Up User Enrollment and Invitation Processes in Authentik","description":"A detailed guide to setting up user registration and invitation processes in Authentik, covering the enrollment flow, invitation flow, and related stages.","inLanguage":"en","url":"https://prohomelab.com/en/posts/authentik-enrollment-invitation/","author":[{"@type":"Person","name":"Stilicho2011","image":"https://prohomelab.com/avatar-stilicho2011.webp","url":"https://prohomelab.com","sameAs":["https://github.com/stilicho2011/ubuntu_rep","https://t.me/stilicho2011_videos","https://www.youtube.com/@prohomelab","https://boosty.to/stilicho2011"]}],"copyrightYear":"2026","datePublished":"2026-01-13T00:00:00.000Z","dateModified":"2026-10-10T00:00:00.000Z","image":"https://prohomelab.com/_astro/featured.DQEOtAgV_EogRd.jpg","keywords":["SSO","Docker","Self-Hosting","Authentik"],"mainEntityOfPage":"https://prohomelab.com/en/posts/authentik-enrollment-invitation/","wordCount":2114}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://prohomelab.com/en/"},{"@type":"ListItem","position":2,"name":"Authentik","item":"https://prohomelab.com/en/posts/authentik/"},{"@type":"ListItem","position":3,"name":"Setting Up User Enrollment and Invitation Processes in Authentik","item":"https://prohomelab.com/en/posts/authentik-enrollment-invitation/"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoObject","name":"Setting Up User Enrollment and Invitation Processes in Authentik","description":"A detailed guide to setting up user registration and invitation processes in Authentik, covering the enrollment flow, invitation flow, and related stages.","thumbnailUrl":["https://i.ytimg.com/vi/hKGW2PKnZc8/maxresdefault.jpg"],"uploadDate":"2026-01-13T00:00:00.000Z","embedUrl":"https://www.youtube.com/embed/hKGW2PKnZc8","contentUrl":"https://www.youtube.com/watch?v=hKGW2PKnZc8"}</script><script>
+      // Light or dark before first paint, so a dark page never flashes white.
+      // data-mode is the choice (system, light, dark), data-theme the result (light or dark).
+      (() => {
+        const d = document.documentElement;
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        let mode = d.dataset.defaultMode || 'system';
+        if (d.dataset.modeSwitch) {
+          try {
+            const saved = localStorage.getItem('phl-theme');
+            if (saved === 'system' || saved === 'light' || saved === 'dark') mode = saved;
+          } catch (e) {}
+        }
+        const apply = () => {
+          d.dataset.mode = mode;
+          d.dataset.theme = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode;
+        };
+        apply();
+        media.addEventListener('change', () => mode === 'system' && apply());
+        window.__phlSetMode = (next) => {
+          mode = next;
+          try {
+            localStorage.setItem('phl-theme', next);
+          } catch (e) {}
+          apply();
+        };
+      })();
+    </script><style>:root:root{--phl-font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-heading:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-mono:'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace}</style><script>(function(){const ym = {"id":"103870927","webvisor":true,"clickmap":true,"trackLinks":true,"accurateTrackBounce":true,"ecommerce":"dataLayer"};
+const ga = {"id":"G-VRHQGK81S9"};
+const umami = {"src":"https://stats.prohomelab.com/script.js","websiteId":"31518a04-7f00-4d16-99f3-759c057c7bf2","recorder":true,"recorderSrc":"https://stats.prohomelab.com/recorder.js"};
+const consent = "opt-in";
+
+      (() => {
+        let started = false;
+        const add = (src, attrs = {}) => {
+          const s = document.createElement('script');
+          s.async = true;
+          s.src = src;
+          for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+          document.head.appendChild(s);
+        };
+        window.__phlAnalytics = () => {
+          if (started) return;
+          started = true;
+          if (ym) {
+            window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+            window.ym.l = Date.now();
+            add(`https://mc.yandex.ru/metrika/tag.js?id=${ym.id}`);
+            const opts = { ssr: true, webvisor: ym.webvisor, clickmap: ym.clickmap, accurateTrackBounce: ym.accurateTrackBounce, trackLinks: ym.trackLinks };
+            if (ym.ecommerce) opts.ecommerce = ym.ecommerce;
+            window.ym(Number(ym.id), 'init', opts);
+          }
+          if (ga) {
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ga.id);
+            add(`https://www.googletagmanager.com/gtag/js?id=${ga.id}`);
+          }
+          if (umami) {
+            const attrs = { 'data-website-id': umami.websiteId };
+            if (umami.domains) attrs['data-domains'] = umami.domains;
+            add(umami.src, { ...attrs, defer: '' });
+            if (umami.recorder) add(umami.recorderSrc, { ...attrs, defer: '' });
+          }
+        };
+        let choice = null;
+        try { choice = localStorage.getItem('phl-consent'); } catch (e) {}
+        if (consent !== 'opt-in' || choice === 'granted') window.__phlAnalytics();
+      })();
+    })();</script><link rel="stylesheet" href="/_astro/Base.CNmgq2nC.css"></head><body id="top"><template id="phl-lang-ru"><div class="phl-langbar" lang="ru-RU" role="region" aria-label="Эта страница есть на русском"><div class="phl-langbar-inner"><p>Эта страница есть на русском</p><div class="phl-langbar-actions"><a href="/posts/authentik-enrollment-invitation/" hreflang="ru-RU" data-phl-lang="ru">Читать на русском</a><button type="button" data-phl-lang-stay>Остаться</button></div></div></div></template><script>(function(){const data = {"cur":"en","alts":{"ru":"/posts/authentik-enrollment-invitation/"},"match":{"ru":["ru","uk","be","kk"],"en":["en"]},"byLang":{"ru-ru":"ru","en":"en"},"fallback":"en"};
+
+        (() => {
+          const store = (v) => { try { localStorage.setItem('phl-lang', v); } catch (e) {} };
+          // An explicit choice anywhere (language switcher, the bar) is remembered.
+          document.addEventListener('click', (e) => {
+            const go = e.target.closest('[data-phl-lang]');
+            if (go) return store(go.dataset.phlLang);
+            const link = e.target.closest('a[hreflang]');
+            const key = link && data.byLang[link.getAttribute('hreflang').toLowerCase()];
+            if (key) return store(key);
+            const stay = e.target.closest('[data-phl-lang-stay]');
+            if (stay) { store(data.cur); stay.closest('.phl-langbar')?.remove(); }
+          });
+          let saved = null;
+          try { saved = localStorage.getItem('phl-lang'); } catch (e) {}
+          const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''])
+            .map((l) => String(l).toLowerCase().split('-')[0]);
+          const fits = (key, code) => (data.match[key] || []).includes(code);
+          // The language this reader reads, for other parts of the page (the analytics banner):
+          // the stored choice, else the page language if the browser fits it, else the first
+          // locale the browser fits, else the fallback, else the page language.
+          window.__phlReaderLocale = () => {
+            if (saved && data.match[saved]) return saved;
+            if (list.some((code) => fits(data.cur, code))) return data.cur;
+            for (const code of list) {
+              const key = Object.keys(data.match).find((k) => fits(k, code));
+              if (key) return key;
+            }
+            return data.fallback || data.cur;
+          };
+          if (saved || !Object.keys(data.alts).length) return;
+          if (list.some((code) => fits(data.cur, code))) return;
+          let target = null;
+          for (const code of list) {
+            target = Object.keys(data.alts).find((key) => fits(key, code)) || null;
+            if (target) break;
+          }
+          if (!target && data.fallback && data.fallback !== data.cur && data.alts[data.fallback]) target = data.fallback;
+          const tpl = target && document.getElementById('phl-lang-' + target);
+          if (tpl) document.body.prepend(tpl.content.cloneNode(true));
+        })();
+      })();</script><a class="phl-skip" href="#phl-content">Skip to content</a><header class="phl-header phl-header-sticky"><div class="phl-header-inner"><a class="phl-brand" href="/en/"><img class="phl-logo phl-logo-light" src="/prohomelab-mark.svg" alt><span class="phl-brand-name">ProHomeLab</span><span class="phl-brand-point" aria-hidden="true"></span></a><nav class="phl-nav" aria-label="Main menu"><ul class="phl-nav-list"><li><a href="/en/blog/">All Articles</a></li><li><details class="phl-dropdown" data-phl-dropdown><summary aria-current="true">Topics<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul class="phl-dropdown-panel"><li><a href="/en/posts/">Topics</a></li><li><a href="/en/posts/authentik/">Authentik</a></li><li><a href="/en/posts/backup/">Backup</a></li><li><a href="/en/posts/crowdsec/">Crowdsec</a></li><li><a href="/en/posts/docker-ui/">Docker UI</a></li><li><a href="/en/posts/hardware/">Hardware</a></li><li><a href="/en/posts/media-servers/">Media Servers</a></li><li><a href="/en/posts/network/">Network</a></li><li><a href="/en/posts/news/">News</a></li><li><a href="/en/posts/nextcloud/">Nextcloud</a></li><li><a href="/en/posts/opnsense/">OPNsense</a></li><li><a href="/en/posts/pkm/">PKM</a></li><li><a href="/en/posts/podman/">Podman</a></li><li><a href="/en/posts/proxmox/">Proxmox</a></li><li><a href="/en/posts/selfhosting/">Self-hosting</a></li><li><a href="/en/posts/single-sign-on/">Single Sign On</a></li><li><a href="/en/posts/terraform/">Terraform</a></li><li><a href="/en/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/en/categories/">Categories</a></li><li><a href="/en/tags/">Tags</a></li><li><a href="/en/tools/">Tools</a></li><li><a href="/en/about/">About</a></li></ul></nav><div class="phl-header-tools phl-has-mobile-menu"><button type="button" class="phl-search-button" data-phl-search-open aria-label="Search" title="Search" hidden><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg></button><dialog class="phl-search" data-phl-search aria-label="Search"><div class="phl-search-box"><div class="phl-search-field"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg><input type="search" data-phl-search-input placeholder="Search articles" aria-label="Search articles" autocomplete="off" spellcheck="false"><button type="button" class="phl-search-close" data-phl-search-close aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></button></div><p class="phl-search-status" data-phl-search-status role="status" aria-live="polite"></p><ol class="phl-search-results" data-phl-search-results></ol><button type="button" class="phl-search-more" data-phl-search-more hidden>Show more</button></div></dialog><script>(function(){const options = {"shortcut":true,"pageSize":8,"text":{"noResults":"Nothing found","loading":"Searching","unavailable":"Search works on the built site (astro build)","more":"Show more"}};
+
+  (() => {
+    const open = document.querySelector('[data-phl-search-open]');
+    const dialog = document.querySelector('[data-phl-search]');
+    if (!open || !dialog || typeof dialog.showModal !== 'function') return;
+    const input = dialog.querySelector('[data-phl-search-input]');
+    const list = dialog.querySelector('[data-phl-search-results]');
+    const status = dialog.querySelector('[data-phl-search-status]');
+    const more = dialog.querySelector('[data-phl-search-more]');
+    const t = options.text;
+    let pagefind = null;
+    let failed = false;
+    let results = [];
+    let shown = 0;
+    let query = 0;
+    open.hidden = false;
+
+    const load = async () => {
+      if (pagefind || failed) return pagefind;
+      try {
+        pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+        await pagefind.init();
+      } catch (e) {
+        failed = true;
+        pagefind = null;
+      }
+      return pagefind;
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const render = async () => {
+      const page = results.slice(shown, shown + options.pageSize);
+      const id = query;
+      const data = await Promise.all(page.map((r) => r.data()));
+      if (id !== query) return;
+      for (const d of data) {
+        const li = document.createElement('li');
+        const sub = (d.sub_results || []).filter((x) => x.url !== d.url).slice(0, 2);
+        li.innerHTML =
+          `<a class="phl-search-hit" href="${esc(d.url)}"><span class="phl-search-title">${esc(d.meta?.title || d.url)}</span>` +
+          `<span class="phl-search-excerpt">${d.excerpt || ''}</span></a>` +
+          (sub.length
+            ? `<ul class="phl-search-sub">${sub.map((x) => `<li><a href="${esc(x.url)}">${esc(x.title)}</a></li>`).join('')}</ul>`
+            : '');
+        list.appendChild(li);
+      }
+      shown += page.length;
+      more.hidden = shown >= results.length;
+    };
+    const run = async () => {
+      const term = input.value.trim();
+      const id = ++query;
+      list.innerHTML = '';
+      more.hidden = true;
+      shown = 0;
+      if (!term) { status.textContent = ''; return; }
+      status.textContent = t.loading;
+      const pf = await load();
+      if (id !== query) return;
+      if (!pf) { status.textContent = t.unavailable; return; }
+      const res = await pf.debouncedSearch(term, {}, 200);
+      if (res === null || id !== query) return;
+      results = res.results;
+      status.textContent = results.length ? '' : t.noResults;
+      await render();
+    };
+
+    const show = () => {
+      dialog.showModal();
+      input.focus();
+      input.select();
+      load();
+    };
+    open.addEventListener('click', show);
+    dialog.querySelector('[data-phl-search-close]').addEventListener('click', () => dialog.close());
+    // A click on the backdrop (outside the box) closes the dialog.
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    input.addEventListener('input', run);
+    more.addEventListener('click', render);
+    // Enter opens the first result.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = list.querySelector('a');
+        if (first) { e.preventDefault(); location.href = first.href; }
+      }
+    });
+    if (options.shortcut) {
+      document.addEventListener('keydown', (e) => {
+        if (dialog.open) return;
+        const typing = /^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable;
+        if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          show();
+        }
+      });
+    }
+  })();
+})();</script><ul class="phl-social-links phl-header-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><a class="phl-lang-link" href="/posts/authentik-enrollment-invitation/" hreflang="ru-RU" lang="ru-RU" title="Language" data-phl-lang="ru">RU</a><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;System&quot;,&quot;light&quot;:&quot;Light&quot;,&quot;dark&quot;:&quot;Dark&quot;}" data-title="Color mode" aria-label="Color mode" title="Color mode"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script><details class="phl-mobile-menu" data-phl-dropdown><summary aria-label="Menu"><span class="phl-mobile-open"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"/></svg></span><span class="phl-mobile-close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></span></summary><nav class="phl-mobile-panel" aria-label="Main menu"><ul class="phl-mobile-list"><li><a href="/en/blog/">All Articles</a></li><li><details><summary>Topics<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul><li><a href="/en/posts/">Topics</a></li><li><a href="/en/posts/authentik/">Authentik</a></li><li><a href="/en/posts/backup/">Backup</a></li><li><a href="/en/posts/crowdsec/">Crowdsec</a></li><li><a href="/en/posts/docker-ui/">Docker UI</a></li><li><a href="/en/posts/hardware/">Hardware</a></li><li><a href="/en/posts/media-servers/">Media Servers</a></li><li><a href="/en/posts/network/">Network</a></li><li><a href="/en/posts/news/">News</a></li><li><a href="/en/posts/nextcloud/">Nextcloud</a></li><li><a href="/en/posts/opnsense/">OPNsense</a></li><li><a href="/en/posts/pkm/">PKM</a></li><li><a href="/en/posts/podman/">Podman</a></li><li><a href="/en/posts/proxmox/">Proxmox</a></li><li><a href="/en/posts/selfhosting/">Self-hosting</a></li><li><a href="/en/posts/single-sign-on/">Single Sign On</a></li><li><a href="/en/posts/terraform/">Terraform</a></li><li><a href="/en/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/en/categories/">Categories</a></li><li><a href="/en/tags/">Tags</a></li><li><a href="/en/tools/">Tools</a></li><li><a href="/en/about/">About</a></li></ul><ul class="phl-social-links phl-mobile-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><p class="phl-mobile-mode"><span>Color mode</span><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;System&quot;,&quot;light&quot;:&quot;Light&quot;,&quot;dark&quot;:&quot;Dark&quot;}" data-title="Color mode" aria-label="Color mode" title="Color mode"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script></p></nav></details></div></div></header><script>
+  // Close open menus on outside click, on Escape, and when another one opens.
+  (() => {
+    if (window.__phlDropdowns) return;
+    window.__phlDropdowns = true;
+    const all = () => document.querySelectorAll('[data-phl-dropdown][open]');
+    document.addEventListener('click', (e) => {
+      all().forEach((d) => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      all().forEach((d) => {
+        d.removeAttribute('open');
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener(
+      'toggle',
+      (e) => {
+        const d = e.target;
+        if (!d.matches?.('[data-phl-dropdown]') || !d.open) return;
+        all().forEach((o) => o !== d && !o.contains(d) && o.removeAttribute('open'));
+      },
+      true,
+    );
+  })();
+</script><main class="phl-main" id="phl-content" tabindex="-1"><div class="phl-progress" aria-hidden="true"><span></span></div><div class="phl-article-grid phl-has-toc"><article class="phl-article" data-pagefind-body><nav class="phl-breadcrumbs" aria-label="Breadcrumbs"><ol><li><a href="/en/">Home</a></li><li><a href="/en/posts/authentik/">Authentik</a></li><li><span aria-current="page">Setting Up User Enrollment and Invitation Processes in Authentik</span></li></ol></nav><header class="phl-article-header"><p class="phl-eyebrow">SSO</p><h1 data-pagefind-meta="title">Setting Up User Enrollment and Invitation Processes in Authentik</h1><p class="phl-meta"><span class="phl-meta-authors"><a href="/en/authors/stilicho2011/">Stilicho2011</a></span><time datetime="2026-01-13T00:00:00.000Z">January 13, 2026</time><span>Updated <time datetime="2026-10-10T00:00:00.000Z">October 10, 2026</time></span><span>10 min read</span><span class="phl-views">44 views</span></p></header><div class="phl-article-tools"><p class="phl-translations">Also available in: <a href="/posts/authentik-enrollment-invitation/" hreflang="ru-RU">RU</a></p><button type="button" class="phl-zen-toggle" data-phl-zen data-on="Reading mode" data-off="Exit reading mode" aria-pressed="false">Reading mode</button></div><div class="phl-embed phl-yt phl-article-video" data-yt-id="hKGW2PKnZc8"><a class="phl-yt-link" href="https://www.youtube.com/watch?v=hKGW2PKnZc8" target="_blank" rel="noopener" aria-label="Setting Up User Enrollment and Invitation Processes in Authentik"><img src="https://i.ytimg.com/vi/hKGW2PKnZc8/hqdefault.jpg" alt="Setting Up User Enrollment and Invitation Processes in Authentik" width="480" height="360" loading="eager" decoding="async"><span class="phl-yt-play" aria-hidden="true"></span></a></div><details class="phl-series"><summary>Part 5 of 9 in the series <a href="/en/series/authentik/">Authentik</a></summary><ol><li><a href="/en/posts/authentik-overview/">Authentik Overview - Architecture, Features, and Comparison with Keycloak</a></li><li><a href="/en/posts/authentik-overview-proxy-oidc/">OIDC, OAuth2, and Proxy Provider in Authentik - How to Protect Any Application</a></li><li><a href="/en/posts/authentik-setup/">Authentik - Initial Setup After Installation</a></li><li><a href="/en/posts/authentik-password-recovery/">Setting Up Password Recovery in Authentik</a></li><li><span aria-current="page">Setting Up User Enrollment and Invitation Processes in Authentik</span></li><li><a href="/en/posts/authentik-two-factor-authentication/">Setting Up Two-Factor Authentication in Authentik</a></li><li><a href="/en/posts/authentik-cloudflare-turnstile/">Cloudflare Turnstile in Authentik - Setting Up Login Form Protection</a></li><li><a href="/en/posts/authentik-email-notifications/">Setting Up Email Notifications in Authentik</a></li><li><a href="/en/posts/authentik-reputation-policy/">Authentik - Setting Up a Reputation Policy</a></li></ol></details><details class="phl-toc" data-phl-toc><summary class="phl-toc-title">Contents</summary><nav aria-label="Contents"><ul><li class="depth-2"><a href="#creating-a-group-for-regular-users" data-phl-toc-link="creating-a-group-for-regular-users">Creating a group for regular users</a></li><li class="depth-2"><a href="#creating-stages-and-flows" data-phl-toc-link="creating-stages-and-flows">Creating stages and flows</a></li><li class="depth-3"><a href="#email-stage" data-phl-toc-link="email-stage">Email Stage</a></li><li class="depth-3"><a href="#creating-the-self-registration-flow" data-phl-toc-link="creating-the-self-registration-flow">Creating the self-registration flow</a></li><li class="depth-2"><a href="#configuring-default-authentication-flow" data-phl-toc-link="configuring-default-authentication-flow">Configuring default-authentication-flow</a></li><li class="depth-2"><a href="#setting-up-user-invitations-in-authentik" data-phl-toc-link="setting-up-user-invitations-in-authentik">Setting up user invitations in Authentik</a></li><li class="depth-3"><a href="#user-write-stage" data-phl-toc-link="user-write-stage">User Write Stage</a></li><li class="depth-3"><a href="#invitation-stage" data-phl-toc-link="invitation-stage">Invitation Stage</a></li><li class="depth-2"><a href="#creating-invitations" data-phl-toc-link="creating-invitations">Creating invitations</a></li><li class="depth-2"><a href="#shutting-the-door-on-self-registration" data-phl-toc-link="shutting-the-door-on-self-registration">Shutting the door on self-registration</a></li></ul></nav></details><div class="phl-prose"><!--phl-feed-start--><div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>If you enjoyed this article, you can become a sponsor on <a href="https://boosty.to/stilicho2011">Boosty</a>.</p>
+</div>
+</div>
+<p>As an administrator in <a href="https://prohomelab.com/en/posts/authentik-overview/">Authentik</a>, you can manually create and delete users, generate complex passwords for them, and set up their login rules using TOTP codes or WebAuthn devices. This is certainly a workable mechanism, but what if there are a lot of such users? Or even if we're talking about some home use scenario, you simply want to automate the process so that you only deal with the management side of things.
+In this article, we'll talk about how to set up such automation for user registration and invitations in Authentik.</p>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>For this setup, and generally for Authentik to work correctly going forward, you should have already configured your mail server details in the <code>.env</code> environment variables file, from which notifications will be sent to both you and your users (more on that in <a href="https://prohomelab.com/en/posts/authentik-email-notifications/">Setting Up Email Notifications in Authentik</a>). You can verify the mail server is configured correctly with the simple command <code>docker exec authentik_worker ak test_email your_email@domain.com</code></p>
+</div>
+</div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>The application settings described in this article are accurate as of the time of writing. The video guide below was recorded earlier, but the configuration logic hasn't changed since.</p>
+</div>
+</div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Starting with release 2026.5, Authentik has a dedicated <strong>Invitation Wizard</strong> right in the admin panel (<code>Directory</code> > <code>Invitations</code>, the <code>New Invitation</code> button). It can create a minimal enrollment flow with an invitation stage for you, bind the invitation to it, and email the link right away - no manual assembly of flows/stages needed. The manual method below still works and gives you more control over the details - and it's the one I show in this article.</p>
+</div>
+</div>
+<h2 id="creating-a-group-for-regular-users">Creating a group for regular users</h2>
+<p>In the Authentik interface, go to <code>Directory > Groups > New Group</code></p>
+<p>In the window that appears, give our group a name. Since these will be regular users, we don't toggle the <code>Superuser Privileges</code> switch.</p>
+<p><img alt="Creating the authentik Users group without Superuser Privileges" loading="lazy" decoding="async" width="1340" height="970" src="/_astro/0.BuQggoAa_Z1ukGOD.webp"></p>
+<p>Click <code>Create</code></p>
+<p>Answering an unasked question - "why did I name the group so oddly, with the first word lowercase and the second capitalized?" - I'll explain that the default group for admins is spelled exactly that way, <code>authentik Admins</code>. I'm just keeping the style consistent.</p>
+<h2 id="creating-stages-and-flows">Creating stages and flows</h2>
+<h3 id="email-stage">Email Stage</h3>
+<p>Go to <code>Flows and Stages</code> > <code>Stages</code> > <code>Create</code></p>
+<p>In the menu that appears, select <code>Email Stage</code></p>
+<p><img alt="Selecting the stage type - Email Stage" loading="lazy" decoding="async" width="1245" height="976" src="/_astro/1.CVeD1Z1J_Z1oLd1C.webp"></p>
+<p>Click <code>Next</code> and in the next window set the necessary parameters: give the stage a name, an email subject, and the template that will be used. Click <code>Finish</code></p>
+<p><img alt="Configuring the Email Stage - name, email subject, template" loading="lazy" decoding="async" width="1245" height="976" src="/_astro/2.CVD6X5OT_1Vm2.webp"></p>
+<h3 id="creating-the-self-registration-flow">Creating the self-registration flow</h3>
+<p>Go to <code>Flows</code> > <code>Create</code></p>
+<p>Fill in and set the necessary parameters roughly as shown in the screenshot below. I enabled <code>compatibility mode</code> for better compatibility with password managers. In the <code>Authentication</code> field, I didn't set any mandatory parameters. I did this intentionally - later on I'll set a hard requirement for all users, without exception, to set up <a href="https://prohomelab.com/en/posts/authentik-two-factor-authentication/">two-factor authentication</a>.</p>
+<p><img alt="Creating the Enrollment Flow with compatibility mode enabled" loading="lazy" decoding="async" width="1366" height="1227" src="/_astro/3.CYqkVPJW_3oKTF.webp"></p>
+<p>Now go to the <code>main-page-enrollment</code> flow we created > <code>Stage Bindings</code> > <code>Bind existing stage</code> (as you probably guessed, you can also create stages from this menu by clicking <code>Create and Bind Stage</code>, but I think my approach is more illustrative).</p>
+<p>In the menu that appears, fill it in following my screenshot. Select the existing stage <code>default-source-enrollment-prompt</code>, and set the processing order for this stage.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Note that I have the <code>evaluate when flow is planned</code> toggle enabled. If you're familiar with the topic, you can choose a different option.</p>
+</div>
+</div>
+<p><img alt="Binding the default-source-enrollment-prompt stage to the Enrollment Flow" loading="lazy" decoding="async" width="1557" height="980" src="/_astro/4.BU6PPQLc_rlAjV.webp"></p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>The <code>default-source-enrollment-prompt</code>, <code>default-source-enrollment-write</code>, and <code>default-source-enrollment-login</code> stages are built-in, and by default they're also used by the <code>default-source-enrollment</code> flow (enrollment through external sources - signing in with Google, GitHub, and the like). A stage is a shared object: whatever we change in it below changes in every flow it's bound to. If you don't use external login sources, this doesn't affect anything. But if you do, or plan to, it's better to create separate copies of these stages for your own flows and edit those instead. Otherwise the <code>Create users as inactive</code> option, for example, will also kick in for people signing in through an external source. There's a second reason too: the built-in stages are managed by a bundled blueprint, and an Authentik upgrade may reset their settings to the defaults. Your own copies won't have that problem.</p>
+</div>
+</div>
+<p>Now we need to make changes to the stage we just bound. Click <code>Edit Stage</code> and select the data fields we need, which new users will need to fill in when registering.</p>
+<p>We select the following values: <code>name</code>, <code>email</code>, <code>password</code>, <code>repeat password</code>. The <code>username</code> value is already selected by default. In the <strong>Validation Policy</strong> section, select the <code>password complexity</code> policy we created (you can read how to set password complexity values in the article <a href="https://prohomelab.com/en/posts/authentik-password-recovery/">on password recovery</a>). Click <code>Update</code></p>
+<p><img alt="Configuring registration fields and the Validation Policy in default-source-enrollment-prompt" loading="lazy" decoding="async" width="1455" height="1255" src="/_astro/5.3Es8oyGr_du3Th.webp"></p>
+<p>Now let's create a new stage binding for the flow: click <code>Bind existing stage</code> > <code>default-source-enrollment-write</code>, set the processing order, click <code>Create</code>.</p>
+<p><img alt="Binding the default-source-enrollment-write stage to the Enrollment Flow" loading="lazy" decoding="async" width="1379" height="919" src="/_astro/6.DInGP2GX_Z1Mw68T.webp"></p>
+<p>As before, let's make changes to the created stage > <code>Edit Stage</code></p>
+<p>Enable the <code>Create users as inactive</code> option. This is needed so that after new users enter their data and register in the system, their account remains inactive until they confirm the action via email.
+For <code>Group</code>, select the <code>authentik Users</code> group we created. Be sure to select <code>internal</code> in the <code>User type</code> section.</p>
+<p><img alt="Configuring default-source-enrollment-write - Create users as inactive, group, and User type" loading="lazy" decoding="async" width="1531" height="1085" src="/_astro/7.CrRXgn_e_wUO2O.webp"></p>
+<p>Click <code>Bind existing stage</code> once more, select <code>email-account-confirmation</code>, which we created earlier, set the processing order, click <code>Create</code>.</p>
+<p><img alt="Binding the email-account-confirmation stage to the Enrollment Flow" loading="lazy" decoding="async" width="1169" height="823" src="/_astro/8.CJj7OKVV_4Nivz.webp"></p>
+<p>You can check the settings for this stage.
+Actually there isn't much to edit here, we just make sure that the <strong>Activate pending users on success</strong> feature is enabled.
+If you haven't configured mail via environment variables, deactivate the <code>global settings</code> toggle. New fields will appear that you'll need to fill in with the corresponding values from your email provider.</p>
+<p><img alt="Configuring the email-account-confirmation stage - Activate pending users on success" loading="lazy" decoding="async" width="1552" height="1055" src="/_astro/9.BfTJr9O5_ZmbQlr.webp"></p>
+<h2 id="configuring-default-authentication-flow">Configuring default-authentication-flow</h2>
+<p>Go to <code>Flows</code>, select our authentication flow, in my case <code>default-authentication-flow</code>, go into the <code>Stage Bindings</code> menu, and make changes to the <code>default-authentication-identification</code> stage. Scroll all the way down, and in the <code>Flow Settings</code> menu under <code>Enrollment Flow</code>, select the newly created flow and click <code>Update</code>.</p>
+<p><img alt="Binding the Enrollment Flow to the default-authentication-identification stage" loading="lazy" decoding="async" width="1235" height="1207" src="/_astro/10.CrG_Lv5q_EXNgX.webp"></p>
+<p>Log out of our account and check the login menu (of course, all this should be done in incognito mode, and at minimum you need to clear your browser cookies).</p>
+<p>We see that a new registration menu for new users has appeared.</p>
+<p><img alt="Authentik login screen with the new registration link" loading="lazy" decoding="async" width="832" height="651" src="/_astro/11.3Gp1CPdm_Z1JmjW1.webp"></p>
+<p>You can test the menu's functionality: have a new (test) user (you, in this case) register, receive a confirmation email, click the link in the email, and the rest is intuitive. If you did everything right, and the article's author didn't mess anything up (as sometimes happens), you now have a new user who created their own account, with a password matching the parameters and policies you set, and they're now in the regular users group.</p>
+<h2 id="setting-up-user-invitations-in-authentik">Setting up user invitations in Authentik</h2>
+<p>We've now enabled new users to register on our Authentik instance themselves. But that's too much freedom, letting any random passerby simply visit the Authentik site and register. We don't want that, right? We want only select users to be able to register, and only by invitation. Or we could do a mass invitation mailing, but in any case, only the person we sent an invitation to will be able to register. Let's set that up now.</p>
+<h3 id="user-write-stage">User Write Stage</h3>
+<p>Go to <code>Stages</code>, create a new <code>User Write Stage</code> stage (due to a translation bug in application version 2025.10.3, which isn't fully disabled, this stage is called "Этап записи пользователя" in my instance).</p>
+<p><img alt="Creating the User Write Stage" loading="lazy" decoding="async" width="1494" height="1069" src="/_astro/12.smbS0kSA_1AyjGC.webp"></p>
+<p>Click <code>Next</code>. Set the necessary parameters: the stage name and its settings, plus which group new users will be placed into. Since we're assuming we know who is registering, we can deactivate the <code>Create users as inactive</code> toggle.</p>
+<p><img alt="Configuring the User Write Stage for invited users" loading="lazy" decoding="async" width="1260" height="937" src="/_astro/13.qdWQp-6O_159Iho.webp"></p>
+<h3 id="invitation-stage">Invitation Stage</h3>
+<p>Let's create another new stage, this time <code>Invitation Stage</code> (in my instance it's called "Этап приглашения").</p>
+<p><img alt="Creating the Invitation Stage" loading="lazy" decoding="async" width="1191" height="896" src="/_astro/14.BaRFRPXa_Z1H3af2.webp"></p>
+<p>Click <code>Next</code>, give the stage a name. If the <code>Continue flow without invitation</code> toggle is enabled, disable it.</p>
+<p><img alt="Configuring the Invitation Stage - disabling Continue flow without invitation" loading="lazy" decoding="async" width="1595" height="1068" src="/_astro/15.BQQgC6cI_Z1bx8ya.webp"></p>
+<p>Next, go to <code>Flows</code> > <code>Create</code> and set the necessary parameters. As before, I enable compatibility mode for password managers.</p>
+<p><img alt="Creating the enrollment invitation flow with compatibility mode" loading="lazy" decoding="async" width="1414" height="1140" src="/_astro/16.BcXGJTlk_FtkVq.webp"></p>
+<p>Now go to the <code>enrollment invitation flow</code> we just created, and click <code>Bind existing stage</code>.</p>
+<p>Here we select the stage we created, set its processing order, and choose <code>Evaluate when flow is planned</code> instead of <code>Evaluate when stage is run</code>.</p>
+<p><img alt="Binding the Invitation Stage to the enrollment invitation flow" loading="lazy" decoding="async" width="1392" height="956" src="/_astro/17.lEOrlViG_ZX7grm.webp"></p>
+<p>Click <code>Bind existing stage</code> again and select <code>default-source-enrollment-prompt</code>, set its processing order, and choose <code>Evaluate when flow is planned</code> instead of <code>Evaluate when stage is run</code>.</p>
+<p><img alt="Binding the default-source-enrollment-prompt stage to the enrollment invitation flow" loading="lazy" decoding="async" width="1401" height="967" src="/_astro/18.Bbanz896_Z13yQ9z.webp"></p>
+<p>Now edit the <code>default-source-enrollment-prompt</code> stage and check that everything matches the screenshot. Basically, everything here is similar to the settings described at the beginning of this article.</p>
+<p><img alt="Configuring the default-source-enrollment-prompt stage for the invitation flow" loading="lazy" decoding="async" width="1435" height="1233" src="/_astro/19.D3HVZtG7_B9SEi.webp"></p>
+<p>Click <code>Bind existing stage</code> again and select <code>enrollment-invitation-write</code>, set its processing order, and choose <code>Evaluate when flow is planned</code> instead of <code>Evaluate when stage is run</code>.</p>
+<p><img alt="Binding the enrollment-invitation-write stage to the enrollment invitation flow" loading="lazy" decoding="async" width="1426" height="985" src="/_astro/20.DRMxssaT_lUnuj.webp"></p>
+<p>One last time, click <code>Bind existing stage</code> and select <code>default-source-enrollment-login</code>, set its processing order, and choose <code>Evaluate when flow is planned</code> instead of <code>Evaluate when stage is run</code>.</p>
+<p><img alt="Binding the default-source-enrollment-login stage to the enrollment invitation flow" loading="lazy" decoding="async" width="1385" height="808" src="/_astro/21.QBsfzrZ9_1gRfbv.webp"></p>
+<h2 id="creating-invitations">Creating invitations</h2>
+<p>Now go to <code>Directory</code> > <code>Invitations</code> > <code>Create</code></p>
+<p>In the window that appears, give the invitation a name, specify how long it will be valid (you can effectively make it permanent), and decide whether it's <code>single use</code> or reusable multiple times. In the <code>Flow</code> field, it's worth selecting our <code>enrollment invitation flow</code>: that way the invitation only works in this flow. Leave the field empty, and the invitation will be accepted in any flow that has an invitation stage.</p>
+<p><img alt="Creating an invitation - expiration and single use" loading="lazy" decoding="async" width="1569" height="900" src="/_astro/22.4lN0-ndK_Z1d79oj.webp"></p>
+<p>Click <code>Create</code>.</p>
+<p>Now, to get the invitation link, just click the corresponding item in the dropdown menu, and we get our invitation link, which we can send to our users.</p>
+<p><img alt="Getting the invitation link in the Invitations section" loading="lazy" decoding="async" width="711" height="574" src="/_astro/23.COZiVFZL_ZlmFn8.webp"></p>
+<p>Now anyone who receives such an invitation link, upon following it, will land on the new user registration menu, just like in the previous section.</p>
+<h2 id="shutting-the-door-on-self-registration">Shutting the door on self-registration</h2>
+<p>Freedom is good, but in moderation. Let's say we've registered everyone we need and aren't expecting anyone else. Now we'll strictly forbid new users from registering without our explicit control.</p>
+<p>Go to <code>Stages</code> > <code>Create</code> and create a new <code>Deny Stage</code>.</p>
+<p><img alt="Creating the Deny Stage" loading="lazy" decoding="async" width="1264" height="977" src="/_astro/24.4nfsOFa9_ZfgJ5C.webp"></p>
+<p>Click <code>Next</code>, give our stage a name, and write the message that an uninvited guest will see if the wild idea strikes them to try registering on our Authentik instance.</p>
+<p><img alt="Configuring the denial message in the Deny Stage" loading="lazy" decoding="async" width="1436" height="1008" src="/_astro/25.D75necNy_Z2d02Sa.webp"></p>
+<p>Go to <code>Flows</code> > <code>main-page-enrollment</code>, go to <code>Bind existing stage</code>.
+Select our <code>Deny Stage</code>. For the order number, choose any value, but with the mandatory condition that this stage is processed first - in my case that's <code>0</code> - and choose <code>Evaluate when flow is planned</code> instead of <code>Evaluate when stage is run</code>, then click <code>Create</code>.</p>
+<p><img alt="Binding the Deny Stage as the first stage of main-page-enrollment" loading="lazy" decoding="async" width="1326" height="935" src="/_astro/26.BVRnGtFc_ZMLphM.webp"></p>
+<p>Now, in incognito mode, let's try registering on our Authentik instance, and if we did everything right, the user (whom we weren't expecting) will get a rather unpleasant message.</p>
+<p><img alt="Registration denial message after the Deny Stage block" loading="lazy" decoding="async" width="901" height="682" src="/_astro/27.DHvFnUHn_Z1XKCC3.webp"></p>
+<p>While you're at it, you can also remove the registration link itself from the login screen: in the <code>default-authentication-identification</code> stage, clear the <code>Enrollment Flow</code> field we filled in earlier. That alone isn't enough, though - the flow is still reachable by its direct URL, so it still needs the <code>Deny Stage</code>. Invitations aren't affected: they have a separate flow of their own.</p>
+<p>With that, this article, which is essentially just a bunch of fun screenshots, can come to a close.</p><!--phl-feed-end--></div><footer class="phl-article-footer"><p class="phl-article-terms"><a class="phl-term-cat" href="/en/categories/sso/">SSO</a><a href="/en/tags/sso/">#SSO</a><a href="/en/tags/docker/">#Docker</a><a href="/en/tags/self-hosting/">#Self-Hosting</a><a href="/en/tags/authentik/">#Authentik</a></p><p class="phl-license">License: CC BY 4.0</p><div class="phl-share"><span class="phl-share-label">Share</span><a href="https://t.me/share/url?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fauthentik-enrollment-invitation%2F&amp;text=Setting%20Up%20User%20Enrollment%20and%20Invitation%20Processes%20in%20Authentik" target="_blank" rel="noopener noreferrer" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://x.com/intent/post?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fauthentik-enrollment-invitation%2F&amp;text=Setting%20Up%20User%20Enrollment%20and%20Invitation%20Processes%20in%20Authentik" target="_blank" rel="noopener noreferrer" aria-label="X" title="X" style="--phl-brand-l:#000000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.234 10.162L22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299l-.929-1.329L3.076 1.56h3.182l5.965 8.532l.929 1.329l7.754 11.09h-3.182z"/></svg></a><a href="https://www.reddit.com/submit?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fauthentik-enrollment-invitation%2F&amp;title=Setting%20Up%20User%20Enrollment%20and%20Invitation%20Processes%20in%20Authentik" target="_blank" rel="noopener noreferrer" aria-label="Reddit" title="Reddit" style="--phl-brand-l:#ff4500;--phl-brand-d:#ff4500" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12c0 3.314 1.343 6.314 3.515 8.485l-2.286 2.286A.72.72 0 0 0 1.738 24H12c6.627 0 12-5.373 12-12S18.627 0 12 0m4.388 3.199a1.999 1.999 0 1 1-1.947 2.46v.002a2.37 2.37 0 0 0-2.032 2.341v.007c1.776.067 3.4.567 4.686 1.363a2.802 2.802 0 1 1 2.908 4.753c-.088 3.256-3.637 5.876-7.997 5.876c-4.361 0-7.905-2.617-7.998-5.87a2.8 2.8 0 0 1 1.189-5.34c.645 0 1.239.218 1.712.585c1.275-.79 2.881-1.291 4.64-1.365v-.01a3.23 3.23 0 0 1 2.88-3.207a2 2 0 0 1 1.959-1.595m-8.085 8.376c-.784 0-1.459.78-1.506 1.797s.64 1.429 1.426 1.429s1.371-.369 1.418-1.385s-.553-1.841-1.338-1.841m7.406 0c-.786 0-1.385.824-1.338 1.841s.634 1.385 1.418 1.385c.785 0 1.473-.413 1.426-1.429c-.046-1.017-.721-1.797-1.506-1.797m-3.703 4.013c-.974 0-1.907.048-2.77.135a.222.222 0 0 0-.183.305a3.2 3.2 0 0 0 2.953 1.964a3.2 3.2 0 0 0 2.953-1.964a.222.222 0 0 0-.184-.305a28 28 0 0 0-2.769-.135"/></svg></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fauthentik-enrollment-invitation%2F" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn" style="--phl-brand-l:#0a66c2;--phl-brand-d:#0b73da" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037c-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85c3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.06 2.06 0 0 1-2.063-2.065a2.064 2.064 0 1 1 2.063 2.065m1.782 13.019H3.555V9h3.564zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg></a><a href="mailto:?subject=Setting%20Up%20User%20Enrollment%20and%20Invitation%20Processes%20in%20Authentik&amp;body=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fauthentik-enrollment-invitation%2F" rel="noopener noreferrer" aria-label="Email" title="Email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a></div><section class="phl-author-box"><h2>Author</h2><div class="phl-author"><img class="phl-author-image" src="/avatar-stilicho2011.webp" alt="" width="64" height="64" loading="lazy"><div class="phl-author-body"><p class="phl-author-name"><a href="/en/authors/stilicho2011/">Stilicho2011</a></p><p class="phl-author-bio">Writing about homelab, self-hosting, automation and open-source solutions</p><p class="phl-author-links"><a href="mailto:pavel@prohomelab.com" rel="me noopener" aria-label="email" title="email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener" target="_blank" aria-label="github" title="github" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a><a href="https://t.me/stilicho2011_videos" rel="me noopener" target="_blank" aria-label="telegram" title="telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://www.youtube.com/@prohomelab" rel="me noopener" target="_blank" aria-label="youtube" title="youtube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a><a href="https://boosty.to/stilicho2011" rel="me noopener" target="_blank" aria-label="boosty" title="boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></p></div></div></section></footer><nav class="phl-prevnext" aria-label="Previous / Next"><a class="phl-prevnext-prev" href="/en/posts/authentik-password-recovery/" rel="prev"><span class="phl-prevnext-label">Previous</span><span class="phl-prevnext-title">Setting Up Password Recovery in Authentik</span></a><a class="phl-prevnext-next" href="/en/posts/authentik-two-factor-authentication/" rel="next"><span class="phl-prevnext-label">Next</span><span class="phl-prevnext-title">Setting Up Two-Factor Authentication in Authentik</span></a></nav><section class="phl-related"><h2>Related articles</h2><div class="phl-cards"><article class="phl-card"><a class="phl-card-cover" href="/en/posts/authentik-password-recovery/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.D_BRxKk2_KykWc.webp" srcset="/_astro/featured.D_BRxKk2_HLRpn.webp 320w, /_astro/featured.D_BRxKk2_ZAigRs.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">SSO</span><time datetime="2026-01-12T00:00:00.000Z">January 12, 2026</time><span class="phl-card-video">▶ video</span><span class="phl-views">46 views</span></p><h3 class="phl-card-title"><a href="/en/posts/authentik-password-recovery/">Setting Up Password Recovery in Authentik</a></h3><p class="phl-card-summary">A detailed guide to setting up password recovery in Authentik, covering flows, stages, and policies, along with recommendations for protecting against username enumeration attacks.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/en/posts/authentik-two-factor-authentication/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.b8i_yGED_2aG9le.webp" srcset="/_astro/featured.b8i_yGED_Z12uWj7.webp 320w, /_astro/featured.b8i_yGED_Z2lA6AW.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">SSO</span><time datetime="2026-01-14T00:00:00.000Z">January 14, 2026</time><span class="phl-views">83 views</span></p><h3 class="phl-card-title"><a href="/en/posts/authentik-two-factor-authentication/">Setting Up Two-Factor Authentication in Authentik</a></h3><p class="phl-card-summary">A guide to setting up two-factor authentication in Authentik using TOTP and WebAuthn, covering flows, stages, and security best practices.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/en/posts/authentik-cloudflare-turnstile/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.B_blhV5M_LOkh.webp" srcset="/_astro/featured.B_blhV5M_Z2pNDzX.webp 320w, /_astro/featured.B_blhV5M_1likV8.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">SSO</span><time datetime="2026-01-15T00:00:00.000Z">January 15, 2026</time><span class="phl-views">16 views</span></p><h3 class="phl-card-title"><a href="/en/posts/authentik-cloudflare-turnstile/">Cloudflare Turnstile in Authentik - Setting Up Login Form Protection</a></h3><p class="phl-card-summary">A detailed guide to setting up Cloudflare Turnstile - a modern alternative to CAPTCHA for protecting login, registration, and password recovery forms without degrading the user experience.</p></div></article></div></section></article></div><script type="module" src="/_astro/MermaidLoader.astro_astro_type_script_index_0_lang.D0cD853-.js"></script><script type="module">document.querySelectorAll(`.phl-yt`).forEach(e=>{let t=e.querySelector(`.phl-yt-link`);t?.addEventListener(`click`,n=>{n.preventDefault();let r=e.dataset.ytId,i=e.dataset.ytParams?`&${e.dataset.ytParams}`:``,a=document.createElement(`iframe`);a.src=`https://www.youtube-nocookie.com/embed/${r}?autoplay=1${i}`,a.title=t.getAttribute(`aria-label`)??`YouTube video`,a.allow=`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share`,a.allowFullscreen=!0,e.replaceChildren(a)})});var e=matchMedia(`(prefers-reduced-motion: reduce)`).matches;document.querySelectorAll(`.phl-carousel`).forEach(t=>{let n=t.querySelector(`.phl-carousel-track`),r=n?[...n.children]:[];if(!n||r.length<2)return;let i=t=>{let i=(t+r.length)%r.length;n.scrollTo({left:r[i].offsetLeft-n.offsetLeft,behavior:e?`auto`:`smooth`})},a=()=>Math.round(n.scrollLeft/n.clientWidth),o=document.createElement(`div`);o.className=`phl-carousel-nav`,o.innerHTML=`<button type="button" class="phl-carousel-prev" aria-label="Previous">‹</button><span class="phl-carousel-dots"></span><button type="button" class="phl-carousel-next" aria-label="Next">›</button>`;let s=o.querySelector(`.phl-carousel-dots`);r.forEach((e,t)=>{let n=document.createElement(`button`);n.type=`button`,n.setAttribute(`aria-label`,`${t+1} / ${r.length}`),n.addEventListener(`click`,()=>i(t)),s.appendChild(n)});let c=()=>[...s.children].forEach((e,t)=>e.toggleAttribute(`aria-current`,t===a()));n.addEventListener(`scroll`,()=>requestAnimationFrame(c),{passive:!0}),o.querySelector(`.phl-carousel-prev`).addEventListener(`click`,()=>i(a()-1)),o.querySelector(`.phl-carousel-next`).addEventListener(`click`,()=>i(a()+1)),t.appendChild(o),c();let l=Number(t.dataset.interval);if(l>0&&!e){let e=!1;t.addEventListener(`mouseenter`,()=>e=!0),t.addEventListener(`mouseleave`,()=>e=!1),t.addEventListener(`focusin`,()=>e=!0),setInterval(()=>!e&&i(a()+1),Math.max(l,1500))}});var t=e=>`phl-tabs:${e}`,n=[...document.querySelectorAll(`.phl-tabs`)],r=(e,i,a=!0)=>{let o=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!o.some(e=>e.dataset.label===i))return;o.forEach(e=>e.hidden=e.dataset.label!==i),e.querySelectorAll(`:scope > .phl-tablist button`).forEach(e=>e.setAttribute(`aria-selected`,String(e.dataset.label===i)));let s=e.dataset.group;if(a&&s){try{localStorage.setItem(t(s),i)}catch{}n.filter(t=>t!==e&&t.dataset.group===s).forEach(e=>r(e,i,!1))}};n.forEach((e,n)=>{let i=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!i.length)return;let a=document.createElement(`div`);a.className=`phl-tablist`,a.setAttribute(`role`,`tablist`),i.forEach((t,o)=>{let s=document.createElement(`button`);s.type=`button`,s.setAttribute(`role`,`tab`),s.id=`phl-tab-${n}-${o}`,s.dataset.label=t.dataset.label,s.innerHTML=t.querySelector(`.phl-tab-label`)?.innerHTML??t.dataset.label??``,t.setAttribute(`role`,`tabpanel`),t.setAttribute(`aria-labelledby`,s.id),s.addEventListener(`click`,()=>r(e,t.dataset.label)),s.addEventListener(`keydown`,e=>{let t=e.key===`ArrowRight`?1:e.key===`ArrowLeft`?-1:0;if(!t)return;let n=a.children[(o+t+i.length)%i.length];n.focus(),n.click()}),a.appendChild(s)}),e.prepend(a),e.classList.add(`phl-tabs-ready`);let o=null;try{o=e.dataset.group?localStorage.getItem(t(e.dataset.group)):null}catch{}r(e,o??e.dataset.default??i[0].dataset.label,!1)}),document.querySelectorAll(`.phl-accordion[data-mode="collapse"]`).forEach(e=>{let t=[...e.querySelectorAll(`:scope > .phl-accordion-item`)];t.forEach(e=>e.addEventListener(`toggle`,()=>e.open&&t.forEach(t=>t!==e&&(t.open=!1))))});var i=document.querySelectorAll(`.phl-prose img:not(.nozoom)`);if(i.length){let e=document.createElement(`dialog`);e.className=`phl-lightbox`,e.innerHTML=`<img alt=""><button type="button" class="phl-lightbox-close" aria-label="Close">×</button>`,document.body.appendChild(e);let t=e.querySelector(`img`);e.addEventListener(`click`,()=>e.close()),i.forEach(n=>{n.closest(`a, .phl-yt, .phl-repo`)||(n.classList.add(`phl-zoomable`),n.addEventListener(`click`,()=>{t.src=n.currentSrc||n.src,t.alt=n.alt,e.showModal()}))})}</script><script type="module" src="/_astro/ChartTypeitClient.astro_astro_type_script_index_0_lang.CjHU9QBU.js"></script><script>(function(){const smartToc = true;
+const tableHint = "The table scrolls sideways";
+const wideBlocks = true;
+const wideCode = false;
+
+  // TOC: collapsed on phones, open from 768 px (decision 0007).
+  // Follows width changes too (rotating a tablet, resizing the window).
+  const toc = document.querySelector('[data-phl-toc]');
+  const wide = matchMedia('(min-width: 768px)');
+  const syncToc = () => toc && toc.toggleAttribute('open', wide.matches);
+  syncToc();
+  wide.addEventListener('change', syncToc);
+
+  // Current section in the TOC.
+  if (toc && smartToc && 'IntersectionObserver' in window) {
+    const links = new Map([...toc.querySelectorAll('[data-phl-toc-link]')].map((a) => [a.dataset.phlTocLink, a]));
+    const heads = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+    const visible = new Set();
+    const mark = () => {
+      const current = heads.find((h) => visible.has(h.id)) ?? [...heads].reverse().find((h) => h.getBoundingClientRect().top < 120);
+      links.forEach((a, id) => a.toggleAttribute('aria-current', current?.id === id));
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id)));
+        mark();
+      },
+      { rootMargin: '0px 0px -70% 0px' },
+    );
+    heads.forEach((h) => io.observe(h));
+  }
+
+  // Wide blocks: tables and screenshots (and code, with wideCode) wider than the text column get data-phl-wide.
+  // Measured against the column width itself, not the window, so the result is the same on a
+  // phone and a desktop. The CSS lets them grow only on large screens (styles/layout.css).
+  if (wideBlocks) {
+    const root = document.documentElement;
+    const raw = getComputedStyle(root).getPropertyValue('--phl-content-width').trim();
+    const rem = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const column = raw.endsWith('rem') ? parseFloat(raw) * rem : parseFloat(raw) || 736;
+    // With the info column (from 1680 px) a block next to it must not grow over it:
+    // such blocks get data-phl-wide="beside-info" and stay in the text column.
+    const info = document.querySelector('.phl-article-info');
+    const large = matchMedia('(min-width: 1680px)');
+    const wideEls = new Set();
+    const classify = () => {
+      const bottom = info && large.matches ? info.getBoundingClientRect().bottom + 24 : -Infinity;
+      // Top to bottom: a block that does not grow keeps the ones below in place, a growing one
+      // only pushes them further down, so one pass is stable.
+      [...wideEls].sort((x, y) => (x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)).forEach((el) => {
+        const value = el.getBoundingClientRect().top < bottom ? 'beside-info' : '';
+        if (el.getAttribute('data-phl-wide') !== value) el.setAttribute('data-phl-wide', value);
+      });
+    };
+    let queued = false;
+    const queue = () => {
+      if (queued) return;
+      queued = true;
+      // A timer, not requestAnimationFrame: that one never fires in hidden tabs and some previews.
+      setTimeout(() => { queued = false; classify(); }, 50);
+    };
+    const mark = (el) => {
+      if (!el || wideEls.has(el)) return;
+      el.setAttribute('data-phl-wide', 'beside-info');
+      wideEls.add(el);
+      queue();
+    };
+    if (info) {
+      // Image loads, an opened series list, a resized window all move blocks.
+      if ('ResizeObserver' in window) new ResizeObserver(queue).observe(document.querySelector('.phl-article') ?? document.body);
+      addEventListener('resize', queue);
+    }
+    if (wideCode) document.querySelectorAll('.phl-prose .expressive-code').forEach((ec) => {
+      const pre = ec.querySelector('pre');
+      if (pre && pre.scrollWidth > column + 1) mark(ec);
+    });
+    document.querySelectorAll('.phl-prose table').forEach((t) => {
+      if (t.scrollWidth > column + 1) mark(t);
+    });
+    // A screenshot: an image clearly larger than the column, alone in its paragraph or figure.
+    const block = (img) => {
+      const fig = img.closest('.phl-prose figure');
+      if (fig) return fig;
+      const p = img.closest('.phl-prose > p');
+      return p && p.querySelectorAll('img').length === 1 && !p.textContent.trim() ? p : null;
+    };
+    const check = (img) => {
+      const w = Number(img.getAttribute('width')) || img.naturalWidth;
+      if (w >= column * 1.25 && !img.closest('.phl-gallery, .phl-carousel, .phl-card, .phl-repo')) mark(block(img));
+    };
+    document.querySelectorAll('.phl-prose img').forEach((img) => {
+      if (img.getAttribute('width') || img.complete) check(img);
+      else img.addEventListener('load', () => check(img), { once: true });
+    });
+  }
+
+  // Wide tables: say that they scroll, and mark the side where columns are hidden.
+  document.querySelectorAll('.phl-prose table').forEach((table) => {
+    const hint = document.createElement('p');
+    hint.className = 'phl-table-hint';
+    hint.textContent = tableHint;
+    hint.hidden = true;
+    table.before(hint);
+    table.tabIndex = 0;
+    const update = () => {
+      const hidden = table.scrollWidth - table.clientWidth > 1;
+      const pos = Math.abs(table.scrollLeft);
+      const atStart = pos < 2;
+      const atEnd = pos >= table.scrollWidth - table.clientWidth - 2;
+      const sides = [];
+      if (hidden && !atStart) sides.push('start');
+      if (hidden && !atEnd) sides.push('end');
+      table.dataset.phlScroll = sides.join(' ');
+      hint.hidden = !hidden;
+    };
+    table.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  });
+
+  // Reading progress.
+  const bar = document.querySelector('.phl-progress span');
+  const article = document.querySelector('.phl-article');
+  if (bar && article) {
+    const update = () => {
+      const r = article.getBoundingClientRect();
+      const total = r.height - innerHeight;
+      const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 1;
+      bar.style.transform = `scaleX(${p})`;
+    };
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+
+  // Reading mode: hides everything but the text; remembered; Escape exits.
+  const zen = document.querySelector('[data-phl-zen]');
+  if (zen) {
+    const set = (on) => {
+      document.documentElement.classList.toggle('phl-zen', on);
+      zen.setAttribute('aria-pressed', String(on));
+      zen.textContent = on ? zen.dataset.off : zen.dataset.on;
+      try { localStorage.setItem('phl-zen', on ? '1' : ''); } catch (e) {}
+    };
+    let saved = false;
+    try { saved = localStorage.getItem('phl-zen') === '1'; } catch (e) {}
+    if (saved) set(true);
+    zen.addEventListener('click', () => set(!document.documentElement.classList.contains('phl-zen')));
+    addEventListener('keydown', (e) => e.key === 'Escape' && document.documentElement.classList.contains('phl-zen') && set(false));
+  }
+})();</script></main><footer class="phl-footer"><div class="phl-footer-inner"><nav class="phl-footer-nav" aria-label="Footer menu"><ul><li><a href="/en/tools/traefik-compose/">Docker Compose generator</a></li><li><a href="/en/tools/compose-quadlet/">Compose to Podman Quadlet</a></li><li><a href="/en/tools/proxmox-quorum/">Proxmox quorum</a></li><li><a href="/en/tools/opnsense-vlan-planner/">VLAN planner</a></li><li><a href="/en/tools/rackplan/">Rack planner</a></li><li><a href="/en/privacy/">Privacy policy</a></li></ul></nav><ul class="phl-social-links phl-footer-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><div class="phl-footer-meta"><p><span>© 2025-2026 Stilicho2011. All Rights Reserved.</span><span class="phl-footer-credit">Theme: <a href="https://prohomelab.com">ProHomeLab</a></span><button type="button" class="phl-consent-open" data-phl-consent-open hidden>Analytics settings</button></p><div class="phl-footer-tools"><a class="phl-to-top" href="#top"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l7-7l7 7m-7 7V5"/></svg>Back to top</a></div></div></div></footer><div class="phl-consent" data-phl-consent data-mode="opt-in" role="region" aria-label="Analytics" hidden><p><span data-phl-consent-text>Allow anonymous visit statistics?</span> <a href="/en/privacy/" data-phl-consent-policy>Details</a></p><div class="phl-consent-actions"><button type="button" data-phl-consent-choice="granted">Accept</button><button type="button" data-phl-consent-choice="denied">Decline</button></div></div><script>(function(){const TEXTS = {"ru":{"lang":"ru-RU","label":"Аналитика","text":"Разрешить обезличенную статистику посещений?","policy":"Подробнее","href":"/privacy/","granted":"Разрешить","denied":"Отказаться","seen":"Понятно"},"en":{"lang":"en","label":"Analytics","text":"Allow anonymous visit statistics?","policy":"Details","href":"/en/privacy/","granted":"Accept","denied":"Decline","seen":"OK"}};
+const PAGE = "en";
+
+      (() => {
+        const box = document.querySelector('[data-phl-consent]');
+        if (!box) return;
+        const key = 'phl-consent';
+        let saved = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        const texts = TEXTS;
+        const reader = window.__phlReaderLocale && window.__phlReaderLocale();
+        const tx = reader && reader !== PAGE && texts[reader];
+        if (tx) {
+          box.lang = tx.lang;
+          box.setAttribute('aria-label', tx.label);
+          box.querySelector('[data-phl-consent-text]').textContent = tx.text;
+          const pol = box.querySelector('[data-phl-consent-policy]');
+          if (pol && tx.href) { pol.textContent = tx.policy; pol.href = tx.href; }
+          box.querySelectorAll('[data-phl-consent-choice]').forEach((b) => { b.textContent = tx[b.dataset.phlConsentChoice] || b.textContent; });
+        }
+        const show = () => { box.hidden = false; };
+        if (!saved) show();
+        box.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-phl-consent-choice]');
+          if (!b) return;
+          const value = b.dataset.phlConsentChoice;
+          try { localStorage.setItem(key, value); } catch (e) {}
+          box.hidden = true;
+          if (value === 'granted' && window.__phlAnalytics) window.__phlAnalytics();
+          // Declining after accepting: counters already loaded on this page stop with the next page.
+        });
+        document.querySelectorAll('[data-phl-consent-open]').forEach((el) => {
+          el.hidden = false;
+          el.addEventListener('click', (e) => { e.preventDefault(); show(); box.querySelector('button')?.focus(); });
+        });
+      })();
+    })();</script></body></html>

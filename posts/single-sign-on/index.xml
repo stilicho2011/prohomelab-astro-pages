@@ -1,0 +1,1064 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>IAM и IdP решения | ProHomeLab</title>
+    <link>https://prohomelab.com/posts/single-sign-on/</link>
+    <description>Сайт про homelab, self-hosting и IT: инструкции по установке серверов, виртуализация, Docker, Proxmox, безопасность и автоматизация.</description>
+    <language>ru-RU</language>
+    <lastBuildDate>Sat, 25 Oct 2025 00:00:00 GMT</lastBuildDate>
+    <generator>ProHomeLab theme for Astro</generator>
+    <atom:link href="https://prohomelab.com/posts/single-sign-on/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Authentik - обзор, архитектура, возможности и сравнение с Keycloak</title>
+      <link>https://prohomelab.com/posts/authentik-overview/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/authentik-overview/</guid>
+      <pubDate>Sat, 25 Oct 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>Authentik</category>
+      <category>IAM</category>
+      <category>IdP</category>
+      <category>SSO</category>
+      <category>Homelab</category>
+      <category>Keycloak</category>
+      <category>Authelia</category>
+      <category>Zitadel</category>
+      <description>Подробный обзор Authentik - open source системы для централизованной аутентификации и авторизации (IdP/SSO). Рассмотрим зачем нужны IAM-решения, архитектуру, ключевые функции и сравнение с альтернативами.</description>
+      <content:encoded><![CDATA[<h2 id="зачем-вообще-нужен-authentik-и-что-такое-iam--idp-в-homelab--продакшене">Зачем вообще нужен Authentik (и что такое IAM / IdP в homelab / продакшене)</h2>
+<h3 id="почему-нужны-решения-типа-authentik--iam--idp">Почему нужны решения типа Authentik / IAM / IdP</h3>
+<p>В базовых системах часто каждый сервис (приложение, веб-интерфейс, API) реализует свою форму логина - свои пользователи, хранение паролей, механизм сессий и т.д. Это порождает:</p>
+<ul>
+<li>Дублирование логики аутентификации / авторизации</li>
+<li>Разные пароли в разных системах</li>
+<li>Большую поверхность ошибок безопасности</li>
+<li>Трудности централизованного управления пользователями, MFA, аудитом</li>
+<li>Проблемы с единой сессией (SSO) между системами</li>
+</ul>
+<p>Решения типа <strong>IAM / IdP (Identity Provider)</strong> позволяют централизовать аутентификацию и авторизацию: сервисы «делегируют» процесс логина IdP-решению, а IdP выдает токен / сессии / утверждения (assertions), которые сервисы доверяют.</p>
+<h4 id="в-production-среде-преимущества">В production среде преимущества</h4>
+<ul>
+<li>Централизованная политика безопасности (MFA, IP-ограничения, временные доступы)</li>
+<li>Единый аудит и логирование</li>
+<li>Интеграция с LDAP, AD, сторонними OAuth-провайдерами</li>
+<li>Масштабируемость: добавление новых сервисов без дублирования аутентификации</li>
+</ul>
+<h4 id="в-homelab--self-hosted-окружении">В homelab / self-hosted окружении</h4>
+<ul>
+<li>Контроль над своими данными и паролями</li>
+<li>Возможность экспериментировать с политиками и кастомизацией</li>
+<li>Единый вход для множества домашних сервисов (<a href="https://prohomelab.com/posts/nextcloud-aio/">Nextcloud</a>, Home Assistant и пр.)</li>
+<li>Прокачка инфраструктуры до уровня production</li>
+</ul>
+<p><strong>Итог:</strong> Authentik - одно из решений, которое сочетает удобство, гибкость и open source-подход, подходя как для домашних лабораторий, так и для production.</p>
+<hr>
+<h3 id="что-такое-authentik---краткий-обзор">Что такое Authentik - краткий обзор</h3>
+<p><strong>Authentik</strong> - open source / open-core система <strong>Identity Provider (IdP)</strong> и <strong>Single Sign-On (SSO)</strong>, созданная с упором на гибкость и расширяемость.</p>
+<h4 id="ключевые-возможности">Ключевые возможности</h4>
+<ul>
+<li>Поддержка стандартов: <strong>OAuth2 / OIDC, SAML2, LDAP, SCIM, RADIUS</strong></li>
+<li>Механизм <strong>Flows / Stages</strong> для построения сценариев аутентификации</li>
+<li>Удобный UI для админа и пользователей</li>
+<li>Self-service (регистрация, восстановление пароля, MFA)</li>
+<li>Политики условного доступа (conditional access)</li>
+<li>API, <a href="https://prohomelab.com/posts/terraform-proxmox-vm-automation/">Terraform</a>, Blueprints - конфигурация как код</li>
+<li>Масштабирование от Docker до <a href="https://prohomelab.com/posts/docker-podman-kubernetes/">Kubernetes</a> / Helm</li>
+<li>Поддержка внешних провайдеров идентификации</li>
+</ul>
+<blockquote>
+<p>IdP - критически важный элемент безопасности. Authentik нужно регулярно обновлять и мониторить. В 2024 году фиксировались уязвимости, связанные с управлением сертификатами, но они были оперативно устранены.</p>
+</blockquote>
+<hr>
+<h3 id="основные-концепции">Основные концепции</h3>
+<table>
+<thead>
+<tr>
+<th>Концепция</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Flows / Stages</strong></td>
+<td>Логика последовательности аутентификации (пароль, MFA, IP-проверка и т.д.).</td>
+</tr>
+<tr>
+<td><strong>Applications / Providers</strong></td>
+<td>Настройка приложений и провайдеров входа (OIDC, SAML и др.).</td>
+</tr>
+<tr>
+<td><strong>Policy / Conditions</strong></td>
+<td>Контроль доступа на основе атрибутов (группа, IP, время суток).</td>
+</tr>
+<tr>
+<td><strong>SCIM / LDAP / Federation</strong></td>
+<td>Синхронизация пользователей из внешних систем.</td>
+</tr>
+<tr>
+<td><strong>Self-Service / Enrollment</strong></td>
+<td>Интерфейс для пользователей (смена пароля, MFA и пр.).</td>
+</tr>
+<tr>
+<td><strong>Consent / Attribute Mapping</strong></td>
+<td>Управление атрибутами, передаваемыми приложениям.</td>
+</tr>
+<tr>
+<td><strong>API / Automation</strong></td>
+<td>Полная автоматизация конфигураций через API, Terraform, Blueprints.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="преимущества-и-ограничения">Преимущества и ограничения</h3>
+<h4 id="преимущества">Преимущества</h4>
+<ul>
+<li>Высокая гибкость и кастомизация (flows, policies).</li>
+<li>Поддержка широкого набора протоколов (OIDC, SAML, LDAP, RADIUS).</li>
+<li>Подходит для small/medium окружений и Kubernetes-кластеров.</li>
+<li>Простой интерфейс по сравнению с <a href="https://prohomelab.com/posts/keycloak/">Keycloak</a>.</li>
+<li>API и Terraform для автоматизации.</li>
+<li>Open source - контроль над данными и кодом.</li>
+</ul>
+<h4 id="ограничения">Ограничения</h4>
+<ul>
+<li>Менее крупное сообщество, чем у Keycloak.</li>
+<li>При больших нагрузках может требовать оптимизации.</li>
+<li>Требует регулярных обновлений и аудита.</li>
+<li>Часть функций доступна только в enterprise-версии.</li>
+<li>Настройка flows требует опыта.</li>
+</ul>
+<hr>
+<h4 id="сравнение-authentik-с-конкурентами">Сравнение Authentik с конкурентами</h4>
+<table>
+<thead>
+<tr>
+<th>Характеристика</th>
+<th><strong>Authentik</strong></th>
+<th><strong>Keycloak</strong></th>
+<th><strong>Authelia</strong></th>
+<th><strong>Auth0 / Okta (SaaS)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Тип решения</td>
+<td>Self-host / open core</td>
+<td>Self-host / enterprise</td>
+<td>Self-host / gateway</td>
+<td>SaaS / managed</td>
+</tr>
+<tr>
+<td>Поддерживаемые протоколы</td>
+<td>OAuth2 / OIDC, SAML2, LDAP, SCIM, RADIUS</td>
+<td>OAuth2 / OIDC, SAML2, Kerberos, LDAP / AD</td>
+<td>SSO / 2FA, ограниченные протоколы</td>
+<td>OAuth2 / OIDC, SAML, social login</td>
+</tr>
+<tr>
+<td>Кастомизация</td>
+<td>Очень гибкий (flows, policies)</td>
+<td>Высокая (plugins)</td>
+<td>Простая</td>
+<td>Минимальная</td>
+</tr>
+<tr>
+<td>Интеграции</td>
+<td>LDAP, SCIM, внешние OAuth</td>
+<td>LDAP / AD, федерация</td>
+<td>LDAP</td>
+<td>Много готовых</td>
+</tr>
+<tr>
+<td>Установка</td>
+<td>Docker, Helm, UI</td>
+<td>Java-стек (тяжелый)</td>
+<td>Легковесная</td>
+<td>Без установки</td>
+</tr>
+<tr>
+<td>Масштабируемость</td>
+<td>Средние нагрузки, кластеризация</td>
+<td>Enterprise</td>
+<td>Малые сценарии</td>
+<td>Неограниченно</td>
+</tr>
+<tr>
+<td>Сообщество</td>
+<td>Молодое, быстрорастущее</td>
+<td>Зрелое</td>
+<td>Нишевое</td>
+<td>Огромное</td>
+</tr>
+<tr>
+<td>Безопасность</td>
+<td>Требует обновлений</td>
+<td>Зрелая</td>
+<td>Упрощенная</td>
+<td>Высокая (SLA)</td>
+</tr>
+<tr>
+<td>Стоимость</td>
+<td>Бесплатно / enterprise support</td>
+<td>Бесплатно / поддержка Red Hat</td>
+<td>Бесплатно</td>
+<td>Подписка</td>
+</tr>
+<tr>
+<td>Оптимальный кейс</td>
+<td>Homelab, SMB, кастомизация</td>
+<td>Enterprise</td>
+<td>Простые SSO / 2FA</td>
+<td>Без администрирования</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Authentik часто называют «золотой серединой» между тяжелыми IAM-решениями и простыми proxy-системами вроде Authelia.</p>
+</blockquote>
+<p>Более развернутое сравнение Authentik, Authelia, Keycloak и ZITADEL друг с другом (по функциям, сложности установки, ресурсам) - в <a href="https://prohomelab.com/posts/sso-comparison/">отдельной статье-сравнении</a>.</p>
+<hr>
+<h3 id="установка-и-архитектурные-рекомендации">Установка и архитектурные рекомендации</h3>
+<h4 id="подходы-к-установке">Подходы к установке</h4>
+<ul>
+<li><strong>Docker Compose</strong> - идеально для homelab и тестов</li>
+<li><strong>Kubernetes / Helm</strong> - для production</li>
+<li><strong>Cloud AMI / Marketplace</strong> - готовые образы (AWS и др.)</li>
+</ul>
+<h4 id="архитектура-и-советы">Архитектура и советы</h4>
+<ul>
+<li>Разделяйте сервисы: PostgreSQL, Redis, Authentik web/worker.</li>
+<li>Используйте внешние БД и Redis.</li>
+<li>Настройте резервное копирование.</li>
+<li>Обеспечьте TLS/HTTPS для интерфейсов.</li>
+<li>Настройте мониторинг и обновления.</li>
+<li>При необходимости - кластеризация и репликация.</li>
+</ul>
+<hr>
+<h3 id="минимальный-пример-установки-docker-compose-версии-2025101">Минимальный пример установки (Docker Compose) версии 2025.10.1</h3>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Заметка</span></div>
+<div class="phl-callout-content">
+<p><strong>Актуализация.</strong> На момент публикации актуальной была версия 2025.10.1, но Authentik релизится часто - на август 2026 актуальна ветка 2026.5.x. Не копируйте тег версии слепо: перед установкой проверьте <a href="https://github.com/goauthentik/authentik/releases">страницу релизов на GitHub</a> и подставьте актуальный <code>AUTHENTIK_TAG</code>. Сама структура docker-compose файла с тех пор принципиально не менялась.</p>
+</div>
+</div>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">---</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">postgresql</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">docker.io/library/postgres:16-alpine</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">authentik_postgres</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">healthcheck</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">interval</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">30s</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">retries</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">5</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">start_period</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">20s</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">test</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">CMD-SHELL</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">timeout</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">5s</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">database:/var/lib/postgresql/data</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">POSTGRES_PASSWORD</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${PG_PASS:?database password required}</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">POSTGRES_USER</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${PG_USER:-authentik}</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">POSTGRES_DB</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${PG_DB:-authentik}</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">env_file</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">    </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">.env</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">authentik</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">server</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">command</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">server</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">depends_on</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">postgresql</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">condition</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">service_healthy</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">env_file</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">.env</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.10.1}</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">authentik_server</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">AUTHENTIK_REDIS__HOST</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">redis</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">AUTHENTIK_POSTGRESQL__HOST</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">postgresql</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">AUTHENTIK_POSTGRESQL__USER</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${PG_USER:-authentik}</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">AUTHENTIK_POSTGRESQL__NAME</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${PG_DB:-authentik}</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">AUTHENTIK_POSTGRESQL__PASSWORD</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${PG_PASS}</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">TZ</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">Europe/Moscow</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">./media:/media</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">./custom-templates:/templates</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">authentik</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.authentik.entrypoints=web"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.authentik.rule=Host(`authentik.domain.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.authentik-https-redirect.redirectscheme.scheme=https"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.authentik.middlewares=authentik-https-redirect"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.authentik-secure.entrypoints=websecure"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">## Individual Application forwardAuth regex (catch any subdomain using individual application forwardAuth)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.authentik-secure.rule=Host(`authentik.domain.ru`) || HostRegexp(`{subdomain:[a-z0-9]+}.domain.ru`) &#x26;&#x26; PathPrefix(`/outpost.goauthentik.io/`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.authentik-secure.tls=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.authentik-secure.service=authentik"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.authentik.loadbalancer.server.port=9000"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">worker</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.10.1}</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">command</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">worker</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">authentik_worker</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">AUTHENTIK_REDIS__HOST</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">redis</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">AUTHENTIK_POSTGRESQL__HOST</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">postgresql</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">AUTHENTIK_POSTGRESQL__USER</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${PG_USER:-authentik}</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">AUTHENTIK_POSTGRESQL__NAME</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${PG_DB:-authentik}</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">AUTHENTIK_POSTGRESQL__PASSWORD</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${PG_PASS}</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">TZ</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">Europe/Moscow</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># `user: root` and the docker socket volume are optional.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># See more for the docker socket integration here:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># https://goauthentik.io/docs/outposts/integrations/docker</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Removing `user: root` also prevents the worker from fixing the permissions</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># on the mounted folders, so when removing this make sure the folders have the correct UID/GID</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># (1000:1000 by default)</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#user: root</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/var/run/docker.sock:/var/run/docker.sock</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">./media:/media</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">./certs:/certs</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">./custom-templates:/templates</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">env_file</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">.env</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">depends_on</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">postgresql</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">condition</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">service_healthy</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">authentik</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">database</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">driver</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">local</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">authentik</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="---services:  postgresql:    image: docker.io/library/postgres:16-alpine    container_name: authentik_postgres    restart: unless-stopped    healthcheck:      interval: 30s      retries: 5      start_period: 20s      test:      - CMD-SHELL      - pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}      timeout: 5s    volumes:        - database:/var/lib/postgresql/data    environment:      POSTGRES_PASSWORD: ${PG_PASS:?database password required}      POSTGRES_USER: ${PG_USER:-authentik}      POSTGRES_DB: ${PG_DB:-authentik}    env_file:    - .env    networks:        authentik:#  server:    command: server    depends_on:      postgresql:        condition: service_healthy    env_file:        - .env    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.10.1}    container_name: authentik_server    restart: unless-stopped    environment:        AUTHENTIK_REDIS__HOST: redis        AUTHENTIK_POSTGRESQL__HOST: postgresql        AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}        AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}        AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}        TZ: Europe/Moscow    volumes:        - ./media:/media        - ./custom-templates:/templates    networks:        authentik:        proxy:    labels:        - &#x22;traefik.enable=true&#x22;        - &#x22;traefik.http.routers.authentik.entrypoints=web&#x22;        - &#x22;traefik.http.routers.authentik.rule=Host(&#x60;authentik.domain.ru&#x60;)&#x22;        - &#x22;traefik.http.middlewares.authentik-https-redirect.redirectscheme.scheme=https&#x22;        - &#x22;traefik.http.routers.authentik.middlewares=authentik-https-redirect&#x22;        - &#x22;traefik.http.routers.authentik-secure.entrypoints=websecure&#x22;        ## Individual Application forwardAuth regex (catch any subdomain using individual application forwardAuth)        - &#x22;traefik.http.routers.authentik-secure.rule=Host(&#x60;authentik.domain.ru&#x60;) || HostRegexp(&#x60;{subdomain:[a-z0-9]+}.domain.ru&#x60;) &#x26;&#x26; PathPrefix(&#x60;/outpost.goauthentik.io/&#x60;)&#x22;        - &#x22;traefik.http.routers.authentik-secure.tls=true&#x22;        - &#x22;traefik.http.routers.authentik-secure.service=authentik&#x22;        - &#x22;traefik.http.services.authentik.loadbalancer.server.port=9000&#x22;        - &#x22;traefik.docker.network=proxy&#x22;#  worker:    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.10.1}    restart: unless-stopped    command: worker    container_name: authentik_worker    environment:        AUTHENTIK_REDIS__HOST: redis        AUTHENTIK_POSTGRESQL__HOST: postgresql        AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}        AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}        AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}        TZ: Europe/Moscow    # &#x60;user: root&#x60; and the docker socket volume are optional.    # See more for the docker socket integration here:    # https://goauthentik.io/docs/outposts/integrations/docker    # Removing &#x60;user: root&#x60; also prevents the worker from fixing the permissions    # on the mounted folders, so when removing this make sure the folders have the correct UID/GID    # (1000:1000 by default)    #user: root    volumes:        - /var/run/docker.sock:/var/run/docker.sock        - ./media:/media        - ./certs:/certs        - ./custom-templates:/templates    env_file:        - .env    depends_on:      postgresql:        condition: service_healthy    networks:        proxy:        authentik:#volumes:  database:      driver: local#networks:  proxy:      external: true  authentik:      external: true"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">PG_PASS=pass</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">AUTHENTIK_SECRET_KEY=secret</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># SMTP Host Emails are sent to</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">AUTHENTIK_ERROR_REPORTING__ENABLED=true</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">AUTHENTIK_EMAIL__HOST=smtp.gmail.com</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">AUTHENTIK_EMAIL__PORT=465</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Optionally authenticate (don't add quotation marks to your password)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">AUTHENTIK_EMAIL__USERNAME=mail@gmail.com</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">AUTHENTIK_EMAIL__PASSWORD=password</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Use StartTLS</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">AUTHENTIK_EMAIL__USE_TLS=false</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Use SSL</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">AUTHENTIK_EMAIL__USE_SSL=true</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">AUTHENTIK_EMAIL__TIMEOUT=10</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Email address authentik will send from, should have a correct @domain</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">AUTHENTIK_EMAIL__FROM=mail@gmail.com</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">AUTHENTIK_ERROR_REPORTING__ENABLED=true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="PG_PASS=passAUTHENTIK_SECRET_KEY=secret# SMTP Host Emails are sent toAUTHENTIK_ERROR_REPORTING__ENABLED=trueAUTHENTIK_EMAIL__HOST=smtp.gmail.comAUTHENTIK_EMAIL__PORT=465# Optionally authenticate (don&#x27;t add quotation marks to your password)AUTHENTIK_EMAIL__USERNAME=mail@gmail.comAUTHENTIK_EMAIL__PASSWORD=password# Use StartTLSAUTHENTIK_EMAIL__USE_TLS=false# Use SSLAUTHENTIK_EMAIL__USE_SSL=trueAUTHENTIK_EMAIL__TIMEOUT=10# Email address authentik will send from, should have a correct @domainAUTHENTIK_EMAIL__FROM=mail@gmail.comAUTHENTIK_ERROR_REPORTING__ENABLED=true"><div></div></button></div></figure></div>]]></content:encoded>
+    </item>
+    <item>
+      <title>TOTP vs WebAuthn vs Passwordless - в чем разница и что выбрать</title>
+      <link>https://prohomelab.com/posts/totp-webauthn-passwordless/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/totp-webauthn-passwordless/</guid>
+      <pubDate>Sun, 10 Aug 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>Authentik</category>
+      <category>IAM</category>
+      <category>IdP</category>
+      <category>SSO</category>
+      <category>Homelab</category>
+      <category>Keycloak</category>
+      <category>Authelia</category>
+      <category>Zitadel</category>
+      <description>Подробно о TOTP, WebAuthn, passkeys и Passwordless Login: как они работают, их сильные и слабые стороны, а также рекомендации по выбору подходящей технологии для входа в свои сервисы.</description>
+      <content:encoded><![CDATA[<p>Если вам понравилась настоящая статья, то можете поддержать автора став спонсором на бусти (ссылка в разделе контакты).</p>
+<p>У меня на ютуб-канале и на сайте есть целая серия статей и роликов про IAM-решения: <a href="https://prohomelab.com/posts/authentik-overview/">Authentik</a>, <a href="https://prohomelab.com/posts/authelia-docker-install/">Authelia</a>, Keycloak и Zitadel. Во всех них так или иначе всплывают одни и те же три термина - TOTP, WebAuthn и Passwordless Login - как способы входа и второй фактор защиты. Но в ру-сегменте я ни разу не встречал внятного объяснения, чем они друг от друга отличаются на самом деле, а не на уровне "это тоже двухфакторка". Решил закрыть этот пробел одной статьей, чтобы потом просто на нее ссылаться из остальных.</p>
+<h2 id="зачем-вообще-в-этом-разбираться">Зачем вообще в этом разбираться</h2>
+<p>Пароль как единственный способ входа - штука, доказавшая свою несостоятельность многократно: пароли переиспользуют, их сливают базами при взломах, их фишат поддельными формами входа. Индустрия уже лет десять как активно двигается в сторону чего-то более надежного, и сегодня даже далекий от IT человек так или иначе сталкивается с этим - хотя бы через вход в Госуслуги по коду из приложения или через Face ID на телефоне.</p>
+<p>Дальше разберу TOTP, WebAuthn и Passwordless Login по отдельности, а в конце - как между собой соотносятся WebAuthn и passwordless-подход, потому что путаница чаще всего именно тут.</p>
+<hr>
+<h2 id="1-totp---одноразовые-коды-по-времени">1. TOTP - одноразовые коды по времени</h2>
+<p><strong>TOTP (Time-based One-Time Password)</strong> - это метод двухфакторной аутентификации, при котором одноразовый код генерируется на основе текущего времени и общего секретного ключа. Это самый старый и самый привычный из трех вариантов - тот самый шестизначный код в Google Authenticator, Authy, Bitwarden или <a href="https://prohomelab.com/posts/vaultwarden/">Vaultwarden</a> (я сам пользуюсь последним).</p>
+<p><strong>Как это работает на практике:</strong> при привязке сервис показывает QR-код, приложение его сканирует и получает секретный ключ. Дальше и сервис, и приложение независимо друг от друга каждые 30 секунд считают один и тот же код на основе этого ключа и текущего времени - именно поэтому важно, чтобы время на телефоне было синхронизировано. Пользователь просто вводит актуальный код в дополнение к паролю.</p>
+<p><strong>Сильные стороны:</strong></p>
+<ul>
+<li>Огромная зрелость и совместимость - TOTP поддерживает практически любой сервис с двухфакторкой, от банков до самописных self-hosted панелей.</li>
+<li>Не требует подключения к интернету в момент входа - код считается локально на устройстве.</li>
+<li>Ощутимо усиливает защиту обычного пароля почти без затрат на внедрение.</li>
+</ul>
+<p><strong>Слабые стороны:</strong></p>
+<ul>
+<li>TOTP - это дополнение к паролю, а не его замена. Пароль все еще должен быть надежным: если его украли, TOTP-код - единственное, что стоит между злоумышленником и вашим аккаунтом.</li>
+<li>Уязвим к фишингу в реальном времени: если жертву заманить на поддельную страницу входа и она введет туда и пароль, и текущий TOTP-код, атакующий может тут же перепроковать оба значения на настоящем сайте. Это требует активной атаки "в моменте", а не слитой базы - неприятный, но не самый массовый сценарий.</li>
+</ul>
+<hr>
+<h2 id="2-webauthn---аутентификация-с-помощью-криптографии">2. WebAuthn - аутентификация с помощью криптографии</h2>
+<p><strong>WebAuthn (Web Authentication API)</strong> - открытый стандарт от W3C и FIDO Alliance, который позволяет входить в сервис с помощью криптографической пары ключей вместо пароля или кода.</p>
+<p><strong>Как это работает:</strong> при регистрации устройство генерирует пару ключей - приватный остается на устройстве (в защищенном чипе, TPM или Secure Enclave) и никогда никуда не передается, публичный отправляется на сервер и сохраняется в вашем профиле. При каждом входе сервер присылает случайный "челлендж", устройство подписывает его приватным ключом, а сервер проверяет подпись публичным. Пароль в этой схеме вообще не участвует.</p>
+<p>Практические реализации WebAuthn - это аппаратные ключи безопасности (YubiKey, SoloKey), встроенная биометрия (отпечаток пальца, Face ID, Windows Hello) и защищенные модули самого устройства.</p>
+<p><strong>Сильные стороны:</strong></p>
+<ul>
+<li>Устойчив к фишингу в принципе, а не "в основном": подпись криптографически привязана к домену сайта, поэтому даже идеальная копия страницы входа не сможет получить рабочую подпись для настоящего сервера.</li>
+<li>Нет пароля - нечего перехватывать и нечему утекать при взломе базы сервиса.</li>
+<li>Хорошая поддержка биометрии и аппаратных токенов "из коробки" в современных браузерах и ОС.</li>
+</ul>
+<p><strong>Слабые стороны:</strong></p>
+<ul>
+<li>Требует поддержки со стороны и браузера, и конкретного сайта - для старых или самописных внутренних систем это может быть нетривиально прикрутить.</li>
+<li>Перенос ключей между устройствами исторически был больным местом (об этом чуть ниже, в разделе про passkeys).</li>
+<li>Аппаратные ключи вроде YubiKey - не самое дешевое удовольствие, и я настоятельно рекомендую держать запасной ключ на случай утери или поломки основного - иначе рискуете остаться без доступа к собственным аккаунтам.</li>
+</ul>
+<h3 id="а-что-такое-passkeys">А что такое passkeys?</h3>
+<p>Отдельно стоит сказать про <strong>passkeys</strong> - это не отдельная технология, а маркетинговое имя для конкретного, "удобного" сценария использования WebAuthn, который активно продвигают Apple, Google и Microsoft последние пару лет. Ключевое отличие passkey от классического аппаратного WebAuthn-ключа - синхронизация: приватный ключ хранится не только на одном устройстве, а зашифрованно синхронизируется через облако (iCloud Keychain, Google Password Manager и подобные) между всеми устройствами пользователя. Это решает главную боль ранних версий WebAuthn - "я привязал YubiKey, а теперь у меня новый телефон и я в панике" - но сознательно немного жертвует моделью угроз в пользу удобства, так как приватный ключ теперь технически покидает конкретное железное устройство. Для большинства людей это разумный компромисс, для параноиков - повод оставаться на аппаратных ключах без синхронизации.</p>
+<hr>
+<h2 id="3-passwordless-login---вход-без-пароля">3. Passwordless Login - вход без пароля</h2>
+<p><strong>Passwordless Login</strong> - это не конкретная технология, а общий подход: для входа вообще не используется пароль, вместо него - что-то из перечисленного:</p>
+<ul>
+<li><strong>по e-mail</strong> - сервис присылает одноразовую ссылку (magic link);</li>
+<li><strong>по SMS или мессенджеру</strong> - код подтверждения приходит на телефон;</li>
+<li><strong>через WebAuthn/passkey</strong> - криптографический вход без пароля (лично я использую либо Vaultwarden, либо Windows Hello, в зависимости от устройства);</li>
+<li><strong>через OAuth</strong> - вход через существующий аккаунт Google, GitHub, Microsoft и так далее.</li>
+</ul>
+<p><strong>Сильные стороны:</strong></p>
+<ul>
+<li>Нет пароля - нечего забывать, нечего использовать повторно на других сайтах, нечему утекать при компрометации базы.</li>
+<li>Заметно упрощает сам процесс входа для пользователя - иногда буквально один клик.</li>
+<li>Может выступать и как основной способ входа, и как дополнительный фактор.</li>
+</ul>
+<p><strong>Слабые стороны:</strong></p>
+<ul>
+<li>Если вариант завязан на почту или SMS, безопасность входа целиком зависит от безопасности этого стороннего канала - а SMS давно и заслуженно считается самым слабым звеном (перехват через SIM-swap - реальная и хорошо задокументированная угроза). Я бы рекомендовал не полагаться на SMS как единственный способ входа туда, где важна безопасность.</li>
+<li>Раз пароля нет, вся защита аккаунта фактически переезжает на защиту самого канала входа (почты, номера телефона, устройства) - соответственно, эти вещи требуют не меньшего, а иногда и большего внимания к безопасности.</li>
+</ul>
+<hr>
+<h2 id="4-в-чем-разница-между-webauthn-и-passwordless-login">4. В чем разница между WebAuthn и Passwordless Login</h2>
+<p>Вот тут чаще всего и возникает путаница, потому что термины используются рядом и про одно и то же - но это разные уровни абстракции.</p>
+<ul>
+<li><strong>WebAuthn</strong> - это конкретный, современный и криптографически надежный протокол/API, один из инструментов в наборе.</li>
+<li><strong>Passwordless Login</strong> - это цель или стратегия ("уберем пароль вообще"), которая может быть реализована через WebAuthn, а может - через куда менее надежные magic-ссылки на почту или SMS-коды.</li>
+</ul>
+<p>Иначе говоря: любой вход через WebAuthn - это passwordless по определению, но не любой passwordless-вход одинаково безопасен, потому что WebAuthn - это far cry от одноразовой ссылки на почту с точки зрения защиты от фишинга.</p>
+<h3 id="сравнение-webauthn-и-passwordless-login-в-целом">Сравнение WebAuthn и Passwordless Login в целом</h3>
+<table>
+<thead>
+<tr>
+<th>Характеристика</th>
+<th><strong>WebAuthn</strong></th>
+<th><strong>Passwordless Login (в целом)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Что это</td>
+<td>Стандарт и API для аутентификации с помощью криптографии</td>
+<td>Общий подход к входу без пароля, любыми средствами</td>
+</tr>
+<tr>
+<td>Технологическая база</td>
+<td>Асимметричная криптография (пара ключей)</td>
+<td>Может быть чем угодно: WebAuthn, email-ссылки, одноразовые коды, биометрия</td>
+</tr>
+<tr>
+<td>Примеры</td>
+<td>YubiKey, passkeys, Windows Hello, Face ID, TPM</td>
+<td>Magic link на email, SMS-код, push-уведомление, WebAuthn</td>
+</tr>
+<tr>
+<td>Устойчивость к фишингу</td>
+<td>Очень высокая - приватный ключ никогда не покидает контролируемую цепочку доверия</td>
+<td>Сильно зависит от метода: SMS/e-mail заметно слабее, WebAuthn/биометрия - на уровне лучших практик</td>
+</tr>
+<tr>
+<td>Удобство</td>
+<td>Быстро, без ввода чего-либо, но нужно поддерживаемое устройство</td>
+<td>Часто еще проще (один клик по ссылке), но иногда медленнее из-за ожидания письма/SMS</td>
+</tr>
+<tr>
+<td>Требования к инфраструктуре</td>
+<td>Сервер должен реализовать FIDO2/WebAuthn API</td>
+<td>Может быть проще: достаточно SMTP или SMS-шлюза</td>
+</tr>
+<tr>
+<td>Годится как 2FA</td>
+<td>Да</td>
+<td>Да, но не всегда - зависит от конкретного метода</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="5-итоговая-таблица-по-всем-трем">5. Итоговая таблица по всем трем</h2>
+<table>
+<thead>
+<tr>
+<th>Технология</th>
+<th>Использует пароль?</th>
+<th>Завязан на время?</th>
+<th>Устойчив к фишингу?</th>
+<th>Типичный пример</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>TOTP</strong></td>
+<td>Да, как дополнение</td>
+<td>Да</td>
+<td>Нет</td>
+<td>Google Authenticator, Vaultwarden</td>
+</tr>
+<tr>
+<td><strong>WebAuthn</strong></td>
+<td>Нет</td>
+<td>Нет</td>
+<td>Да</td>
+<td>YubiKey, passkey, Touch ID</td>
+</tr>
+<tr>
+<td><strong>Passwordless</strong></td>
+<td>Нет</td>
+<td>Зависит от метода</td>
+<td>Зависит от метода</td>
+<td>Magic link, SMS-код, WebAuthn</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="6-как-выбрать-на-практике">6. Как выбрать на практике</h2>
+<p>Из опыта настройки Authentik, Authelia, <a href="https://prohomelab.com/posts/keycloak/">Keycloak</a> и Zitadel в своем homelab я бы советовал так:</p>
+<ul>
+<li><strong>Нужен просто второй фактор к существующему паролю, максимально совместимый и без затрат</strong> - берите TOTP, он заведется практически везде и не потребует нового железа.</li>
+<li><strong>Важна максимальная защита от фишинга</strong> и вы готовы один раз потратиться на аппаратный ключ (или обойтись встроенной биометрией устройства) - однозначно WebAuthn, в идеале в виде passkey, чтобы не мучиться с привязкой к единственному устройству.</li>
+<li><strong>Хотите вообще избавиться от паролей</strong> как класса риска - стройте passwordless-вход на основе WebAuthn/passkey, а magic-ссылки на почту или SMS используйте как запасной, а не основной путь входа.</li>
+</ul>
+<p>На практике эти три подхода прекрасно комбинируются: у меня, например, пароль + TOTP закрывают базовый уровень сервисов, а все, что торчит наружу и особенно критично, дополнительно защищено WebAuthn-ключом через тот же Authentik.</p>
+<h2 id="выводы">Выводы</h2>
+<p><strong>TOTP</strong> - это усиление обычного пароля одноразовым кодом, самый совместимый и самый простой в внедрении вариант, но не защищенный от фишинга в реальном времени.</p>
+<p><strong>WebAuthn</strong> - это криптографически надежный протокол входа без пароля, устойчивый к фишингу по своей природе; passkeys - его современная, синхронизируемая между устройствами реализация.</p>
+<p><strong>Passwordless Login</strong> - это общая стратегия отказа от паролей, которая может опираться на WebAuthn (тогда это по-настоящему надежно) или на куда более слабые magic-ссылки и SMS-коды (тогда безопасность входа определяется безопасностью этого канала).</p>
+<hr>
+<p>Полезные ссылки:</p>
+<ul>
+<li><a href="https://webauthn.guide">WebAuthn Guide</a></li>
+<li><a href="https://fidoalliance.org">FIDO Alliance</a></li>
+<li><a href="https://datatracker.ietf.org/doc/html/rfc6238">RFC 6238 - TOTP</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>Authelia в Docker - устанавливаем ForwardAuth-защиту для сервисов за Traefik</title>
+      <link>https://prohomelab.com/posts/authelia-docker-install/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/authelia-docker-install/</guid>
+      <pubDate>Wed, 06 Aug 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>Authentik</category>
+      <category>IAM</category>
+      <category>IdP</category>
+      <category>SSO</category>
+      <category>Homelab</category>
+      <category>Keycloak</category>
+      <category>Authelia</category>
+      <category>Zitadel</category>
+      <description>Пошаговая инструкция по установке и настройке Authelia в Docker - развертывание, конфигурация 2FA, интеграция с Traefik через forwardAuth и разбор основных параметров конфига.</description>
+      <content:encoded><![CDATA[<p>Из всех решений для SSO/2FA, которые я разбирал на канале, Authelia - самое легковесное. Если <a href="https://prohomelab.com/posts/authentik-overview/">Authentik</a> и <a href="https://prohomelab.com/posts/keycloak/">Keycloak</a> - это полноценные IAM-платформы со своей базой пользователей и веб-консолью, то Authelia скорее "охранник на входе": она не заменяет ваши сервисы и не хранит про них ничего, а просто встает перед Traefik (или NGINX/Caddy) и решает один вопрос - пускать конкретного человека дальше или сначала спросить пароль и код из приложения-аутентификатора. Развернутое сравнение Authelia с Authentik, Keycloak и ZITADEL - в <a href="https://prohomelab.com/posts/sso-comparison/">отдельной статье</a>.</p>
+<p>Если статья или видео оказались полезны - поддержать канал можно на бусти, ссылка в контактах.</p>
+<h2 id="что-она-умеет">Что она умеет</h2>
+<ul>
+<li>Защита любых веб-приложений по домену или конкретному URI - точечно, а не все-или-ничего.</li>
+<li>2FA: TOTP, Duo, WebAuthn.</li>
+<li>Пользователи - из простого YAML-файла, LDAP или Active Directory, на выбор.</li>
+<li>ForwardAuth-интеграция с Traefik, NGINX, Caddy.</li>
+<li>ACL - правила доступа по домену, группе, сети.</li>
+</ul>
+<p>У нее принципиально <strong>нет собственного веб-интерфейса для управления</strong> - вся конфигурация в YAML-файлах, а пользователи заводятся руками или скриптом. Для кого-то это минус (Authentik в этом смысле удобнее для нетехнического члена семьи), а для меня - скорее плюс: конфиг лежит в git, изменения видны в diff, и не нужно тыкаться в панель, чтобы понять, что где настроено.</p>
+<table>
+<thead>
+<tr>
+<th>Характеристика</th>
+<th><strong>Authelia</strong></th>
+<th>Authentik</th>
+<th>Keycloak</th>
+<th>ZITADEL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Легкость установки</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐</td>
+<td>⭐⭐</td>
+</tr>
+<tr>
+<td>2FA</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>SSO</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Open Source</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Веб-интерфейс</td>
+<td>❌ (только конфиг)</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Потребление ресурсов</td>
+<td>Низкое</td>
+<td>Среднее</td>
+<td>Высокое</td>
+<td>Среднее</td>
+</tr>
+<tr>
+<td>ACL</td>
+<td>✅</td>
+<td>✅</td>
+<td>Ограниченно</td>
+<td>❌</td>
+</tr>
+</tbody>
+</table>
+<p>(Оценки "звездочками" - мое субъективное ощущение по итогам установки всех четырех, не результат замеров.)</p>
+<p>Если нужна максимальная простота и минимум ресурсов на не самом мощном homelab-сервере - Authelia отличный выбор. Если хочется веб-панель для не-технических пользователей семьи - смотрите в сторону Authentik.</p>
+<h2 id="что-понадобится">Что понадобится</h2>
+<ul>
+<li>Docker и Docker Compose.</li>
+<li>Уже настроенный обратный прокси - у меня Traefik.</li>
+<li>Домены с HTTPS (Let's Encrypt/Cloudflare - без разницы).</li>
+<li>Базовое знание YAML - конфиг весь текстовый, магии в интерфейсе не будет.</li>
+</ul>
+<h2 id="структура-проекта">Структура проекта</h2>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">authelia/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">├──</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">configuration.yml</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">├──</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">users.yml</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">├──</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">docker-compose.yml</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">└──</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">secrets</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="authelia/├── configuration.yml├── users.yml├── docker-compose.yml└── secrets"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">authelia</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"authelia/authelia:4.39.20"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># не используйте :latest - зафиксируйте версию явно, актуальную смотрите на https://github.com/authelia/authelia/releases</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"authelia"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"./secrets:/secrets:ro"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"./config:/config"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"./logs:/var/log/authelia/"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.authelia.rule=Host(`authelia.stilicho.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.authelia.entrypoints=websecure"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.authelia.tls=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.authelia.forwardAuth.address=http://authelia:9091/api/verify?rd=https://authelia.stilicho.ru"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.authelia.loadbalancer.server.port=9091"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">TZ</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"Europe/Moscow"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"/secrets/JWT_SECRET"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># tr -cd '[:alnum:]' &#x3C; /dev/urandom | fold -w 64 | head -n 1 > ./secrets/JWT_SECRET</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">AUTHELIA_SESSION_SECRET_FILE</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"/secrets/SESSION_SECRET"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># tr -cd '[:alnum:]' &#x3C; /dev/urandom | fold -w 64 | head -n 1 > ./secrets/SESSION_SECRET</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"/secrets/STORAGE_ENCRYPTION_KEY"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># tr -cd '[:alnum:]' &#x3C; /dev/urandom | fold -w 64 | head -n 1 > ./secrets/STORAGE_ENCRYPTION_KEY</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#whoami-secure:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#    image: "traefik/whoami"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#    restart: "unless-stopped"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#    container_name: "whoami-secure"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#    labels:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#        - "traefik.enable=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#        - "traefik.http.routers.whoami-secure.rule=Host(`whoami-secure.stilicho.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#        - "traefik.http.routers.whoami-secure.entrypoints=websecure"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#        - "traefik.http.routers.whoami-secure.middlewares=authelia@docker"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#    networks:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#        proxy:</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:    authelia:        image: &#x22;authelia/authelia:4.39.20&#x22; # не используйте :latest - зафиксируйте версию явно, актуальную смотрите на https://github.com/authelia/authelia/releases        container_name: &#x22;authelia&#x22;        volumes:            - &#x22;./secrets:/secrets:ro&#x22;            - &#x22;./config:/config&#x22;            - &#x22;./logs:/var/log/authelia/&#x22;        networks:            proxy:        labels:            - &#x22;traefik.enable=true&#x22;            - &#x22;traefik.http.routers.authelia.rule=Host(&#x60;authelia.stilicho.ru&#x60;)&#x22;            - &#x22;traefik.http.routers.authelia.entrypoints=websecure&#x22;            - &#x22;traefik.http.routers.authelia.tls=true&#x22;            - &#x22;traefik.http.middlewares.authelia.forwardAuth.address=http://authelia:9091/api/verify?rd=https://authelia.stilicho.ru&#x22;            - &#x22;traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader=true&#x22;            - &#x22;traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email&#x22;            - &#x22;traefik.http.services.authelia.loadbalancer.server.port=9091&#x22;        environment:            TZ: &#x22;Europe/Moscow&#x22;            AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE: &#x22;/secrets/JWT_SECRET&#x22; # tr -cd &#x27;[:alnum:]&#x27; < /dev/urandom | fold -w 64 | head -n 1 > ./secrets/JWT_SECRET            AUTHELIA_SESSION_SECRET_FILE: &#x22;/secrets/SESSION_SECRET&#x22; # tr -cd &#x27;[:alnum:]&#x27; < /dev/urandom | fold -w 64 | head -n 1 > ./secrets/SESSION_SECRET            AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: &#x22;/secrets/STORAGE_ENCRYPTION_KEY&#x22; # tr -cd &#x27;[:alnum:]&#x27; < /dev/urandom | fold -w 64 | head -n 1 > ./secrets/STORAGE_ENCRYPTION_KEY    #whoami-secure:    #    image: &#x22;traefik/whoami&#x22;    #    restart: &#x22;unless-stopped&#x22;    #    container_name: &#x22;whoami-secure&#x22;    #    labels:    #        - &#x22;traefik.enable=true&#x22;    #        - &#x22;traefik.http.routers.whoami-secure.rule=Host(&#x60;whoami-secure.stilicho.ru&#x60;)&#x22;    #        - &#x22;traefik.http.routers.whoami-secure.entrypoints=websecure&#x22;    #        - &#x22;traefik.http.routers.whoami-secure.middlewares=authelia@docker&#x22;    #    networks:    #        proxy:networks:    proxy:        external: true"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">users</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">stilicho</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#616972;--1:#99A0A6">## Username</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">displayname</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"stilicho"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">## WARNING: This is a default password for testing only!</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">## IMPORTANT: Change this password before deploying to production!</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">## Generate a new hash using the instructions at:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">## https://www.authelia.com/reference/guides/passwords/#passwords</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">## Password is 'authelia'</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">password</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"$argon2id$v=19$m=65536,t=3,p=4$uSPUUUh/a5U7pNso6g2cMA$YJECeQHkv/qXZDB3W9ADkWj7DMSJRWcn/pVHTUvCbtI"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">email</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"authelia@authelia.com"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">groups</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"admin"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"dev"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="users:    stilicho: ## Username        displayname: &#x22;stilicho&#x22;        ## WARNING: This is a default password for testing only!        ## IMPORTANT: Change this password before deploying to production!        ## Generate a new hash using the instructions at:        ## https://www.authelia.com/reference/guides/passwords/#passwords        ## Password is &#x27;authelia&#x27;        password: &#x22;$argon2id$v=19$m=65536,t=3,p=4$uSPUUUh/a5U7pNso6g2cMA$YJECeQHkv/qXZDB3W9ADkWj7DMSJRWcn/pVHTUvCbtI&#x22;        email: &#x22;authelia@authelia.com&#x22;        groups:            - &#x22;admin&#x22;            - &#x22;dev&#x22;"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">server</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">address</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">tcp://0.0.0.0:9091/</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">log</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">level</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">debug</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">theme</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">dark</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># This secret can also be set using the env variables AUTHELIA_JWT_SECRET_FILE</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#jwt_secret:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">default_redirection_url</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">https://authelia.stilicho.ru</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">totp</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">issuer</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">authelia.com</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># duo_api:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#  hostname: api-123456789.example.com</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#  integration_key: ABCDEF</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#  # This secret can also be set using the env variables AUTHELIA_DUO_API_SECRET_KEY_FILE</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#  secret_key: 1234567890abcdefghifjkl</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">authentication_backend</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">file</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">path</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/config/users.yml</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">password</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">algorithm</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">argon2</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6"># Recommended Parameters</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6"># Uses 2 GiB memory, then immediately releases it.</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6"># See https://www.authelia.com/reference/guides/passwords/#recommended-parameters-argon2</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6"># See https://www.rfc-editor.org/rfc/rfc9106.html#section-4 for details on tuning the parameters for your hardware.</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6"># After saving configuration file, password hash can be generated by running: docker run -v ./configuration.yml:/configuration.yml --rm authelia/authelia:latest authelia crypto hash generate --config /configuration.yml --password 'yourpassword'</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">argon2</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">                </span><span style="--0:#1E7734;--1:#85E89D">variant</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">argon2id</span></div></div><div class="ec-line"><div class="code"><span class="indent">                </span><span style="--0:#1E7734;--1:#85E89D">iterations</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">1</span></div></div><div class="ec-line"><div class="code"><span class="indent">                </span><span style="--0:#1E7734;--1:#85E89D">memory</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">2097152</span></div></div><div class="ec-line"><div class="code"><span class="indent">                </span><span style="--0:#1E7734;--1:#85E89D">parallelism</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">4</span></div></div><div class="ec-line"><div class="code"><span class="indent">                </span><span style="--0:#1E7734;--1:#85E89D">key_length</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">32</span></div></div><div class="ec-line"><div class="code"><span class="indent">                </span><span style="--0:#1E7734;--1:#85E89D">salt_length</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">16</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6"># Recommended Parameters when constrained by low memory or low powered hardware. Uses 64 KiB memory, then immediately releases it.</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6"># argon2:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6">#   variant: argon2id</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6">#   iterations: 3</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6">#   memory: 65536</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6">#   parallelism: 4</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6">#   key_length: 32</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#616972;--1:#99A0A6">#   salt_length: 16</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">access_control</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">default_policy</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">deny</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">rules</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6"># Rules applied to everyone</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#1E7734;--1:#85E89D">domain</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">traefik-dashboard.stilicho.ru</span></div></div><div class="ec-line"><div class="code"><span class="indent">          </span><span style="--0:#1E7734;--1:#85E89D">policy</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">two_factor</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">#- domain: portainer.stilicho.ru #для portainer есть oidc</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">#  policy: two_factor</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">        </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#1E7734;--1:#85E89D">domain</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">nginx.stilicho.ru</span></div></div><div class="ec-line"><div class="code"><span class="indent">          </span><span style="--0:#1E7734;--1:#85E89D">policy</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">two_factor</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">session</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">authelia_session</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># This secret can also be set using the env variables AUTHELIA_SESSION_SECRET_FILE</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#secret:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">expiration</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">14400</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># 4 hour</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">inactivity</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">14400</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># 4 hour</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">domain</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">stilicho.ru</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># Should match whatever your root protected domain is</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># redis:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#   host: redis</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#   port: 6379</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#   # This secret can also be set using the env variables AUTHELIA_SESSION_REDIS_PASSWORD_FILE</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#   # password: authelia</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">regulation</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">max_retries</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">3</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">find_time</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">120</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">ban_time</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">300</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">storage</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#encryption_key: /secrets/STORAGE_ENCRYPTION_KEY # Now required</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">local</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">path</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/config/db.sqlite3</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#password_policy:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#  zxcvbn:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#    enabled: true</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#    min_score: 4</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#identity_providers:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#  oidc:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">## The other portions of the mandatory OpenID Connect 1.0 configuration go here.</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">## See: https://www.authelia.com/c/oidc</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#    clients:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#      - client_id: 'portainer'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        client_name: 'Portainer'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        client_secret: '$pbkdf2-sha512$310000$c8p78n7pUMln0jzvd4aK4Q$JNRBzwAo0ek5qKn50cFzzvE9RXV88h1wJn5KGiHrD0YKtZaR/nCb2CJPOsKaPK0hjf.9yHxzQGZziziccp6Yng'  # The digest of 'insecure_secret'.</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        public: false</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        authorization_policy: 'two_factor'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        require_pkce: false</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        pkce_challenge_method: ''</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        redirect_uris:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#          - 'https://portainer.stilicho.ru'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        scopes:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#         - 'openid'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#          - 'profile'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#          - 'groups'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#          - 'email'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        response_types:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#          - 'code'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        grant_types:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#          - 'authorization_code'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        access_token_signed_response_alg: 'none'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        userinfo_signed_response_alg: 'none'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#        token_endpoint_auth_method: 'client_secret_post'</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#log:</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#  level: info</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#  format: text</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#  file_path: /logs/authelia.log</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6">#  keep_stdout: false</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">notifier</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># smtp:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#   username: test</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#   # This secret can also be set using the env variables AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#   password: password</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#   host: mail.example.com</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#   port: 25</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#   sender: admin@example.com</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">filesystem</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">filename</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/config/notification.txt</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="server:    address: tcp://0.0.0.0:9091/log:    level: debugtheme: dark# This secret can also be set using the env variables AUTHELIA_JWT_SECRET_FILE#jwt_secret:default_redirection_url: https://authelia.stilicho.rutotp:    issuer: authelia.com# duo_api:#  hostname: api-123456789.example.com#  integration_key: ABCDEF#  # This secret can also be set using the env variables AUTHELIA_DUO_API_SECRET_KEY_FILE#  secret_key: 1234567890abcdefghifjklauthentication_backend:    file:        path: /config/users.yml        password:            algorithm: argon2            # Recommended Parameters            # Uses 2 GiB memory, then immediately releases it.            # See https://www.authelia.com/reference/guides/passwords/#recommended-parameters-argon2            # See https://www.rfc-editor.org/rfc/rfc9106.html#section-4 for details on tuning the parameters for your hardware.            # After saving configuration file, password hash can be generated by running: docker run -v ./configuration.yml:/configuration.yml --rm authelia/authelia:latest authelia crypto hash generate --config /configuration.yml --password &#x27;yourpassword&#x27;            argon2:                variant: argon2id                iterations: 1                memory: 2097152                parallelism: 4                key_length: 32                salt_length: 16            # Recommended Parameters when constrained by low memory or low powered hardware. Uses 64 KiB memory, then immediately releases it.            # argon2:            #   variant: argon2id            #   iterations: 3            #   memory: 65536            #   parallelism: 4            #   key_length: 32            #   salt_length: 16access_control:    default_policy: deny    rules:        # Rules applied to everyone        - domain: traefik-dashboard.stilicho.ru          policy: two_factor        #- domain: portainer.stilicho.ru #для portainer есть oidc        #  policy: two_factor        - domain: nginx.stilicho.ru          policy: two_factorsession:    name: authelia_session    # This secret can also be set using the env variables AUTHELIA_SESSION_SECRET_FILE    #secret:    expiration: 14400 # 4 hour    inactivity: 14400 # 4 hour    domain: stilicho.ru # Should match whatever your root protected domain is    # redis:    #   host: redis    #   port: 6379    #   # This secret can also be set using the env variables AUTHELIA_SESSION_REDIS_PASSWORD_FILE    #   # password: autheliaregulation:    max_retries: 3    find_time: 120    ban_time: 300storage:    #encryption_key: /secrets/STORAGE_ENCRYPTION_KEY # Now required    local:        path: /config/db.sqlite3#password_policy:#  zxcvbn:#    enabled: true#    min_score: 4#identity_providers:#  oidc:## The other portions of the mandatory OpenID Connect 1.0 configuration go here.## See: https://www.authelia.com/c/oidc#    clients:#      - client_id: &#x27;portainer&#x27;#        client_name: &#x27;Portainer&#x27;#        client_secret: &#x27;$pbkdf2-sha512$310000$c8p78n7pUMln0jzvd4aK4Q$JNRBzwAo0ek5qKn50cFzzvE9RXV88h1wJn5KGiHrD0YKtZaR/nCb2CJPOsKaPK0hjf.9yHxzQGZziziccp6Yng&#x27;  # The digest of &#x27;insecure_secret&#x27;.#        public: false#        authorization_policy: &#x27;two_factor&#x27;#        require_pkce: false#        pkce_challenge_method: &#x27;&#x27;#        redirect_uris:#          - &#x27;https://portainer.stilicho.ru&#x27;#        scopes:#         - &#x27;openid&#x27;#          - &#x27;profile&#x27;#          - &#x27;groups&#x27;#          - &#x27;email&#x27;#        response_types:#          - &#x27;code&#x27;#        grant_types:#          - &#x27;authorization_code&#x27;#        access_token_signed_response_alg: &#x27;none&#x27;#        userinfo_signed_response_alg: &#x27;none&#x27;#        token_endpoint_auth_method: &#x27;client_secret_post&#x27;#log:#  level: info#  format: text#  file_path: /logs/authelia.log#  keep_stdout: falsenotifier:    # smtp:    #   username: test    #   # This secret can also be set using the env variables AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE    #   password: password    #   host: mail.example.com    #   port: 25    #   sender: admin@example.com    filesystem:        filename: /config/notification.txt"><div></div></button></div></figure></div>
+<p>На что здесь стоит обратить внимание:</p>
+<ul>
+<li><strong>Три секрета через <code>_FILE</code></strong> (<code>JWT_SECRET</code>, <code>SESSION_SECRET</code>, <code>STORAGE_ENCRYPTION_KEY</code>) - генерируются той же командой из комментария в compose-файле (<code>tr -cd '[:alnum:]' &#x3C; /dev/urandom | fold -w 64 | head -n 1 > ./secrets/ИМЯ</code>), по одному запуску на каждый файл. Без них Authelia просто не поднимется - это не опциональные настройки для продвинутых, а обязательный минимум.</li>
+<li><strong>Хэш пароля в <code>users.yml</code></strong> - в примере это тестовый хэш для пароля <code>authelia</code>. Оставлять его как есть даже "просто чтобы посмотреть" не стоит - сгенерируйте свой командой из комментария (<code>authelia crypto hash generate</code>) сразу, экономия пяти минут того не стоит.</li>
+<li><strong><code>log: level: debug</code></strong> в <code>configuration.yml</code> - удобно на этапе первой настройки, чтобы видеть, что происходит при каждом запросе, но после того как все заработало, стоит вернуть на <code>info</code> - иначе лог быстро разрастется, а толку от него для повседневной работы никакого.</li>
+<li><strong><code>access_control.rules</code></strong> - именно здесь описывается, какие домены защищены и какой уровень доступа нужен (<code>two_factor</code>, <code>one_factor</code>, <code>bypass</code>). <code>default_policy: deny</code> означает, что все, что не описано явно правилом, - заблокировано по умолчанию. Правило пишется сверху вниз, и совпадает первое подходящее - порядок правил имеет значение.</li>
+<li><strong><code>session.domain</code></strong> - должен совпадать с корневым доменом, для которого вы защищаете сервисы (у меня <code>stilicho.ru</code>), иначе cookie сессии Authelia не будет виден поддоменам защищенных сервисов, и авторизация не переживет переход между ними.</li>
+<li><strong>Закомментированный блок <code>whoami-secure</code></strong> в compose-файле - тестовый сервис <code>traefik/whoami</code>, специально оставленный для проверки: раскомментируйте его, чтобы убедиться, что <code>forwardAuth</code>-мидлварь реально спрашивает пароль перед тем, как показать страницу, прежде чем вешать защиту на настоящие сервисы.</li>
+</ul>
+<h2 id="проверка">Проверка</h2>
+<p>Поднимаем стек:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">up</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="docker compose up -d"><div></div></button></div></figure></div>
+<p>Открываем защищенный домен в браузере - должно перекинуть на форму логина Authelia, а не сразу на сервис. Вводим логин/пароль из <code>users.yml</code>, дальше - запрос TOTP-кода (если настроили). После успешного входа Authelia редиректит обратно на исходный адрес, и дальше запросы к этому домену идут без повторного логина в пределах <code>session.expiration</code>.</p>
+<p>Если вместо формы логина видите сразу защищенный сервис - значит <code>forwardAuth</code>-мидлварь не подключена к роутеру этого сервиса (<code>traefik.http.routers.&#x3C;сервис>.middlewares=authelia@docker</code> должен быть в лейблах), а не проблема самой Authelia.</p>
+<h2 id="вывод">Вывод</h2>
+<p>Authelia - не замена полноценному IAM-решению, а простой и легкий "стражник" перед вашими сервисами, если не нужна ни своя база пользователей с веб-панелью, ни OIDC-интеграции на каждый чих. Конфиг весь в текстовых файлах, ресурсов почти не ест, а после того как разберетесь один раз с секретами и access_control - добавление нового защищенного домена - это одна строчка в правилах и один лейбл на контейнер.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Установка и настройка Keycloak</title>
+      <link>https://prohomelab.com/posts/keycloak/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/keycloak/</guid>
+      <pubDate>Sat, 02 Aug 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>Authentik</category>
+      <category>IAM</category>
+      <category>IdP</category>
+      <category>SSO</category>
+      <category>Homelab</category>
+      <category>Keycloak</category>
+      <category>Authelia</category>
+      <category>Zitadel</category>
+      <description>Пошаговая инструкция по установке и настройке Keycloak для организации SSO и двухфакторной аутентификации с обратным прокси. Рассмотрены конфигурация Docker Compose, первый вход в админку, создание realm и клиента, а также рекомендации по повышению безопасности.</description>
+      <content:encoded><![CDATA[<h2 id="что-такое-keycloak">Что такое Keycloak</h2>
+<p>Если вам понравилась настоящая статья, то можете поддержать автора став спонсором на бусти (ссылка в разделе контакты).</p>
+<p><strong>Keycloak</strong> - open-source решение для управления идентификацией и доступом (IAM) от Red Hat, с поддержкой SSO, OAuth2, OpenID Connect, SAML 2.0 и еще доброго десятка стандартов помельче. Это, пожалуй, самый "тяжелый" и одновременно самый функциональный игрок из всех IAM-решений, которые я разбирал в этой серии - в enterprise-среде он де-факто стандарт, и если вам когда-нибудь приходилось логиниться в корпоративный портал через страницу с логотипом "Keycloak" внизу - вот это оно и было.</p>
+<p>В домашней лаборатории Keycloak оправдан не всегда - он ощутимо тяжелее, чем тот же Authentik или Authelia, и требует Java-стек под капотом. Но если вы хотите пощупать тот самый инструмент, с которым реально работают в проде на работе, или вам нужны специфичные корпоративные фичи вроде реалмов и федерации - это то, что нужно.</p>
+<h2 id="зачем-нужен-keycloak">Зачем нужен Keycloak</h2>
+<p>Централизованно управлять аутентификацией пользователей Keycloak умеет широко:</p>
+<ul>
+<li>единый вход (SSO) сразу во все подключенные приложения;</li>
+<li>вход через внешних провайдеров - Google, GitHub и другие через OAuth2/OIDC;</li>
+<li>подключение LDAP и Active Directory, если у вас уже есть корпоративный каталог пользователей;</li>
+<li>полноценная веб-админка, а не только конфиг-файлы;</li>
+<li>нативная поддержка OpenID Connect и OAuth 2.0 без костылей.</li>
+</ul>
+<h2 id="что-понадобится">Что понадобится</h2>
+<ul>
+<li>Docker и Docker Compose;</li>
+<li>обратный прокси - в этой статье я использую Traefik;</li>
+<li>домен с настроенным DNS (у меня <code>keycloak.stilicho.ru</code>);</li>
+<li>SSL-сертификат, проще всего через Let's Encrypt силами того же Traefik.</li>
+</ul>
+<h2 id="возможности-keycloak">Возможности Keycloak</h2>
+<p>Возможностей у Keycloak действительно много, и разложу их по смысловым группам, чтобы было понятно, что вообще получаете при установке.</p>
+<p><strong>Аутентификация и авторизация.</strong> Single Sign-On для всех подключенных приложений, вход через социальные провайдеры (Google, Facebook, GitHub и другие), поддержка OAuth2/OIDC/SAML 2.0 и многофакторная аутентификация через TOTP (Google Authenticator и аналоги).</p>
+<p><strong>Управление пользователями и ролями.</strong> Полноценное создание и управление пользователями, группами и ролями, делегированное администрирование - можно разграничить, кто из админов какими пользователями управляет, - плюс импорт и экспорт пользователей через LDAP, CSV или REST API.</p>
+<p><strong>Интеграция с корпоративной инфраструктурой.</strong> Прямая интеграция с LDAP и Active Directory, SCIM-подобные возможности через REST API, полноценный CLI-клиент и Admin REST API для автоматизации.</p>
+<p><strong>Multi-tenancy и реалмы.</strong> Пожалуй, главная архитектурная фишка Keycloak - <strong>реалмы</strong> (realms), изолированные домены аутентификации. У каждого реалма свои настройки, пользователи, клиенты и политики - можно держать один Keycloak на несколько независимых проектов или клиентов, не боясь, что они "увидят" пользователей друг друга.</p>
+<p><strong>Кастомизация.</strong> Можно кастомизировать UI экранов входа и регистрации под свой бренд, расширять функциональность через Java SPI и плагины, локализовать интерфейс под нужный язык.</p>
+<p><strong>Аудит и безопасность.</strong> Аудит логов входа и действий пользователей, гибко настраиваемые политики паролей, ограничения по IP и встроенная защита от brute-force атак.</p>
+<h2 id="docker-compose-файл-который-используется-в-ролике">Docker Compose файл, который используется в ролике</h2>
+<p>Ниже - конфигурация, с которой я разворачивал Keycloak в видео. Она состоит из двух сервисов: базы PostgreSQL и самого Keycloak за Traefik.</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">postgres</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">postgres:16-alpine</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">keycloak-db</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">always</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">expose</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#005CC5;--1:#79B8FF">5432</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/home/path/to/keycloak/database:/var/lib/postgresql/data</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">POSTGRES_DB</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${POSTGRES_DB}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">POSTGRES_USER</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${POSTGRES_USER}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">POSTGRES_PASSWORD</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${POSTGRES_PASSWORD}</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">healthcheck</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">test</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">                </span></span><span style="--0:#24292E;--1:#E1E4E8">[</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"CMD"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"pg_isready"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"-q"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"-d"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"${POSTGRES_DB}"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"-U"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"${POSTGRES_USER}"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">                </span></span><span style="--0:#24292E;--1:#E1E4E8">]</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">interval</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">10s</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">timeout</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">5s</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">retries</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">3</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">start_period</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">60s</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">keycloak</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">keycloak</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">quay.io/keycloak/keycloak:26.6.4</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># не используйте :latest - зафиксируйте версию явно, актуальную смотрите на https://quay.io/repository/keycloak/keycloak?tab=tags</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">keycloak</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">command</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">start</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">KC_HOSTNAME</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${KEYCLOAK_HOSTNAME}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">KC_BOOTSTRAP_ADMIN_USERNAME</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${KC_BOOTSTRAP_ADMIN_USERNAME}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">KC_BOOTSTRAP_ADMIN_PASSWORD</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${KC_BOOTSTRAP_ADMIN_PASSWORD}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">KC_DB</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">postgres</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">KC_DB_URL</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">jdbc:postgresql://postgres/${POSTGRES_DB}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">KC_DB_USERNAME</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${POSTGRES_USER}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">KC_DB_PASSWORD</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">${POSTGRES_PASSWORD}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">KC_PROXY_HEADERS</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"xforwarded"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">KC_HTTP_ENABLED</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">KC_HEALTH_ENABLED</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">PROXY_ADDRESS_FORWARDING</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"true"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">healthcheck</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">test</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">                </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"CMD-SHELL"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">                </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#BF3441;--1:#F97583">|</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#032F62;--1:#9ECBFF">                    </span></span><span style="--0:#032F62;--1:#9ECBFF">exec 3&#x3C;>/dev/tcp/localhost/9000 &#x26;&#x26;</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#032F62;--1:#9ECBFF">                    </span></span><span style="--0:#032F62;--1:#9ECBFF">echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&#x26;3 &#x26;&#x26;</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#032F62;--1:#9ECBFF">                    </span></span><span style="--0:#032F62;--1:#9ECBFF">cat &#x3C;&#x26;3 | tee /tmp/healthcheck.log | grep -q '200 OK'</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">interval</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">10s</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">timeout</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">5s</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">retries</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">3</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">start_period</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">90s</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">#ports:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">#  - 8080:8080</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">#expose:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">#  - 8080 # web ui http</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#616972;--1:#99A0A6">#  - 9000 # health endpoint</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">always</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">depends_on</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#1E7734;--1:#85E89D">postgres</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">                </span><span style="--0:#1E7734;--1:#85E89D">condition</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">service_healthy</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">keycloak</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">proxy</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.keycloak.entrypoints=web"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.keycloak.rule=Host(`keycloak.domain.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.keycloak-https-redirect.redirectscheme.scheme=https"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.keycloak.middlewares=keycloak-https-redirect"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.keycloak-secure.entrypoints=websecure"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.keycloak-secure.rule=Host(`keycloak.domain.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.keycloak-secure.tls=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.keycloak-secure.service=keycloak"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.keycloak.loadbalancer.server.port=8080"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">            </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">keycloak</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">internal</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:    postgres:        image: postgres:16-alpine        container_name: keycloak-db        restart: always        expose:            - 5432        volumes:            - /home/path/to/keycloak/database:/var/lib/postgresql/data        environment:            POSTGRES_DB: ${POSTGRES_DB}            POSTGRES_USER: ${POSTGRES_USER}            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}        healthcheck:            test:                [                    &#x22;CMD&#x22;,                    &#x22;pg_isready&#x22;,                    &#x22;-q&#x22;,                    &#x22;-d&#x22;,                    &#x22;${POSTGRES_DB}&#x22;,                    &#x22;-U&#x22;,                    &#x22;${POSTGRES_USER}&#x22;,                ]            interval: 10s            timeout: 5s            retries: 3            start_period: 60s        networks:            - keycloak    keycloak:        image: quay.io/keycloak/keycloak:26.6.4 # не используйте :latest - зафиксируйте версию явно, актуальную смотрите на https://quay.io/repository/keycloak/keycloak?tab=tags        container_name: keycloak        command: start        environment:            KC_HOSTNAME: ${KEYCLOAK_HOSTNAME}            KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}            KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}            KC_DB: postgres            KC_DB_URL: jdbc:postgresql://postgres/${POSTGRES_DB}            KC_DB_USERNAME: ${POSTGRES_USER}            KC_DB_PASSWORD: ${POSTGRES_PASSWORD}            KC_PROXY_HEADERS: &#x22;xforwarded&#x22;            KC_HTTP_ENABLED: true            KC_HEALTH_ENABLED: true            PROXY_ADDRESS_FORWARDING: &#x22;true&#x22;        healthcheck:            test:                - &#x22;CMD-SHELL&#x22;                - |                    exec 3<>/dev/tcp/localhost/9000 &#x26;&#x26;                    echo -e &#x27;GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n&#x27; >&#x26;3 &#x26;&#x26;                    cat <&#x26;3 | tee /tmp/healthcheck.log | grep -q &#x27;200 OK&#x27;            interval: 10s            timeout: 5s            retries: 3            start_period: 90s        #ports:        #  - 8080:8080        #expose:        #  - 8080 # web ui http        #  - 9000 # health endpoint        restart: always        depends_on:            postgres:                condition: service_healthy        networks:            - keycloak            - proxy        labels:            - &#x22;traefik.enable=true&#x22;            - &#x22;traefik.http.routers.keycloak.entrypoints=web&#x22;            - &#x22;traefik.http.routers.keycloak.rule=Host(&#x60;keycloak.domain.ru&#x60;)&#x22;            - &#x22;traefik.http.middlewares.keycloak-https-redirect.redirectscheme.scheme=https&#x22;            - &#x22;traefik.http.routers.keycloak.middlewares=keycloak-https-redirect&#x22;            - &#x22;traefik.http.routers.keycloak-secure.entrypoints=websecure&#x22;            - &#x22;traefik.http.routers.keycloak-secure.rule=Host(&#x60;keycloak.domain.ru&#x60;)&#x22;            - &#x22;traefik.http.routers.keycloak-secure.tls=true&#x22;            - &#x22;traefik.http.routers.keycloak-secure.service=keycloak&#x22;            - &#x22;traefik.http.services.keycloak.loadbalancer.server.port=8080&#x22;            - &#x22;traefik.docker.network=proxy&#x22;networks:    keycloak:        internal: true    proxy:        external: true"><div></div></button></div></figure></div>
+<p>Значения в файле переменных</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># define FQDN hostname</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">KEYCLOAK_HOSTNAME=keycloak.stilicho.ru</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># define login credentials</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">KC_BOOTSTRAP_ADMIN_USERNAME=admin</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">KC_BOOTSTRAP_ADMIN_PASSWORD=password</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># define database credentials</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">POSTGRES_DB=keycloak_db</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">POSTGRES_USER=keycloak_db_user</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">POSTGRES_PASSWORD=keycloak_db_user_password</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# define FQDN hostnameKEYCLOAK_HOSTNAME=keycloak.stilicho.ru# define login credentialsKC_BOOTSTRAP_ADMIN_USERNAME=adminKC_BOOTSTRAP_ADMIN_PASSWORD=password# define database credentialsPOSTGRES_DB=keycloak_dbPOSTGRES_USER=keycloak_db_userPOSTGRES_PASSWORD=keycloak_db_user_password"><div></div></button></div></figure></div>
+<p>Пару слов про то, что здесь происходит, потому что бездумно копировать чужой compose-файл - плохая идея.</p>
+<p>Сеть <code>keycloak</code> намеренно объявлена как <code>internal: true</code> - у базы данных нет и не должно быть прямого выхода наружу, к ней обращается только сам контейнер Keycloak внутри той же docker-сети. Наружу торчит только сеть <code>proxy</code>, через которую Traefik подхватывает контейнер по лейблам.</p>
+<p><code>KC_PROXY_HEADERS: "xforwarded"</code> и <code>PROXY_ADDRESS_FORWARDING: "true"</code> говорят Keycloak, что он стоит за обратным прокси и должен доверять заголовкам <code>X-Forwarded-*</code> - без этого он будет путаться в том, какой протокол и хост реально использует клиент, и генерировать неправильные redirect-ссылки. <code>KC_HTTP_ENABLED: true</code> разрешает Keycloak слушать по обычному HTTP внутри контейнера - TLS-терминацию в этой схеме на себя берет Traefik, а не сам Keycloak.</p>
+<p>Healthcheck заслуживает отдельного слова: с определенной версии Keycloak health-эндпоинты переехали на отдельный management-порт <strong>9000</strong>, а не висят на основном 8080 вместе с остальным приложением. Именно поэтому в healthcheck используется чистый bash через <code>/dev/tcp</code> вместо <code>curl</code> - в образе Keycloak его попросту нет, а тащить дополнительный пакет ради одной проверки не хочется.</p>
+<h2 id="первый-запуск-и-создание-realm">Первый запуск и создание realm</h2>
+<p>Разворачиваем все командой <code>docker compose up -d</code>, ждем, пока пройдет healthcheck у базы и сам Keycloak поднимется - при первом старте это может занять заметно больше времени, чем последующие рестарты, так как сервис инициализирует внутренние схемы в PostgreSQL.</p>
+<p>После этого заходим на <code>https://keycloak.stilicho.ru</code> (у вас, разумеется, будет свой домен) и логинимся под учеткой из <code>KC_BOOTSTRAP_ADMIN_USERNAME</code>/<code>KC_BOOTSTRAP_ADMIN_PASSWORD</code>. Дальше по порядку:</p>
+<ol>
+<li><strong>Создаем отдельный realm.</strong> По умолчанию Keycloak предлагает работать в realm <code>master</code>, но это плохая практика - <code>master</code> предназначен для администрирования самого Keycloak, а не для ваших приложений. В левом верхнем углу выбираем <strong>Create realm</strong>, даем ему осмысленное имя (например, <code>homelab</code>).</li>
+<li><strong>Создаем клиента.</strong> Внутри свежего realm идем в <strong>Clients → Create client</strong>, задаем Client ID (обычно совпадает с именем защищаемого сервиса), включаем нужный тип аутентификации (Standard flow для обычного веб-приложения через OIDC) и прописываем Valid redirect URIs - адрес, куда Keycloak будет возвращать пользователя после успешного входа.</li>
+<li><strong>Заводим пользователей.</strong> В <strong>Users</strong> создаем нужные учетные записи, либо настраиваем интеграцию с внешним LDAP/Active Directory через <strong>User federation</strong>, если пользователи уже где-то есть и плодить их вручную не хочется.</li>
+<li><strong>Настраиваем MFA при желании.</strong> В <strong>Authentication</strong> можно обязать конкретные группы пользователей проходить TOTP - это делается через flows, не требует правки конфигов и применяется сразу ко всем клиентам realm.</li>
+</ol>
+<p>С этого момента любое приложение, поддерживающее OIDC или SAML, можно подключить к этому realm как отдельного клиента - и оно получит единый вход вместе со всеми остальными сервисами, подключенными тем же способом.</p>
+<h2 id="заключение">Заключение</h2>
+<p>Keycloak - не самый легкий вариант для домашней лаборатории, и если вам нужен просто быстрый forward-auth перед парой сервисов, скорее всего, хватит <a href="https://prohomelab.com/posts/authelia-docker-install/">Authelia</a> или <a href="https://prohomelab.com/posts/authentik-overview/">Authentik</a> - я разбирал оба варианта в соседних статьях. Но если вы хотите разобраться с тем самым инструментом, который реально используют в enterprise, потренироваться на реалмах, федерации и делегированном администрировании, или у вас уже есть LDAP/Active Directory, которые нужно подключить как есть - Keycloak оправдывает свой вес с лихвой. Полное сравнение всех четырех решений (включая ZITADEL) - в <a href="https://prohomelab.com/posts/sso-comparison/">отдельной статье</a>.</p>
+<h2 id="ссылки">Ссылки</h2>
+<ul>
+<li><a href="https://www.keycloak.org/securing-apps/oidc-layers">Документация Keycloak по OIDC и защите приложений</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>ZITADEL - современное IAM-решение с открытым исходным кодом</title>
+      <link>https://prohomelab.com/posts/zitadel-iam-overview/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/zitadel-iam-overview/</guid>
+      <pubDate>Sat, 02 Aug 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>Authentik</category>
+      <category>IAM</category>
+      <category>IdP</category>
+      <category>SSO</category>
+      <category>Homelab</category>
+      <category>Keycloak</category>
+      <category>Authelia</category>
+      <category>Zitadel</category>
+      <description>Пошаговая инструкция по установке и настройке Zitadel для организации двухфакторной аутентификации с обратным прокси. Рассмотрены конфигурация пользователей, интеграция с Docker и рекомендации по повышению безопасности веб-сервисов.</description>
+      <content:encoded><![CDATA[<h2 id="что-такое-zitadel-и-почему-я-на-него-вообще-посмотрел">Что такое ZITADEL и почему я на него вообще посмотрел</h2>
+<p>Раз уж я по очереди прошелся почти по всем заметным self-hosted SSO/IAM решениям - <a href="https://prohomelab.com/posts/authentik-overview/">Authentik</a>, Authelia, <a href="https://prohomelab.com/posts/keycloak/">Keycloak</a> - было бы странно пропустить <strong>ZITADEL</strong>. Тем более что его довольно часто рекомендуют как "то, на что стоит смотреть, если вырос из Authelia, но Keycloak кажется монстром" - и мне стало интересно, так ли это на самом деле.</p>
+<p>Разработала его швейцарская компания <strong>CAOS AG</strong> (Санкт-Галлен), сейчас проект живет под собственным брендом ZITADEL Inc., а CAOS AG осталась чем-то вроде местной операционной "дочки" - деталь скорее для справки, чем для практики. По сути это open-source IAM-платформа: управление пользователями, аутентификация, авторизация, причем в отличие от Authelia она не просит "принеси мне уже настроенный SSO-провайдер", а сама и есть этот провайдер, со своей базой пользователей, MFA и панелью администратора.</p>
+<p>Если хочется сразу понять, куда его ставить относительно остальных трех решений - у меня есть отдельное <a href="https://prohomelab.com/posts/sso-comparison/">сравнение Authelia/Authentik/Keycloak/ZITADEL</a>, там расклад по сценариям использования.</p>
+<p>Если статья или видео оказались полезны - поддержать канал можно на бусти, ссылка в контактах.</p>
+<h2 id="что-внутри">Что внутри</h2>
+<p>Смысла пересказывать документацию построчно нет, но пробежаться по тому, что реально важно, стоит.</p>
+<p><strong>Протоколы</strong> - OIDC, OAuth 2.0 и SAML 2.0 из коробки, то есть подружить с ним современное веб-приложение почти всегда не проблема.</p>
+<p><strong>Multi-tenant из коробки</strong> - можно завести несколько организаций внутри одного инстанса, у каждой свои пользователи и права. Для домашней лаборатории с одним человеком за пультом это, честно говоря, избыточно - но если вы, как и я, держите ZITADEL не только для себя, а еще и для родственников или небольшой команды, разделение на организации быстро становится удобным, а не просто галочкой в фиче-листе.</p>
+<p><strong>MFA</strong> - Email/OTP, TOTP (тот же Google Authenticator), SMS, WebAuthn (значит и YubiKey заходит). Настраивается и глобально, и на уровне отдельной организации.</p>
+<p><strong>API и CLI</strong> - REST, gRPC, свой <code>zitadel</code> CLI. Если вы из тех, кто автоматизирует управление доступом через GitOps/CI, тут есть на чем развернуться - но для обычного homelab-сценария вы, скорее всего, этим даже не воспользуетесь, и это нормально.</p>
+<p><strong>RBAC/ABAC</strong> - роли на уровне проектов, приложений, пользователей, плюс кастомные claims и scopes в токенах, если нужно передавать в приложение что-то нестандартное.</p>
+<p><strong>Развертывание</strong> - можно взять готовый облачный SaaS от самих разработчиков, а можно поднять self-hosted через Docker, Kubernetes или Podman. База - PostgreSQL или CockroachDB, третьего варианта не предусмотрено.</p>
+<h2 id="как-он-смотрится-на-фоне-соседей">Как он смотрится на фоне соседей</h2>
+<table>
+<thead>
+<tr>
+<th>Возможность</th>
+<th>ZITADEL</th>
+<th>Keycloak</th>
+<th>Auth0</th>
+<th>Authelia / TinyAuth</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Open Source</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>OIDC/SAML</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌/частично</td>
+</tr>
+<tr>
+<td>MFA</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌/частично</td>
+</tr>
+<tr>
+<td>Multi-tenant</td>
+<td>✅</td>
+<td>Частично</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>UI для self-service</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>API/CLI</td>
+<td>✅</td>
+<td>Частично</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+</tbody>
+</table>
+<p>Если совсем грубо: там, где Authelia просто открывает или закрывает дверь перед уже настроенным приложением, ZITADEL (как и Keycloak) сам является полноценным центром выдачи личности - со своей базой пользователей, ролями и токенами. Плата за это - он тяжелее и не такой "поставил и забыл", как Authelia.</p>
+<h2 id="разворачиваем">Разворачиваем</h2>
+<p>Ниже - тот же docker-compose, что я использовал в видео:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">services:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#6F42C1;--1:#B392F0">zitadel:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">restart:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"always"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">container_name:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zitadel</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">networks:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zitadel</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">proxy</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">image:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"ghcr.io/zitadel/zitadel:v4.15.0"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6"># не используйте :latest - зафиксируйте версию явно, актуальную смотрите на https://github.com/zitadel/zitadel/releases</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#005CC5;--1:#79B8FF">command</span><span style="--0:#032F62;--1:#9ECBFF">:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">'start-from-init --masterkey "${MASTERKEY_32}" --tlsMode external'</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">env_file:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">.env</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">environment:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_DATABASE_POSTGRES_HOST:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zitadel-db</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_DATABASE_POSTGRES_PORT:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">5432</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_DATABASE_POSTGRES_DATABASE:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zitadel</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_DATABASE_POSTGRES_USER_USERNAME:</span><span style="--0:#24292E;--1:#E1E4E8"> ${DB_USER}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_DATABASE_POSTGRES_USER_PASSWORD:</span><span style="--0:#24292E;--1:#E1E4E8"> ${DB_PASSWORD}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">disable</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME:</span><span style="--0:#24292E;--1:#E1E4E8"> ${DB_ADMIN_USER}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD:</span><span style="--0:#24292E;--1:#E1E4E8"> ${DB_ADMIN_PASSWORD}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">disable</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME:</span><span style="--0:#24292E;--1:#E1E4E8"> ${ZITADEL_LOGIN_USER}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD:</span><span style="--0:#24292E;--1:#E1E4E8"> ${ZITADEL_LOGIN_PASSWORD}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">false</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_FIRSTINSTANCE_ORG_NAME:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">HomeLab</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_PORT:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">8080</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6">#For External TLS (Also use h2c)</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_EXTERNALPORT:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">443</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_EXTERNALDOMAIN:</span><span style="--0:#24292E;--1:#E1E4E8"> ${ZITADEL_SUBDOMAIN}</span><span style="--0:#032F62;--1:#9ECBFF">.</span><span style="--0:#24292E;--1:#E1E4E8">${DOMAIN_NAME} </span><span style="--0:#616972;--1:#99A0A6">#eg. auth.DOMAIN_NAME</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">ZITADEL_EXTERNALSECURE:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">labels:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zitadel.entrypoints=web"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zitadel.rule=Host(`${</span><span style="--0:#24292E;--1:#E1E4E8">ZITADEL_SUBDOMAIN</span><span style="--0:#032F62;--1:#9ECBFF">}.${</span><span style="--0:#24292E;--1:#E1E4E8">DOMAIN_NAME</span><span style="--0:#032F62;--1:#9ECBFF">}`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zitadel.middlewares=https-redirect"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zitadel-secure.entrypoints=websecure"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zitadel-secure.rule=Host(`${</span><span style="--0:#24292E;--1:#E1E4E8">ZITADEL_SUBDOMAIN</span><span style="--0:#032F62;--1:#9ECBFF">}.${</span><span style="--0:#24292E;--1:#E1E4E8">DOMAIN_NAME</span><span style="--0:#032F62;--1:#9ECBFF">}`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zitadel-secure.tls=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.zitadel-secure.service=zitadel"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.zitadel.loadbalancer.server.scheme=h2c"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.zitadel.loadbalancer.passHostHeader=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.zitadel.loadbalancer.server.port=8080"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">depends_on:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">zitadel-db:</span></div></div><div class="ec-line"><div class="code"><span class="indent">                </span><span style="--0:#6F42C1;--1:#B392F0">condition:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"service_healthy"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#6F42C1;--1:#B392F0">zitadel-db:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">restart:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"always"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">container_name:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zitadel-db</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">image:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">postgres:17-alpine</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">env_file:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">.env</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">environment:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">POSTGRES_USER:</span><span style="--0:#24292E;--1:#E1E4E8"> ${DB_ADMIN_USER}</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">POSTGRES_PASSWORD:</span><span style="--0:#24292E;--1:#E1E4E8"> ${DB_ADMIN_PASSWORD}</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">networks:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zitadel</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">healthcheck:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#005CC5;--1:#79B8FF">test</span><span style="--0:#032F62;--1:#9ECBFF">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">                </span></span><span style="--0:#24292E;--1:#E1E4E8">[</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"CMD-SHELL"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"pg_isready"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"-d"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"zitadel"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"-U"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">                    </span><span style="--0:#032F62;--1:#9ECBFF">"${</span><span style="--0:#24292E;--1:#E1E4E8">DB_ADMIN_USER</span><span style="--0:#032F62;--1:#9ECBFF">}"</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">                </span></span><span style="--0:#24292E;--1:#E1E4E8">]</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">interval:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"10s"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">timeout:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"30s"</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">retries:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">5</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">start_period:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"20s"</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">volumes:</span></div></div><div class="ec-line"><div class="code"><span class="indent">            </span><span style="--0:#6F42C1;--1:#B392F0">-</span><span style="--0:#24292E;--1:#E1E4E8"> ${DB_LOCATION}</span><span style="--0:#032F62;--1:#9ECBFF">:/var/lib/postgresql/data</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">networks:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#6F42C1;--1:#B392F0">zitadel:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">name:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">zitadel</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#6F42C1;--1:#B392F0">proxy:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">external:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#6F42C1;--1:#B392F0">name:</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">proxy</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:    zitadel:        restart: &#x22;always&#x22;        container_name: zitadel        networks:            - zitadel            - proxy        image: &#x22;ghcr.io/zitadel/zitadel:v4.15.0&#x22; # не используйте :latest - зафиксируйте версию явно, актуальную смотрите на https://github.com/zitadel/zitadel/releases        command: &#x27;start-from-init --masterkey &#x22;${MASTERKEY_32}&#x22; --tlsMode external&#x27;        env_file: .env        environment:            ZITADEL_DATABASE_POSTGRES_HOST: zitadel-db            ZITADEL_DATABASE_POSTGRES_PORT: 5432            ZITADEL_DATABASE_POSTGRES_DATABASE: zitadel            ZITADEL_DATABASE_POSTGRES_USER_USERNAME: ${DB_USER}            ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: ${DB_PASSWORD}            ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable            ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: ${DB_ADMIN_USER}            ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD}            ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable            ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME: ${ZITADEL_LOGIN_USER}            ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_LOGIN_PASSWORD}            ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED: false            ZITADEL_FIRSTINSTANCE_ORG_NAME: HomeLab            ZITADEL_PORT: 8080 #For External TLS (Also use h2c)            ZITADEL_EXTERNALPORT: 443            ZITADEL_EXTERNALDOMAIN: ${ZITADEL_SUBDOMAIN}.${DOMAIN_NAME} #eg. auth.DOMAIN_NAME            ZITADEL_EXTERNALSECURE: true        labels:            - &#x22;traefik.enable=true&#x22;            - &#x22;traefik.http.routers.zitadel.entrypoints=web&#x22;            - &#x22;traefik.http.routers.zitadel.rule=Host(&#x60;${ZITADEL_SUBDOMAIN}.${DOMAIN_NAME}&#x60;)&#x22;            - &#x22;traefik.http.middlewares.https-redirect.redirectscheme.scheme=https&#x22;            - &#x22;traefik.http.routers.zitadel.middlewares=https-redirect&#x22;            - &#x22;traefik.http.routers.zitadel-secure.entrypoints=websecure&#x22;            - &#x22;traefik.http.routers.zitadel-secure.rule=Host(&#x60;${ZITADEL_SUBDOMAIN}.${DOMAIN_NAME}&#x60;)&#x22;            - &#x22;traefik.http.routers.zitadel-secure.tls=true&#x22;            - &#x22;traefik.http.routers.zitadel-secure.service=zitadel&#x22;            - &#x22;traefik.http.services.zitadel.loadbalancer.server.scheme=h2c&#x22;            - &#x22;traefik.http.services.zitadel.loadbalancer.passHostHeader=true&#x22;            - &#x22;traefik.http.services.zitadel.loadbalancer.server.port=8080&#x22;            - &#x22;traefik.docker.network=proxy&#x22;        depends_on:            zitadel-db:                condition: &#x22;service_healthy&#x22;    zitadel-db:        restart: &#x22;always&#x22;        container_name: zitadel-db        image: postgres:17-alpine        env_file: .env        environment:            POSTGRES_USER: ${DB_ADMIN_USER}            POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD}        networks:            - zitadel        healthcheck:            test:                [                    &#x22;CMD-SHELL&#x22;,                    &#x22;pg_isready&#x22;,                    &#x22;-d&#x22;,                    &#x22;zitadel&#x22;,                    &#x22;-U&#x22;,                    &#x22;${DB_ADMIN_USER}&#x22;,                ]            interval: &#x22;10s&#x22;            timeout: &#x22;30s&#x22;            retries: 5            start_period: &#x22;20s&#x22;        volumes:            - ${DB_LOCATION}:/var/lib/postgresql/datanetworks:    zitadel:        name: zitadel    proxy:        external: true        name: proxy"><div></div></button></div></figure></div>
+<p>И рядом <code>.env</code> с переменными:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">MASTERKEY_32</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">GENERATE_RANDOM_KEY_LENGTH_32_ChangeMe</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6">#Replace Master Key (tr -dc A-Za-z0-9 &#x3C;/dev/urandom | head -c 32)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">DB_USER</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">Enter_DB_User_ChangeMe</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">DB_PASSWORD</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">Enter_DB_Password_ChangeMe</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">DB_ADMIN_USER</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">Enter_DB_Root_User_ChangeMe</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">DB_ADMIN_PASSWORD</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">Enter_DB_Root_Password_ChangeMe</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">ZITADEL_LOGIN_USER</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">Loginusername@Your_Domain_ChangeMe.com</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">ZITADEL_LOGIN_PASSWORD</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">Zitadel_Password_ChangeMe</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">ZITADEL_SUBDOMAIN</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">zitadel</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">DOMAIN_NAME</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">Your_Domain_ChangeMe.com</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">DB_LOCATION</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">/path/to/directory/zitadel/zitadel-db</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="MASTERKEY_32=GENERATE_RANDOM_KEY_LENGTH_32_ChangeMe  #Replace Master Key (tr -dc A-Za-z0-9 </dev/urandom | head -c 32)DB_USER=Enter_DB_User_ChangeMeDB_PASSWORD=Enter_DB_Password_ChangeMeDB_ADMIN_USER=Enter_DB_Root_User_ChangeMeDB_ADMIN_PASSWORD=Enter_DB_Root_Password_ChangeMeZITADEL_LOGIN_USER=Loginusername@Your_Domain_ChangeMe.comZITADEL_LOGIN_PASSWORD=Zitadel_Password_ChangeMeZITADEL_SUBDOMAIN=zitadelDOMAIN_NAME=Your_Domain_ChangeMe.comDB_LOCATION=/path/to/directory/zitadel/zitadel-db"><div></div></button></div></figure></div>
+<p>Пара моментов, на которых реально можно застрять:</p>
+<ul>
+<li><strong><code>MASTERKEY_32</code></strong> - должен быть ровно 32 символа, не больше и не меньше. Генерируется командой из комментария рядом (<code>tr -dc A-Za-z0-9 &#x3C;/dev/urandom | head -c 32</code>), но если решите придумать его сами - обязательно посчитайте длину, иначе ZITADEL просто не запустится с невнятной ошибкой про мастер-ключ.</li>
+<li><strong><code>command: start-from-init</code></strong> - это команда именно для первого запуска, она создает первую организацию и первого пользователя из переменных <code>ZITADEL_FIRSTINSTANCE_*</code>. После того как инстанс поднялся и вы залогинились, часть гайдов рекомендует переключить команду на обычный <code>start</code> - я оставил <code>start-from-init</code>, он безопасен и для повторных запусков (просто не находит, что инициализировать, и идет дальше), но знать про существование обычного <code>start</code> не лишнее.</li>
+<li><strong><code>loadbalancer.server.scheme=h2c</code></strong> в лейблах Traefik - не опечатка и не "для красоты". ZITADEL общается по gRPC, а gRPC поверх обычного HTTP/1.1 не работает - нужен HTTP/2 без TLS между Traefik и контейнером (тот самый h2c, "HTTP/2 Cleartext"). Если убрать эту строку "для простоты", получите на входе загадочные ошибки авторизации, которые никак не намекают на настоящую причину.</li>
+</ul>
+<p>Если у вас уже есть отдельный <code>ZITADEL_LOGIN_USER</code>/<code>PASSWORD</code> с реальными данными - не забудьте, что это учетка первого администратора, а не просто "тестовый пользователь для проверки" - именно под ней вы будете заходить в консоль и настраивать все остальное.</p>
+<h2 id="что-в-итоге">Что в итоге</h2>
+<p>Однозначного вывода "берите ZITADEL, а не Х" здесь не будет - слишком по-разному стоит вопрос у каждого. Если вам просто нужна форма логина перед парой веб-сервисов - ZITADEL для этого явно избыточен, возьмите Authelia или TinyAuth. А вот если хочется собственного центра идентификации с ролями, MFA и API - причем не такого тяжелого в администрировании, как Keycloak - ZITADEL стоит попробовать всерьез, а не просто прочитать про него в очередном сравнительном списке.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Authelia vs Authentik vs Keycloak vs ZITADEL - что выбрать?</title>
+      <link>https://prohomelab.com/posts/sso-comparison/</link>
+      <guid isPermaLink="true">https://prohomelab.com/posts/sso-comparison/</guid>
+      <pubDate>Fri, 01 Aug 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>SSO</category>
+      <category>SSO</category>
+      <category>Authelia</category>
+      <category>Authentik</category>
+      <category>Keycloak</category>
+      <category>Zitadel</category>
+      <category>IAM</category>
+      <category>Self-Hosting</category>
+      <description>Сравнительный обзор популярных решений для аутентификации: Authelia, Authentik, Keycloak и Zitadel. Рассмотрены возможности, плюсы и минусы каждого сервиса, сценарии применения и рекомендации для выбора подходящего инструмента для домашнего или корпоративного использования.</description>
+      <content:encoded><![CDATA[<h2 id="сравнение-authelia-authentik-keycloak-и-zitadel">Сравнение Authelia, Authentik, Keycloak и ZITADEL</h2>
+<p>Если вам понравилась настоящая статья, то можете поддержать автора став спонсором на бусти (ссылка в разделе контакты).</p>
+<h3 id="введение">Введение</h3>
+<p>Сегодня мы сравним четыре популярных решения для SSO и авторизации, по простому сервера авторизации и аутентификации: Authelia, Authentik, Keycloak и Zitadel.
+Если вы создаете свою домашнюю, а может и рабочую, инфраструктуру и не знаете, что выбрать - эта статья/видео для вас.</p>
+<p>Когда вы разворачиваете несколько сервисов, в особенности которые доступны из внешнего мира - Nextcloud, Plex, да любой сервис - возникает вопрос: как централизованно управлять входом, паролями и правами доступа?
+SSO - Single Sign-On - позволяет авторизоваться один раз и использовать доступ везде.
+А еще - можно подключить двухфакторку, LDAP, OAuth2, разграничить роли и настраивать политики доступа. Про то, чем конкретно отличаются TOTP, WebAuthn и passwordless-вход и что из этого выбрать, у меня есть <a href="https://prohomelab.com/posts/totp-webauthn-passwordless/">отдельная статья</a>.</p>
+<h3 id="authelia-vs-authentik-vs-keycloak-vs-zitadel---что-выбрать-для-аутентификации-и-sso">Authelia vs Authentik vs Keycloak vs ZITADEL - Что выбрать для аутентификации и SSO?</h3>
+<p>Если вы строите собственную инфраструктуру и ищете способ централизованной аутентификации, двухфакторной защиты и реализации SSO (Single Sign-On), скорее всего, вы столкнулись с такими решениями, как <strong>Authelia</strong>, <strong>Authentik</strong>, <strong>Keycloak</strong> и <strong>ZITADEL</strong>. Все они решают одну и ту же задачу - <strong>управление доступом</strong>, но делают это по-разному и ориентированы на разные сценарии.</p>
+<p>В этой статье я подробно сравню все четыре инструмента и подскажу, какое решение лучше подойдет под ваши нужды: от простого self-hosted решения до корпоративных и/или облачных решений.</p>
+<p>Мы рассмотрим 4 open-source решения. Я разбил их по алфавиту, но как это не странно, получилось не только разделение по алфавиту, но и по встроенному функционалу, который есть у первой пары, но нет у второй.</p>
+<hr>
+<ol>
+<li><strong>Authelia</strong> - простая и строгая,</li>
+<li><strong>Authentik</strong> - красивый и гибкий,</li>
+<li><strong>Keycloak</strong> - мощный, строгий, корпоративный,</li>
+<li><strong>Zitadel</strong> - облачный, с современным API.</li>
+</ol>
+<hr>
+<h3 id="authelia">Authelia</h3>
+<p><strong>Authelia</strong> - это self-hosted <strong>reverse proxy companion</strong>, предназначенный для защиты веб-приложений с помощью двухфакторной аутентификации и контроля доступа. Authelia работает как <strong>прокси-компаньон</strong>, добавляя безопасность и SSO поверх NGINX, Traefik или HAProxy.</p>
+<p>Authelia - это больше как reverse proxy guard. Устанавливается в меру просто, конфигурация - через YAML. Работает как промежуточный слой между пользователем и вашими сервисами. Нет полноценного UI для управления пользователями - все через конфиг. Подходит, если у вас 5-10 сервисов и вы хотите все держать в конфиге как код.</p>
+<p>Пошаговую установку и настройку Authelia в Docker я разобрал в <a href="https://prohomelab.com/posts/authelia-docker-install/">отдельной статье</a>.</p>
+<h4 id="основные-характеристики-authelia">Основные характеристики Authelia</h4>
+<table>
+<thead>
+<tr>
+<th>Характеристика</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Язык</td>
+<td>Go, React</td>
+</tr>
+<tr>
+<td>Поддержка SSO</td>
+<td>Только OIDC как клиент (не является полноценным IdP)</td>
+</tr>
+<tr>
+<td>2FA</td>
+<td>TOTP, WebAuthn, Duo (включая push-уведомления)</td>
+</tr>
+<tr>
+<td>UI</td>
+<td>Ограниченный (есть веб-страница входа, а админ-конфигурация через YAML)</td>
+</tr>
+<tr>
+<td>LDAP/AD</td>
+<td>Да, для авторизации и групп</td>
+</tr>
+<tr>
+<td>Поддержка reverse-proxy</td>
+<td>Полная: Traefik, NGINX, HAProxy</td>
+</tr>
+<tr>
+<td>Масштабируемость</td>
+<td>Да, поддержка Redis, MariaDB/Postgres</td>
+</tr>
+<tr>
+<td>Целевая аудитория</td>
+<td>Self-hosted homelab окружение и малый офис</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="authentik">Authentik</h3>
+<p><strong>Authentik</strong> - это современный open-source IdP, написанный на Python (Django), который предлагает полноценную поддержку <strong>OIDC</strong>, <strong>SAML</strong>, <strong>SCIM</strong>, UI-интерфейс и мощные политики доступа. Он предназначен как для домашних, так и корпоративных решений.</p>
+<p>Authentik - визуально приятное, модульное и гибкое решение. Простая установка через Docker, отличная документация. Поддерживает OAuth2, SAML, LDAP, и много других провайдеров. Можно делать кастомные policy, UI-потоки, кастомные шаблоны входа.</p>
+<p>Подробный обзор архитектуры и возможностей Authentik - в <a href="https://prohomelab.com/posts/authentik-overview/">отдельной статье</a>, а пошаговую практику по установке, proxy/OIDC-провайдерам и конкретным сценариям (приглашения, восстановление пароля, 2FA, email-уведомления, Cloudflare Turnstile) я разобрал в серии статей в категории <a href="https://prohomelab.com/categories/sso/">SSO</a>.</p>
+<h4 id="основные-характеристики-authentik">Основные характеристики Authentik</h4>
+<table>
+<thead>
+<tr>
+<th>Характеристика</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Язык</td>
+<td>Python (Django)</td>
+</tr>
+<tr>
+<td>Поддержка SSO</td>
+<td>OIDC, SAML (как IdP и SP)</td>
+</tr>
+<tr>
+<td>2FA</td>
+<td>TOTP, WebAuthn, Email OTP, Duo, Push, Social Login</td>
+</tr>
+<tr>
+<td>UI</td>
+<td>Современный интерфейс</td>
+</tr>
+<tr>
+<td>LDAP/AD</td>
+<td>Да (в роли источника пользователей)</td>
+</tr>
+<tr>
+<td>Workflow / Policies</td>
+<td>Да, визуальные потоки, политики и не только</td>
+</tr>
+<tr>
+<td>Масштабируемость</td>
+<td>Да (Docker, Kubernetes, поддержка Redis, PostgreSQL)</td>
+</tr>
+<tr>
+<td>Целевая аудитория</td>
+<td>Self-hosted, SMB (малый, средний бизнес), DevOps</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="плюсы-authelia-и-authentik">Плюсы Authelia и Authentik</h3>
+<p>Оба этих решения имеют встроенный web proxy. Это означает, что бесшовно интегрируясь с обратным прокси, оба этих решения могут работать с приложениями, которые не имеют встроенного механизма OIDC или имеют только базовую http аутентификацию.</p>
+<hr>
+<h3 id="keycloak">Keycloak</h3>
+<p><strong>Keycloak</strong> - это корпоративное open-source решение от Red Hat, предназначенное для централизованной аутентификации и авторизации. Это один из самых мощных и гибких IdP на рынке с поддержкой OIDC, SAML, Kerberos, LDAP и так далее.</p>
+<p>Keycloak - настоящая махина. Поддержка всех возможных протоколов и сценариев. Используется в enterprise-проектах, но требует значительных знаний. Настройка порой громоздкая, интерфейс перегружен, но в этом решении есть все, прям как в Греции.</p>
+<p>Пошаговую установку, настройку docker-compose и первый запуск с созданием realm я разобрал в <a href="https://prohomelab.com/posts/keycloak/">отдельной статье</a>.</p>
+<h4 id="основные-характеристики-keycloak">Основные характеристики Keycloak</h4>
+<table>
+<thead>
+<tr>
+<th>Характеристика</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Язык</td>
+<td>Java (Quarkus, раньше WildFly)</td>
+</tr>
+<tr>
+<td>Поддержка SSO</td>
+<td>OIDC, SAML, Kerberos, Social Login</td>
+</tr>
+<tr>
+<td>2FA</td>
+<td>TOTP, SMS, Email OTP, WebAuthn</td>
+</tr>
+<tr>
+<td>UI</td>
+<td>Мощный, но кому-то покажется перегруженным и нелогичным</td>
+</tr>
+<tr>
+<td>LDAP/AD</td>
+<td>Да (широкая поддержка)</td>
+</tr>
+<tr>
+<td>Расширяемость</td>
+<td>Да, через SPI, расширения и REST API</td>
+</tr>
+<tr>
+<td>Масштабируемость</td>
+<td>Отличная, особенно для enterprise</td>
+</tr>
+<tr>
+<td>Целевая аудитория</td>
+<td>Крупный enterprise, государственные учреждения</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="zitadel">Zitadel</h3>
+<p><strong>ZITADEL</strong> - это современный cloud-native Identity &#x26; Access Management с открытым исходным кодом, разработанный в Швейцарии. Основной фокус - <strong>безопасность, разработчики, DevOps и multitenancy</strong>. Доступна как облачная платформа и self-hosted решение.</p>
+<p>Zitadel - самое молодое, но уже достаточно зрелое решение. Имеет как облачную, так и open-source версию для Docker. Очень чистый и минималистичный UI, современный API и SDK, хорош для dev-first подхода. Отлично документирован, хотя есть над чем работать. Уже активно и широко используется.</p>
+<p>Подробнее про установку и архитектуру ZITADEL - в <a href="https://prohomelab.com/posts/zitadel-iam-overview/">отдельной статье</a>.</p>
+<h4 id="основные-характеристики-zitadel">Основные характеристики ZITADEL</h4>
+<table>
+<thead>
+<tr>
+<th>Характеристика</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Язык</td>
+<td>Go</td>
+</tr>
+<tr>
+<td>Поддержка SSO</td>
+<td>OIDC, SAML, SCIM</td>
+</tr>
+<tr>
+<td>2FA</td>
+<td>WebAuthn, TOTP, SMS, Email</td>
+</tr>
+<tr>
+<td>UI</td>
+<td>Современный, минималистичный, логичный и приятный</td>
+</tr>
+<tr>
+<td>LDAP/AD</td>
+<td>Только в enterprise-подписке (см. документацию)</td>
+</tr>
+<tr>
+<td>Поддержка multi-tenant</td>
+<td>Да (одна из главных фич)</td>
+</tr>
+<tr>
+<td>Масштабируемость</td>
+<td>Очень высокая, cloud-first решение</td>
+</tr>
+<tr>
+<td>Целевая аудитория</td>
+<td>SaaS-платформы, DevOps, разработчики</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="общая-сравнительная-таблица">Общая сравнительная таблица</h3>
+<table>
+<thead>
+<tr>
+<th>Характеристика</th>
+<th>Authelia</th>
+<th>Authentik</th>
+<th>Keycloak</th>
+<th>ZITADEL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Язык разработки</td>
+<td>Go</td>
+<td>Python (Django)</td>
+<td>Java (Quarkus/WildFly)</td>
+<td>Go</td>
+</tr>
+<tr>
+<td>Метод установки</td>
+<td>Docker, Kubernetes, Binary</td>
+<td>Docker, Kubernetes, Binary</td>
+<td>Docker, Kubernetes, ZIP-дистрибутив</td>
+<td>Docker, Kubernetes, Cloud</td>
+</tr>
+<tr>
+<td>Поддержка SSO (OIDC/SAML)</td>
+<td>OIDC (как клиент)</td>
+<td>OIDC, SAML (IdP и SP)</td>
+<td>OIDC, SAML, Kerberos</td>
+<td>OIDC, SAML, SCIM</td>
+</tr>
+<tr>
+<td>Web UI</td>
+<td>Ограниченный</td>
+<td>Да (современный UI)</td>
+<td>Да (богатый, но сложный)</td>
+<td>Да (минималистичный UI)</td>
+</tr>
+<tr>
+<td>Поддержка 2FA / MFA</td>
+<td>TOTP, WebAuthn, Duo</td>
+<td>TOTP, WebAuthn, Email OTP</td>
+<td>TOTP, WebAuthn, Email, SMS</td>
+<td>TOTP, WebAuthn, SMS, Email</td>
+</tr>
+<tr>
+<td>LDAP / AD интеграция</td>
+<td>Авторизация через LDAP</td>
+<td>Да (в роли источника пользователей)</td>
+<td>Да</td>
+<td>Только в Enterprise</td>
+</tr>
+<tr>
+<td>RBAC / ABAC</td>
+<td>Через YAML и policy</td>
+<td>Да (flow-based)</td>
+<td>Да (группы, роли, политики)</td>
+<td>Да (RBAC + conditions)</td>
+</tr>
+<tr>
+<td>Масштабируемость</td>
+<td>Средняя</td>
+<td>Хорошая,</td>
+<td>Отличная</td>
+<td>Отличная</td>
+</tr>
+<tr>
+<td>Cloud-ready</td>
+<td>Нет</td>
+<td>Нет</td>
+<td>Условно</td>
+<td>Да</td>
+</tr>
+<tr>
+<td>Открытый исходный код</td>
+<td>Да (Apache 2.0)</td>
+<td>Да (MIT)</td>
+<td>Да (Apache 2.0)</td>
+<td>Да (GNU Affero GPL v3.0)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="выводы">Выводы</h3>
+<p>Authelia - не является полноценным IdP, а служит скорее промежуточным слоем аутентификации между пользователем и приложением.</p>
+<p>Authentik - активно развивается и удобен для self-hosted сценариев с хорошим UI.</p>
+<p>Keycloak - мощный, но тяжелый. Подходит для корпоративного использования.</p>
+<p>ZITADEL - ориентирован на облако, но имеет self-hosted вариант, с акцентом на разработчиков и безопасность.</p>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,769 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-scheme="prohomelab" data-theme="light" data-mode="system" data-default-mode="system" data-mode-switch="1" data-fluid="1" data-social-colors="hover" style="--phl-content-width: 48rem"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){const cur = "en";
+const alts = {"ru":"/posts/dozzle/"};
+
+      try {
+        const p = localStorage.getItem('phl-lang');
+        if (p && p !== cur && alts[p]) location.replace(alts[p] + location.hash);
+      } catch (e) {}
+    })();</script><title>Dozzle - A Convenient Real-Time Log Viewer for Docker Containers | ProHomeLab</title><meta name="description" content="How to install and set up Dozzle 11 - a lightweight self-hosted web UI for Docker logs. Docker Compose, the setup wizard, OIDC login, container auto-updates with rollback, agents, and docker.sock security."><link rel="canonical" href="https://prohomelab.com/en/posts/dozzle/"><link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/dozzle/"><link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/dozzle/"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32"><link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"><link rel="manifest" href="/site.webmanifest"><meta property="og:site_name" content="ProHomeLab"><meta property="og:title" content="Dozzle - A Convenient Real-Time Log Viewer for Docker Containers"><meta property="og:description" content="How to install and set up Dozzle 11 - a lightweight self-hosted web UI for Docker logs. Docker Compose, the setup wizard, OIDC login, container auto-updates with rollback, agents, and docker.sock security."><meta property="og:type" content="article"><meta property="og:url" content="https://prohomelab.com/en/posts/dozzle/"><meta property="og:locale" content="en"><meta property="og:image" content="https://prohomelab.com/_astro/featured.ckdsVp-I_ZgQdSR.jpg"><meta property="og:image:alt" content="Dozzle - A Convenient Real-Time Log Viewer for Docker Containers"><meta property="article:published_time" content="2026-08-19T00:00:00.000Z"><meta property="article:modified_time" content="2026-10-10T00:00:00.000Z"><meta property="article:section" content="Self-Hosting"><meta property="article:tag" content="Dozzle"><meta property="article:tag" content="Docker"><meta property="article:tag" content="Self-Hosting"><meta property="article:tag" content="Monitoring"><meta name="twitter:card" content="summary_large_image"><meta name="yandex-verification" content="103870927"><link rel="alternate" type="application/rss+xml" title="ProHomeLab" href="https://prohomelab.com/en/index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","articleSection":"Self-Hosting","name":"Dozzle - A Convenient Real-Time Log Viewer for Docker Containers","headline":"Dozzle - A Convenient Real-Time Log Viewer for Docker Containers","description":"How to install and set up Dozzle 11 - a lightweight self-hosted web UI for Docker logs. Docker Compose, the setup wizard, OIDC login, container auto-updates with rollback, agents, and docker.sock security.","inLanguage":"en","url":"https://prohomelab.com/en/posts/dozzle/","author":[{"@type":"Person","name":"Stilicho2011","image":"https://prohomelab.com/avatar-stilicho2011.webp","url":"https://prohomelab.com","sameAs":["https://github.com/stilicho2011/ubuntu_rep","https://t.me/stilicho2011_videos","https://www.youtube.com/@prohomelab","https://boosty.to/stilicho2011"]}],"copyrightYear":"2026","datePublished":"2026-08-19T00:00:00.000Z","dateModified":"2026-10-10T00:00:00.000Z","image":"https://prohomelab.com/_astro/featured.ckdsVp-I_ZgQdSR.jpg","keywords":["Dozzle","Docker","Self-Hosting","Monitoring"],"mainEntityOfPage":"https://prohomelab.com/en/posts/dozzle/","wordCount":4516}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://prohomelab.com/en/"},{"@type":"ListItem","position":2,"name":"Self-Hosting","item":"https://prohomelab.com/en/posts/selfhosting/"},{"@type":"ListItem","position":3,"name":"Dozzle - A Convenient Real-Time Log Viewer for Docker Containers","item":"https://prohomelab.com/en/posts/dozzle/"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoObject","name":"Dozzle - A Convenient Real-Time Log Viewer for Docker Containers","description":"How to install and set up Dozzle 11 - a lightweight self-hosted web UI for Docker logs. Docker Compose, the setup wizard, OIDC login, container auto-updates with rollback, agents, and docker.sock security.","thumbnailUrl":["https://i.ytimg.com/vi/y8qDaMBk7t8/maxresdefault.jpg"],"uploadDate":"2026-08-19T00:00:00.000Z","embedUrl":"https://www.youtube.com/embed/y8qDaMBk7t8","contentUrl":"https://www.youtube.com/watch?v=y8qDaMBk7t8"}</script><script>
+      // Light or dark before first paint, so a dark page never flashes white.
+      // data-mode is the choice (system, light, dark), data-theme the result (light or dark).
+      (() => {
+        const d = document.documentElement;
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        let mode = d.dataset.defaultMode || 'system';
+        if (d.dataset.modeSwitch) {
+          try {
+            const saved = localStorage.getItem('phl-theme');
+            if (saved === 'system' || saved === 'light' || saved === 'dark') mode = saved;
+          } catch (e) {}
+        }
+        const apply = () => {
+          d.dataset.mode = mode;
+          d.dataset.theme = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode;
+        };
+        apply();
+        media.addEventListener('change', () => mode === 'system' && apply());
+        window.__phlSetMode = (next) => {
+          mode = next;
+          try {
+            localStorage.setItem('phl-theme', next);
+          } catch (e) {}
+          apply();
+        };
+      })();
+    </script><style>:root:root{--phl-font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-heading:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-mono:'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace}</style><script>(function(){const ym = {"id":"103870927","webvisor":true,"clickmap":true,"trackLinks":true,"accurateTrackBounce":true,"ecommerce":"dataLayer"};
+const ga = {"id":"G-VRHQGK81S9"};
+const umami = {"src":"https://stats.prohomelab.com/script.js","websiteId":"31518a04-7f00-4d16-99f3-759c057c7bf2","recorder":true,"recorderSrc":"https://stats.prohomelab.com/recorder.js"};
+const consent = "opt-in";
+
+      (() => {
+        let started = false;
+        const add = (src, attrs = {}) => {
+          const s = document.createElement('script');
+          s.async = true;
+          s.src = src;
+          for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+          document.head.appendChild(s);
+        };
+        window.__phlAnalytics = () => {
+          if (started) return;
+          started = true;
+          if (ym) {
+            window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+            window.ym.l = Date.now();
+            add(`https://mc.yandex.ru/metrika/tag.js?id=${ym.id}`);
+            const opts = { ssr: true, webvisor: ym.webvisor, clickmap: ym.clickmap, accurateTrackBounce: ym.accurateTrackBounce, trackLinks: ym.trackLinks };
+            if (ym.ecommerce) opts.ecommerce = ym.ecommerce;
+            window.ym(Number(ym.id), 'init', opts);
+          }
+          if (ga) {
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ga.id);
+            add(`https://www.googletagmanager.com/gtag/js?id=${ga.id}`);
+          }
+          if (umami) {
+            const attrs = { 'data-website-id': umami.websiteId };
+            if (umami.domains) attrs['data-domains'] = umami.domains;
+            add(umami.src, { ...attrs, defer: '' });
+            if (umami.recorder) add(umami.recorderSrc, { ...attrs, defer: '' });
+          }
+        };
+        let choice = null;
+        try { choice = localStorage.getItem('phl-consent'); } catch (e) {}
+        if (consent !== 'opt-in' || choice === 'granted') window.__phlAnalytics();
+      })();
+    })();</script><link rel="stylesheet" href="/_astro/Base.CNmgq2nC.css"></head><body id="top"><template id="phl-lang-ru"><div class="phl-langbar" lang="ru-RU" role="region" aria-label="Эта страница есть на русском"><div class="phl-langbar-inner"><p>Эта страница есть на русском</p><div class="phl-langbar-actions"><a href="/posts/dozzle/" hreflang="ru-RU" data-phl-lang="ru">Читать на русском</a><button type="button" data-phl-lang-stay>Остаться</button></div></div></div></template><script>(function(){const data = {"cur":"en","alts":{"ru":"/posts/dozzle/"},"match":{"ru":["ru","uk","be","kk"],"en":["en"]},"byLang":{"ru-ru":"ru","en":"en"},"fallback":"en"};
+
+        (() => {
+          const store = (v) => { try { localStorage.setItem('phl-lang', v); } catch (e) {} };
+          // An explicit choice anywhere (language switcher, the bar) is remembered.
+          document.addEventListener('click', (e) => {
+            const go = e.target.closest('[data-phl-lang]');
+            if (go) return store(go.dataset.phlLang);
+            const link = e.target.closest('a[hreflang]');
+            const key = link && data.byLang[link.getAttribute('hreflang').toLowerCase()];
+            if (key) return store(key);
+            const stay = e.target.closest('[data-phl-lang-stay]');
+            if (stay) { store(data.cur); stay.closest('.phl-langbar')?.remove(); }
+          });
+          let saved = null;
+          try { saved = localStorage.getItem('phl-lang'); } catch (e) {}
+          const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''])
+            .map((l) => String(l).toLowerCase().split('-')[0]);
+          const fits = (key, code) => (data.match[key] || []).includes(code);
+          // The language this reader reads, for other parts of the page (the analytics banner):
+          // the stored choice, else the page language if the browser fits it, else the first
+          // locale the browser fits, else the fallback, else the page language.
+          window.__phlReaderLocale = () => {
+            if (saved && data.match[saved]) return saved;
+            if (list.some((code) => fits(data.cur, code))) return data.cur;
+            for (const code of list) {
+              const key = Object.keys(data.match).find((k) => fits(k, code));
+              if (key) return key;
+            }
+            return data.fallback || data.cur;
+          };
+          if (saved || !Object.keys(data.alts).length) return;
+          if (list.some((code) => fits(data.cur, code))) return;
+          let target = null;
+          for (const code of list) {
+            target = Object.keys(data.alts).find((key) => fits(key, code)) || null;
+            if (target) break;
+          }
+          if (!target && data.fallback && data.fallback !== data.cur && data.alts[data.fallback]) target = data.fallback;
+          const tpl = target && document.getElementById('phl-lang-' + target);
+          if (tpl) document.body.prepend(tpl.content.cloneNode(true));
+        })();
+      })();</script><a class="phl-skip" href="#phl-content">Skip to content</a><header class="phl-header phl-header-sticky"><div class="phl-header-inner"><a class="phl-brand" href="/en/"><img class="phl-logo phl-logo-light" src="/prohomelab-mark.svg" alt><span class="phl-brand-name">ProHomeLab</span><span class="phl-brand-point" aria-hidden="true"></span></a><nav class="phl-nav" aria-label="Main menu"><ul class="phl-nav-list"><li><a href="/en/blog/">All Articles</a></li><li><details class="phl-dropdown" data-phl-dropdown><summary aria-current="true">Topics<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul class="phl-dropdown-panel"><li><a href="/en/posts/">Topics</a></li><li><a href="/en/posts/authentik/">Authentik</a></li><li><a href="/en/posts/backup/">Backup</a></li><li><a href="/en/posts/crowdsec/">Crowdsec</a></li><li><a href="/en/posts/docker-ui/">Docker UI</a></li><li><a href="/en/posts/hardware/">Hardware</a></li><li><a href="/en/posts/media-servers/">Media Servers</a></li><li><a href="/en/posts/network/">Network</a></li><li><a href="/en/posts/news/">News</a></li><li><a href="/en/posts/nextcloud/">Nextcloud</a></li><li><a href="/en/posts/opnsense/">OPNsense</a></li><li><a href="/en/posts/pkm/">PKM</a></li><li><a href="/en/posts/podman/">Podman</a></li><li><a href="/en/posts/proxmox/">Proxmox</a></li><li><a href="/en/posts/selfhosting/">Self-hosting</a></li><li><a href="/en/posts/single-sign-on/">Single Sign On</a></li><li><a href="/en/posts/terraform/">Terraform</a></li><li><a href="/en/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/en/categories/">Categories</a></li><li><a href="/en/tags/">Tags</a></li><li><a href="/en/tools/">Tools</a></li><li><a href="/en/about/">About</a></li></ul></nav><div class="phl-header-tools phl-has-mobile-menu"><button type="button" class="phl-search-button" data-phl-search-open aria-label="Search" title="Search" hidden><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg></button><dialog class="phl-search" data-phl-search aria-label="Search"><div class="phl-search-box"><div class="phl-search-field"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg><input type="search" data-phl-search-input placeholder="Search articles" aria-label="Search articles" autocomplete="off" spellcheck="false"><button type="button" class="phl-search-close" data-phl-search-close aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></button></div><p class="phl-search-status" data-phl-search-status role="status" aria-live="polite"></p><ol class="phl-search-results" data-phl-search-results></ol><button type="button" class="phl-search-more" data-phl-search-more hidden>Show more</button></div></dialog><script>(function(){const options = {"shortcut":true,"pageSize":8,"text":{"noResults":"Nothing found","loading":"Searching","unavailable":"Search works on the built site (astro build)","more":"Show more"}};
+
+  (() => {
+    const open = document.querySelector('[data-phl-search-open]');
+    const dialog = document.querySelector('[data-phl-search]');
+    if (!open || !dialog || typeof dialog.showModal !== 'function') return;
+    const input = dialog.querySelector('[data-phl-search-input]');
+    const list = dialog.querySelector('[data-phl-search-results]');
+    const status = dialog.querySelector('[data-phl-search-status]');
+    const more = dialog.querySelector('[data-phl-search-more]');
+    const t = options.text;
+    let pagefind = null;
+    let failed = false;
+    let results = [];
+    let shown = 0;
+    let query = 0;
+    open.hidden = false;
+
+    const load = async () => {
+      if (pagefind || failed) return pagefind;
+      try {
+        pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+        await pagefind.init();
+      } catch (e) {
+        failed = true;
+        pagefind = null;
+      }
+      return pagefind;
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const render = async () => {
+      const page = results.slice(shown, shown + options.pageSize);
+      const id = query;
+      const data = await Promise.all(page.map((r) => r.data()));
+      if (id !== query) return;
+      for (const d of data) {
+        const li = document.createElement('li');
+        const sub = (d.sub_results || []).filter((x) => x.url !== d.url).slice(0, 2);
+        li.innerHTML =
+          `<a class="phl-search-hit" href="${esc(d.url)}"><span class="phl-search-title">${esc(d.meta?.title || d.url)}</span>` +
+          `<span class="phl-search-excerpt">${d.excerpt || ''}</span></a>` +
+          (sub.length
+            ? `<ul class="phl-search-sub">${sub.map((x) => `<li><a href="${esc(x.url)}">${esc(x.title)}</a></li>`).join('')}</ul>`
+            : '');
+        list.appendChild(li);
+      }
+      shown += page.length;
+      more.hidden = shown >= results.length;
+    };
+    const run = async () => {
+      const term = input.value.trim();
+      const id = ++query;
+      list.innerHTML = '';
+      more.hidden = true;
+      shown = 0;
+      if (!term) { status.textContent = ''; return; }
+      status.textContent = t.loading;
+      const pf = await load();
+      if (id !== query) return;
+      if (!pf) { status.textContent = t.unavailable; return; }
+      const res = await pf.debouncedSearch(term, {}, 200);
+      if (res === null || id !== query) return;
+      results = res.results;
+      status.textContent = results.length ? '' : t.noResults;
+      await render();
+    };
+
+    const show = () => {
+      dialog.showModal();
+      input.focus();
+      input.select();
+      load();
+    };
+    open.addEventListener('click', show);
+    dialog.querySelector('[data-phl-search-close]').addEventListener('click', () => dialog.close());
+    // A click on the backdrop (outside the box) closes the dialog.
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    input.addEventListener('input', run);
+    more.addEventListener('click', render);
+    // Enter opens the first result.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = list.querySelector('a');
+        if (first) { e.preventDefault(); location.href = first.href; }
+      }
+    });
+    if (options.shortcut) {
+      document.addEventListener('keydown', (e) => {
+        if (dialog.open) return;
+        const typing = /^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable;
+        if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          show();
+        }
+      });
+    }
+  })();
+})();</script><ul class="phl-social-links phl-header-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><a class="phl-lang-link" href="/posts/dozzle/" hreflang="ru-RU" lang="ru-RU" title="Language" data-phl-lang="ru">RU</a><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;System&quot;,&quot;light&quot;:&quot;Light&quot;,&quot;dark&quot;:&quot;Dark&quot;}" data-title="Color mode" aria-label="Color mode" title="Color mode"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script><details class="phl-mobile-menu" data-phl-dropdown><summary aria-label="Menu"><span class="phl-mobile-open"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"/></svg></span><span class="phl-mobile-close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></span></summary><nav class="phl-mobile-panel" aria-label="Main menu"><ul class="phl-mobile-list"><li><a href="/en/blog/">All Articles</a></li><li><details><summary>Topics<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul><li><a href="/en/posts/">Topics</a></li><li><a href="/en/posts/authentik/">Authentik</a></li><li><a href="/en/posts/backup/">Backup</a></li><li><a href="/en/posts/crowdsec/">Crowdsec</a></li><li><a href="/en/posts/docker-ui/">Docker UI</a></li><li><a href="/en/posts/hardware/">Hardware</a></li><li><a href="/en/posts/media-servers/">Media Servers</a></li><li><a href="/en/posts/network/">Network</a></li><li><a href="/en/posts/news/">News</a></li><li><a href="/en/posts/nextcloud/">Nextcloud</a></li><li><a href="/en/posts/opnsense/">OPNsense</a></li><li><a href="/en/posts/pkm/">PKM</a></li><li><a href="/en/posts/podman/">Podman</a></li><li><a href="/en/posts/proxmox/">Proxmox</a></li><li><a href="/en/posts/selfhosting/">Self-hosting</a></li><li><a href="/en/posts/single-sign-on/">Single Sign On</a></li><li><a href="/en/posts/terraform/">Terraform</a></li><li><a href="/en/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/en/categories/">Categories</a></li><li><a href="/en/tags/">Tags</a></li><li><a href="/en/tools/">Tools</a></li><li><a href="/en/about/">About</a></li></ul><ul class="phl-social-links phl-mobile-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><p class="phl-mobile-mode"><span>Color mode</span><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;System&quot;,&quot;light&quot;:&quot;Light&quot;,&quot;dark&quot;:&quot;Dark&quot;}" data-title="Color mode" aria-label="Color mode" title="Color mode"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script></p></nav></details></div></div></header><script>
+  // Close open menus on outside click, on Escape, and when another one opens.
+  (() => {
+    if (window.__phlDropdowns) return;
+    window.__phlDropdowns = true;
+    const all = () => document.querySelectorAll('[data-phl-dropdown][open]');
+    document.addEventListener('click', (e) => {
+      all().forEach((d) => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      all().forEach((d) => {
+        d.removeAttribute('open');
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener(
+      'toggle',
+      (e) => {
+        const d = e.target;
+        if (!d.matches?.('[data-phl-dropdown]') || !d.open) return;
+        all().forEach((o) => o !== d && !o.contains(d) && o.removeAttribute('open'));
+      },
+      true,
+    );
+  })();
+</script><main class="phl-main" id="phl-content" tabindex="-1"><div class="phl-progress" aria-hidden="true"><span></span></div><div class="phl-article-grid phl-has-toc"><article class="phl-article" data-pagefind-body><nav class="phl-breadcrumbs" aria-label="Breadcrumbs"><ol><li><a href="/en/">Home</a></li><li><a href="/en/posts/selfhosting/">Self-Hosting</a></li><li><span aria-current="page">Dozzle - A Convenient Real-Time Log Viewer for Docker Containers</span></li></ol></nav><header class="phl-article-header"><p class="phl-eyebrow">Monitoring &amp; Logs</p><h1 data-pagefind-meta="title">Dozzle - A Convenient Real-Time Log Viewer for Docker Containers</h1><p class="phl-meta"><span class="phl-meta-authors"><a href="/en/authors/stilicho2011/">Stilicho2011</a></span><time datetime="2026-08-19T00:00:00.000Z">August 19, 2026</time><span>Updated <time datetime="2026-10-10T00:00:00.000Z">October 10, 2026</time></span><span>21 min read</span><span class="phl-views">55 views</span></p></header><div class="phl-article-tools"><p class="phl-translations">Also available in: <a href="/posts/dozzle/" hreflang="ru-RU">RU</a></p><button type="button" class="phl-zen-toggle" data-phl-zen data-on="Reading mode" data-off="Exit reading mode" aria-pressed="false">Reading mode</button></div><div class="phl-embed phl-yt phl-article-video" data-yt-id="y8qDaMBk7t8"><a class="phl-yt-link" href="https://www.youtube.com/watch?v=y8qDaMBk7t8" target="_blank" rel="noopener" aria-label="Dozzle - A Convenient Real-Time Log Viewer for Docker Containers"><img src="https://i.ytimg.com/vi/y8qDaMBk7t8/hqdefault.jpg" alt="Dozzle - A Convenient Real-Time Log Viewer for Docker Containers" width="480" height="360" loading="eager" decoding="async"><span class="phl-yt-play" aria-hidden="true"></span></a></div><details class="phl-series"><summary>Part 17 of 24 in the series <a href="/en/series/self-hosting/">Self-Hosting</a></summary><ol><li><a href="/en/posts/fedora-server-42-in-proxmox/">Pros and Cons of Fedora Server 42</a></li><li><a href="/en/posts/linkwarden/">Linkwarden Overview - A Modern Self-Hosted Bookmark Manager</a></li><li><a href="/en/posts/postgres-p-1/">PostgreSQL and pgAdmin in Docker - Beginner Setup Guide</a></li><li><a href="/en/posts/mealie/">Mealie Recipe Manager - Self-Hosted Meal Planning on Docker</a></li><li><a href="/en/posts/vaultwarden/">Vaultwarden in Docker - Your Own Password Vault, Not Bitwarden&#39;s</a></li><li><a href="/en/posts/diun-docker-update-notifications/">Diun - Get Notified When Your Docker Images Have Updates</a></li><li><a href="/en/posts/update-linux-server/">How to Upgrade Linux Server Distributions</a></li><li><a href="/en/posts/homelabbing/">How to Start a Homelab - Hardware, Hypervisor, and Your First Service</a></li><li><a href="/en/posts/best-apps-2025/">The Best Self-Hosted Apps of 2025 - A Personal Roundup</a></li><li><a href="/en/posts/linkwarden-vs-karakeep/">Best Bookmark Manager - Linkwarden or Karakeep</a></li><li><a href="/en/posts/booklore/">BookLore - A Self-Hosted Library and Reader for Your Book Collection</a></li><li><a href="/en/posts/grimmory/">Grimmory - A Self-Hosted Library and Reader for Your Book Collection</a></li><li><a href="/en/posts/pangolin/">Pangolin Tunnel Setup - Expose Homelab Services Without Ports</a></li><li><a href="/en/posts/netbird/">NetBird Self-Hosted - Mesh VPN Without Port Forwarding</a></li><li><a href="/en/posts/postiz-youtube-vk-rutube/">Postiz - Trying to Automate YouTube, VK, and RuTube, and Why Only One Out of Three Actually Works</a></li><li><a href="/en/posts/postgres-p-2/">Connecting Applications to a Shared PostgreSQL and Learning Basic Maintenance - Part 2</a></li><li><span aria-current="page">Dozzle - A Convenient Real-Time Log Viewer for Docker Containers</span></li><li><a href="/en/posts/docker-default-address-pools/">Docker Hit Its Network Limit - How I Diagnosed and Fixed It with default-address-pools</a></li><li><a href="/en/posts/gotify-push-notifications/">Gotify - Your Own Push Notification Server for the Hypervisor and Beyond</a></li><li><a href="/en/posts/forgejo-komodo-gitops/">Forgejo + Komodo - Turning Docker Compose into GitOps</a></li><li><a href="/en/posts/forgejo-komodo-gitops-tutorial/">GitOps for Homelab - Deploying Forgejo and Komodo From Scratch</a></li><li><a href="/en/posts/gitlab-vs-gitea-vs-forgejo/">GitLab, Gitea, and Forgejo. A Comparison for Grown-Ups - What Actually Fits Your Homelab</a></li><li><a href="/en/posts/renovate-forgejo-komodo/">Auto-Updating Docker Containers - Renovate + Forgejo + Komodo</a></li><li><a href="/en/posts/matrix-synapse-docker/">Matrix Synapse - Setting Up Your Own Server for Decentralized Chat</a></li></ol></details><details class="phl-toc" data-phl-toc><summary class="phl-toc-title">Contents</summary><nav aria-label="Contents"><ul><li class="depth-2"><a href="#what-is-dozzle" data-phl-toc-link="what-is-dozzle">What is Dozzle</a></li><li class="depth-2"><a href="#why-youd-want-dozzle" data-phl-toc-link="why-youd-want-dozzle">Why you&#39;d want Dozzle</a></li><li class="depth-2"><a href="#installing-via-docker-compose" data-phl-toc-link="installing-via-docker-compose">Installing via Docker Compose</a></li><li class="depth-2"><a href="#first-run---the-setup-wizard" data-phl-toc-link="first-run---the-setup-wizard">First run - the setup wizard</a></li><li class="depth-2"><a href="#traefik-compatibility---compression-breaks-live-logs-sse" data-phl-toc-link="traefik-compatibility---compression-breaks-live-logs-sse">Traefik compatibility - compression breaks live logs (SSE)</a></li><li class="depth-2"><a href="#setting-up-authentication" data-phl-toc-link="setting-up-authentication">Setting up authentication</a></li><li class="depth-3"><a href="#simple-authentication" data-phl-toc-link="simple-authentication">Simple authentication</a></li><li class="depth-3"><a href="#github-or-oidc-sign-in-as-part-of-the-simple-method" data-phl-toc-link="github-or-oidc-sign-in-as-part-of-the-simple-method">GitHub or OIDC sign-in (as part of the simple method)</a></li><li class="depth-3"><a href="#openid-connect-oidc" data-phl-toc-link="openid-connect-oidc">OpenID Connect (oidc)</a></li><li class="depth-3"><a href="#authentication-via-a-reverse-proxy-forward-proxy" data-phl-toc-link="authentication-via-a-reverse-proxy-forward-proxy">Authentication via a reverse proxy (forward-proxy)</a></li><li class="depth-2"><a href="#interface-and-features" data-phl-toc-link="interface-and-features">Interface and features</a></li><li class="depth-3"><a href="#links-to-a-containers-web-ui" data-phl-toc-link="links-to-a-containers-web-ui">Links to a container&#39;s web UI</a></li><li class="depth-3"><a href="#host-metrics-and-disk-usage" data-phl-toc-link="host-metrics-and-disk-usage">Host metrics and disk usage</a></li><li class="depth-3"><a href="#alerts" data-phl-toc-link="alerts">Alerts</a></li><li class="depth-3"><a href="#dozzle-cloud" data-phl-toc-link="dozzle-cloud">Dozzle Cloud</a></li><li class="depth-2"><a href="#updating-containers-from-dozzle" data-phl-toc-link="updating-containers-from-dozzle">Updating containers from Dozzle</a></li><li class="depth-2"><a href="#multi-host-mode-agents" data-phl-toc-link="multi-host-mode-agents">Multi-host mode (agents)</a></li><li class="depth-3"><a href="#agent-certificates---port-7007-is-access-to-the-whole-host" data-phl-toc-link="agent-certificates---port-7007-is-access-to-the-whole-host">Agent certificates - port 7007 is access to the whole host</a></li><li class="depth-2"><a href="#security" data-phl-toc-link="security">Security</a></li><li class="depth-2"><a href="#pros-and-cons" data-phl-toc-link="pros-and-cons">Pros and cons</a></li><li class="depth-3"><a href="#pros" data-phl-toc-link="pros">Pros</a></li><li class="depth-3"><a href="#cons" data-phl-toc-link="cons">Cons</a></li><li class="depth-2"><a href="#conclusion" data-phl-toc-link="conclusion">Conclusion</a></li><li class="depth-2"><a href="#useful-links" data-phl-toc-link="useful-links">Useful links</a></li></ul></nav></details><div class="phl-prose"><!--phl-feed-start--><div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>If you enjoyed this article, you can become a sponsor on <a href="https://boosty.to/stilicho2011">Boosty</a>.</p>
+</div>
+</div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Updated October 9, 2026</span></div>
+<div class="phl-callout-content">
+<p>Brought up to date for Dozzle 11.3: the setup wizard, GitHub and OIDC sign-in, container updates and auto-updates with automatic rollback, custom certificates for agents, host metrics and per-container disk usage.</p>
+</div>
+</div>
+<h2 id="what-is-dozzle">What is Dozzle</h2>
+<p><strong>Dozzle</strong> is a lightweight open-source web app for viewing Docker container logs in real time, with no database, no complex configuration, and no log storage anywhere other than Docker itself.</p>
+<p>Project site: <a href="https://dozzle.dev">dozzle.dev</a><br>
+Source code: <a href="https://github.com/amir20/dozzle">github.com/amir20/dozzle</a></p>
+<p>Essentially, Dozzle is a convenient web wrapper around <code>docker logs -f</code> - except for all the containers on the host at once, with search, highlighting, and a nice interface that's easy to navigate, instead of a bare terminal.</p>
+<p><strong>Key features:</strong></p>
+<ul>
+<li>Real-time viewing of logs for all containers through a browser</li>
+<li>Search and filtering by text and regular expressions</li>
+<li>Highlighting of log levels and pretty-printing for JSON logs</li>
+<li>Container stats - CPU, memory, network, and since 11.3 how much disk each container takes up</li>
+<li>Host metrics - uptime, load, disk usage</li>
+<li>Start/stop/restart and update containers directly from the interface (optional)</li>
+<li>New image detection and scheduled container auto-updates that roll back on failure</li>
+<li>Alerts on logs, metrics, and Docker events</li>
+<li>Download logs as a file</li>
+<li>Multi-host mode - a single Dozzle instance can show logs from several servers at once</li>
+</ul>
+<p>Over the summer and autumn of 2026, Dozzle went from 10.7 to 11.3 and grew from a "just let me take a quick peek at the logs" tool into a genuinely solid everyday workhorse. It now has a setup wizard, proper OIDC sign-in, and can even stand in for Watchtower. All of that is still optional - if logs are all you want, Dozzle is the same small container you're used to.</p>
+<hr>
+<h2 id="why-youd-want-dozzle">Why you'd want Dozzle</h2>
+<p>If your server runs more than a couple of containers, sooner or later you'll need to quickly check what's going on - with Nextcloud, with Authentik, with a service that just crashed, and so on. There aren't many options:</p>
+<ul>
+<li>SSH in and run <code>docker logs -f &#x3C;container></code> for one container at a time;</li>
+<li>set up a full monitoring stack (Loki + Grafana, ELK) - slow, heavy, and possibly overkill for a home server, given how much there is to configure;</li>
+<li>install Dozzle - one small container that immediately gives you a web UI with all the logs on the host.</li>
+</ul>
+<p>Dozzle isn't a replacement for proper long-term logging (a Loki/Mimir/Grafana stack is undoubtedly a better fit for that - I've got an article on setting one up in the works, and I'll add a link here once it's published) - it's a fast, lightweight tool for "see what's happening right now," and for a home server that's usually more than enough.</p>
+<p>By the way, if you've already read the <a href="https://prohomelab.com/en/posts/diun-docker-update-notifications/">Diun</a> article - these two make a great pair. Diun tells you when a new image version is out, and Dozzle lets you immediately check the container's logs after updating it, to confirm everything came back up cleanly. That said, as of version 11 Dozzle can find and install updates by itself - more on that in <a href="#updating-containers-from-dozzle">Updating containers from Dozzle</a> below - so these days Diun is more of a nod to the past. Still a great app, though.</p>
+<hr>
+<h2 id="installing-via-docker-compose">Installing via Docker Compose</h2>
+<p>The base <code>docker-compose.yml</code>:</p>
+<div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.otfqh.css"><script type="module" src="/_astro/ec.0vx5m.js"></script><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">dozzle</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">amir20/dozzle:latest</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">dozzle</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/var/run/docker.sock:/var/run/docker.sock</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">./data:/data</span><span style="--0:#24292E;--1:#E1E4E8">                   </span><span style="--0:#616972;--1:#99A0A6"># users, settings, alerts, sessions</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">TZ=Europe/Moscow</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_NO_ANALYTICS=true</span><span style="--0:#24292E;--1:#E1E4E8">       </span><span style="--0:#616972;--1:#99A0A6"># disable anonymous telemetry</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_TAILSIZE=300</span><span style="--0:#24292E;--1:#E1E4E8">            </span><span style="--0:#616972;--1:#99A0A6"># how many recent lines to load on open</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">security_opt</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">no-new-privileges:true</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.dozzle.entrypoints=web"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.dozzle.rule=Host(`dozzle.stilicho.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.dozzle-https-redirect.redirectscheme.scheme=https"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.dozzle.middlewares=dozzle-https-redirect"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.dozzle-secure.entrypoints=websecure"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.dozzle-secure.rule=Host(`dozzle.stilicho.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.dozzle-secure.tls=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.dozzle-secure.tls.certresolver=cloudflare"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.dozzle-secure.service=dozzle"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.dozzle.loadbalancer.server.port=8080"</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:  dozzle:    image: amir20/dozzle:latest    container_name: dozzle    volumes:      - /var/run/docker.sock:/var/run/docker.sock      - ./data:/data                   # users, settings, alerts, sessions    environment:      - TZ=Europe/Moscow      - DOZZLE_NO_ANALYTICS=true       # disable anonymous telemetry      - DOZZLE_TAILSIZE=300            # how many recent lines to load on open    restart: unless-stopped    security_opt:      - no-new-privileges:true    networks:      proxy:    labels:      - &#x22;traefik.enable=true&#x22;      - &#x22;traefik.http.routers.dozzle.entrypoints=web&#x22;      - &#x22;traefik.http.routers.dozzle.rule=Host(&#x60;dozzle.stilicho.ru&#x60;)&#x22;      - &#x22;traefik.http.middlewares.dozzle-https-redirect.redirectscheme.scheme=https&#x22;      - &#x22;traefik.http.routers.dozzle.middlewares=dozzle-https-redirect&#x22;      - &#x22;traefik.http.routers.dozzle-secure.entrypoints=websecure&#x22;      - &#x22;traefik.http.routers.dozzle-secure.rule=Host(&#x60;dozzle.stilicho.ru&#x60;)&#x22;      - &#x22;traefik.http.routers.dozzle-secure.tls=true&#x22;      - &#x22;traefik.http.routers.dozzle-secure.tls.certresolver=cloudflare&#x22;      - &#x22;traefik.http.routers.dozzle-secure.service=dozzle&#x22;      - &#x22;traefik.http.services.dozzle.loadbalancer.server.port=8080&#x22;      - &#x22;traefik.docker.network=proxy&#x22;networks:  proxy:    external: true"><div></div></button></div></figure></div>
+<p>Start the service:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">up</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="docker compose up -d"><div></div></button></div></figure></div>
+<p>Then open <code>https://dozzle.stilicho.ru</code> in your browser. Dozzle discovers every container on the host through the Docker socket and shows their logs right away, and on a fresh install the first thing you'll see is the setup wizard (covered in the next section).</p>
+<p>For the details of wiring a service into Traefik with labels, see <a href="https://prohomelab.com/en/posts/traefik-in-docker/">Traefik in Docker</a>.</p>
+<p><strong>Why the <code>/data</code> folder.</strong> The video didn't have one, but with Dozzle 11 it's effectively mandatory. <code>/data</code> holds user data (<code>users.yml</code>), the wizard's settings (<code>dozzle.yml</code>), alerts and notification destinations, and the secret used to sign sessions. If the <code>/data</code> folder doesn't survive restarts, that secret is regenerated every time - so every container restart logs everyone out, and your settings and alerts vanish along with it.</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>The Docker socket (<code>/var/run/docker.sock</code>) grants full control over Docker on the host - effectively root on the host. The video mounted it with <code>:ro</code>, but as the Dozzle docs point out, <code>:ro</code> <strong>does not restrict the Docker API</strong>: it only makes the socket file itself read-only on disk, while API calls go through it just as before - creating, removing, and recreating containers all still work. The flag doesn't hurt, but it won't fully protect you either. The only real way to restrict access is a socket-proxy such as <a href="https://github.com/Tecnativa/docker-socket-proxy">tecnativa/docker-socket-proxy</a> - more on that in the "Security" section below.</p>
+</div>
+</div>
+<hr>
+<h2 id="first-run---the-setup-wizard">First run - the setup wizard</h2>
+<p>Since 11.1, the first time Dozzle starts (while <code>/data</code> is still empty) it opens a setup wizard that walks you through:</p>
+<ol>
+<li><strong>Login.</strong> Your options: a Dozzle account (creates <code>users.yml</code>, <code>simple</code> provider), "My proxy" (forward-proxy - Authentik/Authelia handles auth in front of Dozzle), OIDC (the wizard tells you which variables to set), or carry on without a login.</li>
+<li><strong>Actions and shell</strong> - whether to allow container control and a terminal inside containers. Shell is off by default, and unless you really need it, you're probably better off leaving it that way.</li>
+<li><strong>Hosts</strong> - connecting agents on other servers.</li>
+<li><strong>Dozzle Cloud</strong> - optionally linking to the cloud service run by Dozzle's author (more below).</li>
+<li><strong>Auto-update</strong> - off/daily/weekly, the time, and which containers to update. This step only works with actions enabled.</li>
+<li><strong>Restart</strong> - Dozzle restarts its own container to apply everything.</li>
+</ol>
+<p>Your choices are saved to <code>/data/dozzle.yml</code>:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">authProvider</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">simple</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">enableActions</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">enableShell</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">false</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">autoUpdate</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">weekly</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">autoUpdateTime</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">"03:00"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">updateContainers</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">labelled</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="authProvider: simpleenableActions: trueenableShell: falseautoUpdate: weeklyautoUpdateTime: &#x22;03:00&#x22;updateContainers: labelled"><div></div></button></div></figure></div>
+<p>Environment variables (<code>DOZZLE_AUTH_PROVIDER</code>, <code>DOZZLE_ENABLE_ACTIONS</code>, <code>DOZZLE_ENABLE_SHELL</code>, <code>DOZZLE_AUTO_UPDATE</code> and so on) take precedence over the file - so if you'd rather keep all your config in compose, you can switch the wizard off with <code>DOZZLE_DISABLE_SETUP_WIZARD=true</code>. You can still launch it later from <strong>Settings → About</strong>.</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>If you pick "no login" in the wizard, settings can only be changed from the UI during the first 15 minutes after a new install first starts. That's a safeguard, but also a good reason not to leave a fresh Dozzle sitting open on your network unattended. Go through every step of the wizard right after <code>docker compose up -d</code>.</p>
+</div>
+</div>
+<hr>
+<h2 id="traefik-compatibility---compression-breaks-live-logs-sse">Traefik compatibility - compression breaks live logs (SSE)</h2>
+<p>Dozzle streams logs in real time using <strong>Server-Sent Events (SSE)</strong> - a one-way HTTP stream of data from the server to the browser. Traefik handles WebSocket upgrades automatically, with no extra configuration needed, but SSE has a catch: if you have the <code>compress</code> middleware enabled (often added globally to compress responses for every service), it can break this particular stream - logs in the interface simply stop updating in real time, even though Dozzle itself keeps running without errors.</p>
+<p>To fix this, exclude <code>text/event-stream</code> from compression:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">http</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">middlewares</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">middlewares-compress</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#1E7734;--1:#85E89D">compress</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">excludedContentTypes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">          </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">text/event-stream</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="http:  middlewares:    middlewares-compress:      compress:        excludedContentTypes:          - text/event-stream"><div></div></button></div></figure></div>
+<p>Then apply this middleware to the Dozzle router (or, if <code>compress</code> is already shared across all your services, just add the exclusion to your existing configuration).</p>
+<p>A typical labels block for the Dozzle service, accounting for this, looks something like this:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">dozzle</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">amir20/dozzle:latest</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">traefik.enable=true</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">traefik.http.routers.dozzle.rule=Host(`dozzle.stilicho.ru`)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">traefik.http.routers.dozzle.entrypoints=websecure</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">traefik.http.routers.dozzle.tls.certresolver=letsencrypt</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">traefik.http.services.dozzle.loadbalancer.server.port=8080</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:  dozzle:    image: amir20/dozzle:latest    labels:      - traefik.enable=true      - traefik.http.routers.dozzle.rule=Host(&#x60;dozzle.stilicho.ru&#x60;)      - traefik.http.routers.dozzle.entrypoints=websecure      - traefik.http.routers.dozzle.tls.certresolver=letsencrypt      - traefik.http.services.dozzle.loadbalancer.server.port=8080"><div></div></button></div></figure></div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>If you don't use the <code>compress</code> middleware globally, you don't need to change anything - this issue only shows up when it's in use. But if, after setting up Dozzle, the logs stop updating in real time and you have to refresh the page manually, this is the first thing to check.</p>
+</div>
+</div>
+<hr>
+<h2 id="setting-up-authentication">Setting up authentication</h2>
+<p>With no authentication configured, Dozzle doesn't ask for a login - which is only fine if the service is reachable exclusively from inside your network, or already sits behind a reverse proxy with its own auth. Dozzle now gives you four options:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Who owns the users</th>
+<th>When it fits</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>simple</code></td>
+<td>Dozzle, in <code>users.yml</code></td>
+<td>You don't have an auth system of your own</td>
+</tr>
+<tr>
+<td><code>simple</code> + GitHub/OIDC sign-in</td>
+<td>Dozzle, in <code>users.yml</code></td>
+<td>Same users, but they sign in with GitHub, Authentik, Keycloak, etc. instead of a password</td>
+</tr>
+<tr>
+<td><code>oidc</code></td>
+<td>Your identity provider</td>
+<td>Users and their permissions live in Authentik/Keycloak/Pocket ID, no <code>users.yml</code> needed</td>
+</tr>
+<tr>
+<td><code>forward-proxy</code></td>
+<td>Your proxy</td>
+<td>Authentik/Authelia/Cloudflare Access handles auth entirely in front of Dozzle</td>
+</tr>
+</tbody>
+</table>
+<h3 id="simple-authentication">Simple authentication</h3>
+<p>The easiest way is to create a user right in the setup wizard. If you prefer doing it by hand, the Dozzle image can generate one:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">mkdir</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-p</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">./data</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">run</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--rm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-it</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">amir20/dozzle</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">generate</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">admin</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--name</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"Admin"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--email</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">admin@stilicho.ru</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">></span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">./data/users.yml</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="mkdir -p ./datadocker run --rm -it amir20/dozzle generate admin --name &#x22;Admin&#x22; --email admin@stilicho.ru > ./data/users.yml"><div></div></button></div></figure></div>
+<p>The command prompts for the password interactively, so it never ends up in your shell history. The resulting <code>users.yml</code> with the password hash lands in <code>./data</code>, which the compose file above already mounts as the container's <code>/data</code>. All that's left is to enable the provider:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_AUTH_PROVIDER=simple</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="    environment:      - DOZZLE_AUTH_PROVIDER=simple"><div></div></button></div></figure></div>
+<p><code>generate</code> also takes <code>--user-roles</code> and <code>--user-filter</code>. For example, you can give someone access to the logs of specific containers only, with no right to control them.</p>
+<h3 id="github-or-oidc-sign-in-as-part-of-the-simple-method">GitHub or OIDC sign-in (as part of the simple method)</h3>
+<p>Since version 11, users from <code>users.yml</code> can sign in with GitHub or any OIDC provider - Authentik, Keycloak, Pocket ID, Zitadel - instead of a password. The key point: <code>users.yml</code> remains the allowlist. An external account that isn't linked to a user in the file can't get in, and no accounts are ever created automatically. Password login keeps working alongside it - handy if the OAuth app ever breaks.</p>
+<p>For GitHub, you create an OAuth App with the callback URL <code>https://dozzle.stilicho.ru/api/auth/callback</code> and add <code>DOZZLE_AUTH_GITHUB_CLIENT_ID</code> and <code>DOZZLE_AUTH_GITHUB_CLIENT_SECRET</code> to your compose file.</p>
+<h3 id="openid-connect-oidc">OpenID Connect (oidc)</h3>
+<p>The <code>oidc</code> provider arrived in 11.1. Here the identity provider itself owns the user data. Dozzle doesn't read <code>users.yml</code> at all, and takes roles (<code>shell</code>, <code>actions</code>, <code>download</code>, etc.) and container filters from the token. Add a user in Authentik and they can sign in; remove their role and they can't. Simple as that.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_AUTH_PROVIDER=oidc</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_AUTH_OIDC_ISSUER=https://auth.stilicho.ru/application/o/dozzle/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_AUTH_OIDC_CLIENT_ID=dozzle</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_AUTH_OIDC_CLIENT_SECRET=&#x3C;client_secret></span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="    environment:      - DOZZLE_AUTH_PROVIDER=oidc      - DOZZLE_AUTH_OIDC_ISSUER=https://auth.stilicho.ru/application/o/dozzle/      - DOZZLE_AUTH_OIDC_CLIENT_ID=dozzle      - DOZZLE_AUTH_OIDC_CLIENT_SECRET=<client_secret>"><div></div></button></div></figure></div>
+<p>The redirect URI on the provider side is <code>https://dozzle.stilicho.ru/api/auth/callback</code>. Dozzle looks for roles in the <code>dozzle_roles</code> claim, then <code>resource_access.&#x3C;client-id>.roles</code>, then <code>roles</code>.
+The <code>groups</code> claim is deliberately ignored. Otherwise, any Authentik user who belongs to any group at all would get access to every log. If your permissions are group-based, map them into <code>dozzle_roles</code> on the provider side. I covered creating an OIDC provider in Authentik in <a href="https://prohomelab.com/en/posts/authentik-overview-proxy-oidc/">OIDC, OAuth2 and Proxy Provider in Authentik</a>.</p>
+<h3 id="authentication-via-a-reverse-proxy-forward-proxy">Authentication via a reverse proxy (forward-proxy)</h3>
+<p>If you already have Authentik, Authelia, or Keycloak set up (the blog has a whole <a href="https://prohomelab.com/en/posts/sso-comparison/">Single Sign On</a> series) - there's no need for yet another separate login: route Dozzle through the same proxy's forward-auth instead:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_AUTH_PROVIDER=forward-proxy</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_AUTH_HEADER_USER=Remote-User</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># the header carrying the username that your proxy passes through</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="    environment:      - DOZZLE_AUTH_PROVIDER=forward-proxy      - DOZZLE_AUTH_HEADER_USER=Remote-User   # the header carrying the username that your proxy passes through"><div></div></button></div></figure></div>
+<p>This way, Dozzle trusts the authentication already performed at the Traefik/Authentik level, and won't ask for a separate password.</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>In forward-proxy mode, Dozzle trusts the <code>Remote-User</code> header on every request, and if the proxy doesn't send a roles header, the user gets every permission. So never publish Dozzle's port directly (<code>ports:</code>): anyone who reaches the container by going around the proxy can sign in as whoever they like just by setting that header. Dozzle should only be reachable through Traefik - like in the compose file above, which has no <code>ports:</code> section at all. Maybe I'm being a bit paranoid about security here, but forewarned is forearmed.</p>
+</div>
+</div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Upgrading to Dozzle 11 logs everyone out once. Sessions are now signed with a random secret stored in <code>/data/session_secret</code>. That's expected. If you get logged out after <em>every</em> restart, though, the contents of <code>/data</code> aren't being persisted (see the installation section).</p>
+</div>
+</div>
+<hr>
+<h2 id="interface-and-features">Interface and features</h2>
+<p>Once you open the web interface, you get:</p>
+<ul>
+<li>a list of all containers on the host with a status indicator (running/exited/restarting);</li>
+<li>a live log stream with auto-scroll and on-the-fly text/regex search;</li>
+<li>highlighting of log levels (<code>error</code>, <code>warn</code>, <code>info</code>, etc.) and automatic formatting of JSON log lines into a readable form;</li>
+<li>a stats tab for each container - CPU, memory, network, disk;</li>
+<li>downloading a container's log as a file for a chosen time range (as JSON too, since 10.10);</li>
+<li>with Actions enabled (see below) - buttons to start, stop, restart, and update a container right from the interface.</li>
+</ul>
+<p>Actions - the container control buttons - are disabled by default and need to be enabled separately (or in the setup wizard):</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_ENABLE_ACTIONS=true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="    environment:      - DOZZLE_ENABLE_ACTIONS=true"><div></div></button></div></figure></div>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Only enable Actions if you actually need to manage containers straight from Dozzle, and make sure the service is behind authentication (simple, oidc, or forward-proxy from the section above) - otherwise anyone who gets access to the web interface can stop or restart any container on the host. The same goes double for shell (<code>DOZZLE_ENABLE_SHELL=true</code>) - that's basically <code>docker exec</code> from a browser.</p>
+</div>
+</div>
+<h3 id="links-to-a-containers-web-ui">Links to a container's web UI</h3>
+<p>Most containers have a web UI of their own, and since 10.10 you can link to it straight from Dozzle with the <code>dev.dozzle.url</code> label:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"dev.dozzle.url=https://grafana.stilicho.ru"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="    labels:      - &#x22;dev.dozzle.url=https://grafana.stilicho.ru&#x22;"><div></div></button></div></figure></div>
+<p>The link shows up next to the container name - in the sidebar, in the container table, and in the container page's title bar. A nice touch if everything goes through Traefik: for containers without the label, Dozzle reads the <code>Host(...)</code> rule from the Traefik labels and offers a ready-made snippet. It only becomes a link once you put the label into your compose file yourself.</p>
+<h3 id="host-metrics-and-disk-usage">Host metrics and disk usage</h3>
+<p>Since 11.2, the host card shows uptime, load average, and how full the disk holding Docker's data is. Disk works out of the box, but for uptime and load the container needs the host's <code>/proc</code> mounted - otherwise Dozzle only sees its own container's <code>/proc</code> and, to its credit, shows nothing rather than wrong numbers:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/var/run/docker.sock:/var/run/docker.sock</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/proc:/host/proc:ro</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">./data:/data</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="    volumes:      - /var/run/docker.sock:/var/run/docker.sock      - /proc:/host/proc:ro      - ./data:/data"><div></div></button></div></figure></div>
+<p>11.3 added a <strong>Disk</strong> column: the container's writable layer plus its volumes. Bind mounts (<code>./data:/var/lib/postgresql/data</code>) aren't counted - Docker knows nothing about what's inside them, so a database on a bind mount will show a few kilobytes. Next to the host's disk meter you'll also see <strong>Reclaimable</strong> - how much space you could free up (unused images, volumes, stopped containers, build cache), the same figure as <code>docker system df</code>.</p>
+<h3 id="alerts">Alerts</h3>
+<p>Alerts were rebuilt from scratch in 10.10. A rule is two expressions - which containers to watch and what to fire on. Alert types:</p>
+<ul>
+<li><strong>log</strong> - a log line matches a pattern (5xx errors, stack traces);</li>
+<li><strong>metric</strong> - CPU or memory crosses a threshold;</li>
+<li><strong>event</strong> - Docker events like an OOM kill or a container going unhealthy.</li>
+</ul>
+<p>Destinations are webhook, Slack, Discord, and ntfy, and for webhooks you can write your own payload template. Alert settings live in <code>/data</code> too - one more reason to make sure that folder persists.</p>
+<h3 id="dozzle-cloud">Dozzle Cloud</h3>
+<p>Dozzle Cloud is an optional paid service (with a free tier) from Dozzle's author that groups alerts, sends them to Telegram, email, push, and so on, and on paid plans also reads your logs and hunts for problems with an AI assistant. Your Dozzle connects to it outbound, so no inbound ports need opening.</p>
+<p>But be aware that once linked, <strong>logs from every running container are sent to the cloud by default</strong>. For a self-hosted tool, that's an important point and, in my view, a pretty significant one. If you do want the cloud, you can limit what gets sent with a container label: <code>dev.dozzle.cloud.min_level=warn</code> (warnings and errors only) or <code>dev.dozzle.cloud.min_level=disabled</code> (nothing at all). Without linking, Dozzle sends nothing anywhere, and the cloud panel doesn't even show up in the UI.</p>
+<hr>
+<h2 id="updating-containers-from-dozzle">Updating containers from Dozzle</h2>
+<p>The biggest addition this autumn: Dozzle can now update containers and is, for all practical purposes, a Watchtower replacement.</p>
+<p><strong>Update checks.</strong> Dozzle compares the digest of the image a container is running with what the registry currently serves for that tag. It does this with a so-called <code>HEAD</code> request for the manifest, so no layers are downloaded and Docker Hub rate limits aren't touched, and answers are cached for six hours. When a newer version is out, a dot appears on the container's menu. Checks work even with actions off, and you can turn them off with <code>DOZZLE_IMAGE_CHECK_MODE=off</code> (or <code>manual</code> to only check on demand). For a single container, use the <code>dev.dozzle.update=off</code> label. Locally built images, images pinned by digest, and images from private registries aren't checked.</p>
+<p><strong>Manual updates.</strong> With actions on, each container gets an <strong>Update</strong> button, and the dashboard gets an <strong>N updates</strong> button that updates everything you select in one go (one container at a time per host, with Dozzle itself last). This only makes sense for floating tags like <code>latest</code> or <code>stable</code>: a container on <code>postgres:18.1</code> has nowhere to go.</p>
+<p><strong>Safe swap with rollback.</strong> The best part: Dozzle doesn't just recreate the container. The old one is renamed and kept around until the new one has run for 10 seconds without restarting (and reported healthy, if the image has a healthcheck). If the new container fails to start, exits, restarts, or turns unhealthy, Dozzle removes it and puts the old one back. Volumes and bind mounts are kept - only data written to the container's writable layer is lost. After a successful update, Dozzle cleans up old images on its own, keeping one previous image around for a possible rollback.</p>
+<p><img alt="How Dozzle updates a container and rolls back on failure: the old container is kept until the new one has run for 10 seconds and is healthy" loading="lazy" decoding="async" width="960" height="460" src="/_astro/dozzle-update-rollback.en.B3P4MVoW_ZXadaV.svg"></p>
+<p><strong>Scheduled auto-updates.</strong> Set them up under <strong>Settings → Updates</strong> or in the wizard:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_ENABLE_ACTIONS=true</span><span style="--0:#24292E;--1:#E1E4E8">       </span><span style="--0:#616972;--1:#99A0A6"># auto-update doesn't work without actions</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_AUTO_UPDATE=weekly</span><span style="--0:#24292E;--1:#E1E4E8">        </span><span style="--0:#616972;--1:#99A0A6"># off / daily / weekly (weekly runs on Sunday)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_AUTO_UPDATE_TIME=04:00</span><span style="--0:#24292E;--1:#E1E4E8">    </span><span style="--0:#616972;--1:#99A0A6"># server time, 03:00 by default</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_UPDATE_CONTAINERS=labelled</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># off - Dozzle only, labelled - by label, all - everything</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="    environment:      - DOZZLE_ENABLE_ACTIONS=true       # auto-update doesn&#x27;t work without actions      - DOZZLE_AUTO_UPDATE=weekly        # off / daily / weekly (weekly runs on Sunday)      - DOZZLE_AUTO_UPDATE_TIME=04:00    # server time, 03:00 by default      - DOZZLE_UPDATE_CONTAINERS=labelled  # off - Dozzle only, labelled - by label, all - everything"><div></div></button></div></figure></div>
+<p>In <code>labelled</code> mode (the default), only Dozzle itself and containers with this label get updated:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"dev.dozzle.update=auto"</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="    labels:      - &#x22;dev.dozzle.update=auto&#x22;"><div></div></button></div></figure></div>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p><code>all</code> mode (<strong>Everything</strong>) is exactly how <code>postgres:latest</code> ends up jumping to a new major version at 3 a.m. - one that can't read your old data files, because the maintainers decided to move paths around inside the container and nobody told you. Sure, the rollback might save the container, but not your nerves. Label your databases, and anything else holding data you care about, with <code>dev.dozzle.update=off</code>. And if you'd rather have updates to important services go through you, there's <a href="https://prohomelab.com/en/posts/diun-docker-update-notifications/">Diun</a> for notifications, or a GitOps approach with Renovate, where every update is a pull request.</p>
+</div>
+</div>
+<p>Dozzle updates itself using the same mechanism, via a short-lived helper container called <code>dozzle-self-update-*</code>. But only if it runs on the <code>latest</code> tag: a pinned version like <code>amir20/dozzle:v11.3.0</code> never updates. Rolling back an update that <em>succeeded</em> but started misbehaving later is a Dozzle Cloud feature. The automatic rollback on a failed start works without the cloud.</p>
+<hr>
+<h2 id="multi-host-mode-agents">Multi-host mode (agents)</h2>
+<p>If you have more than one server (say, a Proxmox cluster with a couple of nodes plus a separate mini PC) - you don't need to run Dozzle on every single one. You can install an <strong>agent</strong> on the remote hosts and connect them to one main Dozzle instance.</p>
+<p>On the remote host:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">dozzle-agent</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">amir20/dozzle:latest</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">dozzle-agent</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">command</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">agent</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/var/run/docker.sock:/var/run/docker.sock</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">ports</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">7007:7007</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:  dozzle-agent:    image: amir20/dozzle:latest    container_name: dozzle-agent    command: agent    volumes:      - /var/run/docker.sock:/var/run/docker.sock    ports:      - 7007:7007    restart: unless-stopped"><div></div></button></div></figure></div>
+<p>On the main host, where the web interface runs, add a variable pointing to the agent:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_REMOTE_AGENT=192.168.1.20:7007|docker-01</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="    environment:      - DOZZLE_REMOTE_AGENT=192.168.1.20:7007|docker-01"><div></div></button></div></figure></div>
+<p>The format is <code>address:port|name|group</code>, with name and group optional. List several agents separated by commas; groups collapse in the sidebar and can show merged logs from every host in the group:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOZZLE_REMOTE_AGENT=192.168.1.20:7007|docker-01|Prod,192.168.1.21:7007|docker-02|Prod,192.168.1.30:7007|test|Lab</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="    environment:      - DOZZLE_REMOTE_AGENT=192.168.1.20:7007|docker-01|Prod,192.168.1.21:7007|docker-02|Prod,192.168.1.30:7007|test|Lab"><div></div></button></div></figure></div>
+<p>You can also add an agent from the UI - <strong>Settings → Hosts → Add host</strong>, or the Hosts step of the wizard. It connects immediately, no restart needed, and is saved to <code>/data/dozzle.yml</code>. Agents defined in <code>DOZZLE_REMOTE_AGENT</code> can't be removed from the UI.</p>
+<p>To get uptime and load on a remote host's card, give the agent the same <code>/proc:/host/proc:ro</code> mount as the main Dozzle. The agent itself updates like any other container - including through Dozzle's auto-update.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>Don't confuse agents with <code>DOZZLE_REMOTE_HOST</code>. That variable (format <code>tcp://address:2375|name</code>) is for connecting to a Docker API exposed over TCP, not to an agent on port 7007. For a homelab, agents are both simpler and safer than putting the Docker API on the network.</p>
+</div>
+</div>
+<h3 id="agent-certificates---port-7007-is-access-to-the-whole-host">Agent certificates - port 7007 is access to the whole host</h3>
+<div class="phl-callout" data-callout="caution">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Caution</span></div>
+<div class="phl-callout-content">
+<p>Everyone who uses agents needs to know this.</p>
+</div>
+</div>
+<p>The built-in certificate the agent and main Dozzle use to encrypt their connection is identical in every copy of the image - anyone can pull it out of the public image. So the connection is encrypted, but the agent can't tell your Dozzle from someone else's. <strong>Anyone who can reach port 7007 can point their own Dozzle at your agent, read every log on that host, and run commands inside its containers.</strong> The agent doesn't look at <code>DOZZLE_ENABLE_SHELL</code> or <code>DOZZLE_ENABLE_ACTIONS</code> at all - those only control what the UI offers.</p>
+<p>What to do about it:</p>
+<ul>
+<li>keep port 7007 on a private network - or better, don't publish it at all (<code>ports:</code>) if the main Dozzle and the agent share a Docker network;</li>
+<li>when adding an agent from the UI, leave the <strong>Private certificate</strong> toggle on (it's on by default for new hosts). Dozzle creates its own key pair in <code>/data/agent_cert.pem</code> and <code>/data/agent_key.pem</code> and hands you a ready-made compose snippet for the agent with the keys in <code>DOZZLE_CERT_PEM</code>/<code>DOZZLE_KEY_PEM</code>. That snippet contains the private key - treat it like a password and keep it out of public git repos;</li>
+<li>or generate your own pair for the main Dozzle and all agents:</li>
+</ul>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">run</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--rm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-v</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$PWD</span><span style="--0:#032F62;--1:#9ECBFF">":/out</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">amir20/dozzle:latest</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">generate-certs</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--cert-out</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/out/dozzle_cert.pem</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--key-out</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/out/dozzle_key.pem</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="docker run --rm -v &#x22;$PWD&#x22;:/out amir20/dozzle:latest generate-certs --cert-out /out/dozzle_cert.pem --key-out /out/dozzle_key.pem"><div></div></button></div></figure></div>
+<p>Both files go on the main Dozzle and on every agent - by default they're looked up at <code>/dozzle_cert.pem</code> and <code>/dozzle_key.pem</code>:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">dozzle-agent</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">amir20/dozzle:latest</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">command</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">agent</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/var/run/docker.sock:/var/run/docker.sock</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">secrets</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#1E7734;--1:#85E89D">source</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">cert</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">target</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/dozzle_cert.pem</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#1E7734;--1:#85E89D">source</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">key</span></div></div><div class="ec-line"><div class="code"><span class="indent">        </span><span style="--0:#1E7734;--1:#85E89D">target</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/dozzle_key.pem</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">ports</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">7007:7007</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">secrets</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">cert</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">file</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">./dozzle_cert.pem</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">key</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">file</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">./dozzle_key.pem</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:  dozzle-agent:    image: amir20/dozzle:latest    command: agent    volumes:      - /var/run/docker.sock:/var/run/docker.sock    secrets:      - source: cert        target: /dozzle_cert.pem      - source: key        target: /dozzle_key.pem    ports:      - 7007:7007    restart: unless-stoppedsecrets:  cert:    file: ./dozzle_cert.pem  key:    file: ./dozzle_key.pem"><div></div></button></div></figure></div>
+<p>From then on, the agent only accepts connections from a Dozzle holding the same key pair. Restart the main Dozzle and the agents together.</p>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>You can't put an agent behind a socket-proxy - the agent itself takes the place of one. If you want to restrict permissions with a socket-proxy, connect to the remote host via <code>DOZZLE_REMOTE_HOST</code> instead of using an agent.</p>
+</div>
+</div>
+<hr>
+<h2 id="security">Security</h2>
+<ul>
+<li><code>:ro</code> on <code>docker.sock</code> doesn't restrict the Docker API - requests to create, remove, and recreate containers go through the socket regardless. If you don't need actions, the only real way to restrict access is a socket-proxy like <code>tecnativa/docker-socket-proxy</code>, which only lets through the Docker API endpoints you allow.</li>
+<li>If you plan to use Actions, shell, or auto-updates - make sure authentication is enabled, otherwise it's an open door into managing your entire Docker host. Even if your network is locked down tighter than Fort Knox, it's still better to stick to basic security hygiene.</li>
+<li>In multi-user setups, restrict users with roles and filters: without explicit roles, a user sees every container Dozzle can see.</li>
+<li>In forward-proxy mode, never publish Dozzle's port directly - only through the proxy.</li>
+<li>Agent port 7007 should be reachable by nothing but the main Dozzle, and if you can't guarantee that, use your own certificates.</li>
+<li>As with any service that has access to the Docker socket, don't expose Dozzle directly to the internet without a reverse proxy, SSL, and authentication.</li>
+</ul>
+<hr>
+<h2 id="pros-and-cons">Pros and cons</h2>
+<h3 id="pros">Pros</h3>
+<ul>
+<li>Free and open source.</li>
+<li>Genuinely zero-configuration - install it and you immediately see logs, and with the setup wizard the initial config takes a couple of minutes.</li>
+<li>Lightweight - minimal resource usage, a great fit for a homelab.</li>
+<li>Multi-host mode via agents - logs from all your servers in one window.</li>
+<li>Built-in authentication, with the option to lock it down further, including OIDC or forward-proxy with an SSO you already have.</li>
+<li>Container updates with automatic rollback - can replace Watchtower.</li>
+</ul>
+<h3 id="cons">Cons</h3>
+<ul>
+<li>Logs aren't stored separately - Dozzle just shows what Docker itself physically keeps, and the history disappears after log rotation or container removal.</li>
+<li>Not a replacement for a full logging stack (Loki/Grafana, ELK) for long-term storage and complex analytics.</li>
+<li>Actions, shell, and auto-updates are powerful features that require careful authentication setup, or they become a security risk.</li>
+<li>The built-in agent certificate is the same in every install - setting up your own is on you.</li>
+<li>The project is growing fast: with Dozzle Cloud and an AI assistant on board, the "simple log viewer" isn't quite so simple anymore - good thing all the new stuff is optional.</li>
+</ul>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<p>Dozzle is one of those tools you install once and afterwards can't imagine how you ever lived without it (though, to be fair, you lived just fine. But something was missing, wasn't it?).
+It's not a substitute for full monitoring and doesn't keep logs long-term, but it solves the main task - quickly seeing what a container is doing right now - without touching a terminal.
+Version 11 is also a serious overhaul: OIDC sign-in, host metrics, container updates with rollback. It pairs nicely with <a href="https://prohomelab.com/en/posts/diun-docker-update-notifications/">Diun</a>, which you may already know from my blog, and with management panels like <a href="https://prohomelab.com/en/posts/portainer-to-komodo/">Komodo</a> or <a href="https://prohomelab.com/en/posts/dockhand-docker-web-ui/">Dockhand</a> - together they cover most of the day-to-day work of maintaining a Docker host (although, to be honest, they can show logs themselves too).</p>
+<h2 id="useful-links">Useful links</h2>
+<ul>
+<li><a href="https://dozzle.dev/guide/getting-started">Dozzle documentation</a></li>
+<li><a href="https://github.com/amir20/dozzle/releases">Dozzle releases on GitHub</a></li>
+<li><a href="https://dozzle.dev/guide/setup-wizard">Setup wizard</a></li>
+<li><a href="https://dozzle.dev/guide/authentication">Authentication</a> and <a href="https://dozzle.dev/guide/authentication/oidc">OpenID Connect</a></li>
+<li><a href="https://dozzle.dev/guide/actions">Actions, updates, and rollback</a></li>
+<li><a href="https://dozzle.dev/guide/agent">Agents and certificates</a></li>
+<li><a href="https://dozzle.dev/guide/dozzle-cloud/your-data">Dozzle Cloud: what data leaves your host</a></li>
+</ul><!--phl-feed-end--></div><footer class="phl-article-footer"><p class="phl-article-terms"><a class="phl-term-cat" href="/en/categories/monitoring--logs/">Monitoring &amp; Logs</a><a href="/en/tags/dozzle/">#Dozzle</a><a href="/en/tags/docker/">#Docker</a><a href="/en/tags/self-hosting/">#Self-Hosting</a><a href="/en/tags/monitoring/">#Monitoring</a></p><p class="phl-license">License: CC BY 4.0</p><div class="phl-share"><span class="phl-share-label">Share</span><a href="https://t.me/share/url?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fdozzle%2F&amp;text=Dozzle%20-%20A%20Convenient%20Real-Time%20Log%20Viewer%20for%20Docker%20Containers" target="_blank" rel="noopener noreferrer" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://x.com/intent/post?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fdozzle%2F&amp;text=Dozzle%20-%20A%20Convenient%20Real-Time%20Log%20Viewer%20for%20Docker%20Containers" target="_blank" rel="noopener noreferrer" aria-label="X" title="X" style="--phl-brand-l:#000000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.234 10.162L22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299l-.929-1.329L3.076 1.56h3.182l5.965 8.532l.929 1.329l7.754 11.09h-3.182z"/></svg></a><a href="https://www.reddit.com/submit?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fdozzle%2F&amp;title=Dozzle%20-%20A%20Convenient%20Real-Time%20Log%20Viewer%20for%20Docker%20Containers" target="_blank" rel="noopener noreferrer" aria-label="Reddit" title="Reddit" style="--phl-brand-l:#ff4500;--phl-brand-d:#ff4500" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12c0 3.314 1.343 6.314 3.515 8.485l-2.286 2.286A.72.72 0 0 0 1.738 24H12c6.627 0 12-5.373 12-12S18.627 0 12 0m4.388 3.199a1.999 1.999 0 1 1-1.947 2.46v.002a2.37 2.37 0 0 0-2.032 2.341v.007c1.776.067 3.4.567 4.686 1.363a2.802 2.802 0 1 1 2.908 4.753c-.088 3.256-3.637 5.876-7.997 5.876c-4.361 0-7.905-2.617-7.998-5.87a2.8 2.8 0 0 1 1.189-5.34c.645 0 1.239.218 1.712.585c1.275-.79 2.881-1.291 4.64-1.365v-.01a3.23 3.23 0 0 1 2.88-3.207a2 2 0 0 1 1.959-1.595m-8.085 8.376c-.784 0-1.459.78-1.506 1.797s.64 1.429 1.426 1.429s1.371-.369 1.418-1.385s-.553-1.841-1.338-1.841m7.406 0c-.786 0-1.385.824-1.338 1.841s.634 1.385 1.418 1.385c.785 0 1.473-.413 1.426-1.429c-.046-1.017-.721-1.797-1.506-1.797m-3.703 4.013c-.974 0-1.907.048-2.77.135a.222.222 0 0 0-.183.305a3.2 3.2 0 0 0 2.953 1.964a3.2 3.2 0 0 0 2.953-1.964a.222.222 0 0 0-.184-.305a28 28 0 0 0-2.769-.135"/></svg></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fdozzle%2F" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn" style="--phl-brand-l:#0a66c2;--phl-brand-d:#0b73da" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037c-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85c3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.06 2.06 0 0 1-2.063-2.065a2.064 2.064 0 1 1 2.063 2.065m1.782 13.019H3.555V9h3.564zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg></a><a href="mailto:?subject=Dozzle%20-%20A%20Convenient%20Real-Time%20Log%20Viewer%20for%20Docker%20Containers&amp;body=https%3A%2F%2Fprohomelab.com%2Fen%2Fposts%2Fdozzle%2F" rel="noopener noreferrer" aria-label="Email" title="Email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a></div><section class="phl-author-box"><h2>Author</h2><div class="phl-author"><img class="phl-author-image" src="/avatar-stilicho2011.webp" alt="" width="64" height="64" loading="lazy"><div class="phl-author-body"><p class="phl-author-name"><a href="/en/authors/stilicho2011/">Stilicho2011</a></p><p class="phl-author-bio">Writing about homelab, self-hosting, automation and open-source solutions</p><p class="phl-author-links"><a href="mailto:pavel@prohomelab.com" rel="me noopener" aria-label="email" title="email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener" target="_blank" aria-label="github" title="github" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a><a href="https://t.me/stilicho2011_videos" rel="me noopener" target="_blank" aria-label="telegram" title="telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://www.youtube.com/@prohomelab" rel="me noopener" target="_blank" aria-label="youtube" title="youtube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a><a href="https://boosty.to/stilicho2011" rel="me noopener" target="_blank" aria-label="boosty" title="boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></p></div></div></section></footer><nav class="phl-prevnext" aria-label="Previous / Next"><a class="phl-prevnext-prev" href="/en/posts/postgres-p-2/" rel="prev"><span class="phl-prevnext-label">Previous</span><span class="phl-prevnext-title">Connecting Applications to a Shared PostgreSQL and Learning Basic Maintenance - Part 2</span></a><a class="phl-prevnext-next" href="/en/posts/docker-default-address-pools/" rel="next"><span class="phl-prevnext-label">Next</span><span class="phl-prevnext-title">Docker Hit Its Network Limit - How I Diagnosed and Fixed It with default-address-pools</span></a></nav><section class="phl-related"><h2>Related articles</h2><div class="phl-cards"><article class="phl-card"><a class="phl-card-cover" href="/en/posts/gotify-push-notifications/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.Z5GcvHSF_z4zsT.webp" srcset="/_astro/featured.Z5GcvHSF_Z1UTMOo.webp 320w, /_astro/featured.Z5GcvHSF_1nsi3q.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1671" height="941"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Monitoring &amp; Logs</span><time datetime="2026-09-06T00:00:00.000Z">September 6, 2026</time><span class="phl-views">124 views</span></p><h3 class="phl-card-title"><a href="/en/posts/gotify-push-notifications/">Gotify - Your Own Push Notification Server for the Hypervisor and Beyond</a></h3><p class="phl-card-summary">Setting up Gotify in Docker and configuring push notifications from Proxmox VE, CrowdSec, and Komodo - a dedicated channel for infrastructure events, without a single message in the shared Telegram chat.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/en/posts/diun-docker-update-notifications/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.qdmiZLkW_2eJFwo.webp" srcset="/_astro/featured.qdmiZLkW_ZfQzeG.webp 320w, /_astro/featured.qdmiZLkW_Z21FCaN.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1280" height="720"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Monitoring &amp; Logs</span><time datetime="2025-11-01T00:00:00.000Z">November 1, 2025</time><span class="phl-card-video">▶ video</span><span class="phl-views">50 views</span></p><h3 class="phl-card-title"><a href="/en/posts/diun-docker-update-notifications/">Diun - Get Notified When Your Docker Images Have Updates</a></h3><p class="phl-card-summary">A detailed guide to installing and configuring Diun for tracking Docker image updates. Covers deployment steps, integration with notification services, and monitoring automation, so you can update your containers on time and improve system security.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/en/posts/postgres-p-2/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.-eMWXWjT_JSVNb.webp" srcset="/_astro/featured.-eMWXWjT_ZggLrR.webp 320w, /_astro/featured.-eMWXWjT_Z1zlUJH.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">Databases</span><time datetime="2026-08-18T00:00:00.000Z">August 18, 2026</time><span class="phl-views">23 views</span></p><h3 class="phl-card-title"><a href="/en/posts/postgres-p-2/">Connecting Applications to a Shared PostgreSQL and Learning Basic Maintenance - Part 2</a></h3><p class="phl-card-summary">The second part of the series on a shared PostgreSQL for a home server. We create a dedicated, minimally privileged user and database in pgAdmin for a specific application, connect Authentik to the shared database instead of its own container, and cover basic maintenance - VACUUM, ANALYZE, REINDEX, and when you actually need to do any of this by hand.</p></div></article></div></section></article></div><script type="module" src="/_astro/MermaidLoader.astro_astro_type_script_index_0_lang.D0cD853-.js"></script><script type="module">document.querySelectorAll(`.phl-yt`).forEach(e=>{let t=e.querySelector(`.phl-yt-link`);t?.addEventListener(`click`,n=>{n.preventDefault();let r=e.dataset.ytId,i=e.dataset.ytParams?`&${e.dataset.ytParams}`:``,a=document.createElement(`iframe`);a.src=`https://www.youtube-nocookie.com/embed/${r}?autoplay=1${i}`,a.title=t.getAttribute(`aria-label`)??`YouTube video`,a.allow=`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share`,a.allowFullscreen=!0,e.replaceChildren(a)})});var e=matchMedia(`(prefers-reduced-motion: reduce)`).matches;document.querySelectorAll(`.phl-carousel`).forEach(t=>{let n=t.querySelector(`.phl-carousel-track`),r=n?[...n.children]:[];if(!n||r.length<2)return;let i=t=>{let i=(t+r.length)%r.length;n.scrollTo({left:r[i].offsetLeft-n.offsetLeft,behavior:e?`auto`:`smooth`})},a=()=>Math.round(n.scrollLeft/n.clientWidth),o=document.createElement(`div`);o.className=`phl-carousel-nav`,o.innerHTML=`<button type="button" class="phl-carousel-prev" aria-label="Previous">‹</button><span class="phl-carousel-dots"></span><button type="button" class="phl-carousel-next" aria-label="Next">›</button>`;let s=o.querySelector(`.phl-carousel-dots`);r.forEach((e,t)=>{let n=document.createElement(`button`);n.type=`button`,n.setAttribute(`aria-label`,`${t+1} / ${r.length}`),n.addEventListener(`click`,()=>i(t)),s.appendChild(n)});let c=()=>[...s.children].forEach((e,t)=>e.toggleAttribute(`aria-current`,t===a()));n.addEventListener(`scroll`,()=>requestAnimationFrame(c),{passive:!0}),o.querySelector(`.phl-carousel-prev`).addEventListener(`click`,()=>i(a()-1)),o.querySelector(`.phl-carousel-next`).addEventListener(`click`,()=>i(a()+1)),t.appendChild(o),c();let l=Number(t.dataset.interval);if(l>0&&!e){let e=!1;t.addEventListener(`mouseenter`,()=>e=!0),t.addEventListener(`mouseleave`,()=>e=!1),t.addEventListener(`focusin`,()=>e=!0),setInterval(()=>!e&&i(a()+1),Math.max(l,1500))}});var t=e=>`phl-tabs:${e}`,n=[...document.querySelectorAll(`.phl-tabs`)],r=(e,i,a=!0)=>{let o=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!o.some(e=>e.dataset.label===i))return;o.forEach(e=>e.hidden=e.dataset.label!==i),e.querySelectorAll(`:scope > .phl-tablist button`).forEach(e=>e.setAttribute(`aria-selected`,String(e.dataset.label===i)));let s=e.dataset.group;if(a&&s){try{localStorage.setItem(t(s),i)}catch{}n.filter(t=>t!==e&&t.dataset.group===s).forEach(e=>r(e,i,!1))}};n.forEach((e,n)=>{let i=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!i.length)return;let a=document.createElement(`div`);a.className=`phl-tablist`,a.setAttribute(`role`,`tablist`),i.forEach((t,o)=>{let s=document.createElement(`button`);s.type=`button`,s.setAttribute(`role`,`tab`),s.id=`phl-tab-${n}-${o}`,s.dataset.label=t.dataset.label,s.innerHTML=t.querySelector(`.phl-tab-label`)?.innerHTML??t.dataset.label??``,t.setAttribute(`role`,`tabpanel`),t.setAttribute(`aria-labelledby`,s.id),s.addEventListener(`click`,()=>r(e,t.dataset.label)),s.addEventListener(`keydown`,e=>{let t=e.key===`ArrowRight`?1:e.key===`ArrowLeft`?-1:0;if(!t)return;let n=a.children[(o+t+i.length)%i.length];n.focus(),n.click()}),a.appendChild(s)}),e.prepend(a),e.classList.add(`phl-tabs-ready`);let o=null;try{o=e.dataset.group?localStorage.getItem(t(e.dataset.group)):null}catch{}r(e,o??e.dataset.default??i[0].dataset.label,!1)}),document.querySelectorAll(`.phl-accordion[data-mode="collapse"]`).forEach(e=>{let t=[...e.querySelectorAll(`:scope > .phl-accordion-item`)];t.forEach(e=>e.addEventListener(`toggle`,()=>e.open&&t.forEach(t=>t!==e&&(t.open=!1))))});var i=document.querySelectorAll(`.phl-prose img:not(.nozoom)`);if(i.length){let e=document.createElement(`dialog`);e.className=`phl-lightbox`,e.innerHTML=`<img alt=""><button type="button" class="phl-lightbox-close" aria-label="Close">×</button>`,document.body.appendChild(e);let t=e.querySelector(`img`);e.addEventListener(`click`,()=>e.close()),i.forEach(n=>{n.closest(`a, .phl-yt, .phl-repo`)||(n.classList.add(`phl-zoomable`),n.addEventListener(`click`,()=>{t.src=n.currentSrc||n.src,t.alt=n.alt,e.showModal()}))})}</script><script type="module" src="/_astro/ChartTypeitClient.astro_astro_type_script_index_0_lang.CjHU9QBU.js"></script><script>(function(){const smartToc = true;
+const tableHint = "The table scrolls sideways";
+const wideBlocks = true;
+const wideCode = false;
+
+  // TOC: collapsed on phones, open from 768 px (decision 0007).
+  // Follows width changes too (rotating a tablet, resizing the window).
+  const toc = document.querySelector('[data-phl-toc]');
+  const wide = matchMedia('(min-width: 768px)');
+  const syncToc = () => toc && toc.toggleAttribute('open', wide.matches);
+  syncToc();
+  wide.addEventListener('change', syncToc);
+
+  // Current section in the TOC.
+  if (toc && smartToc && 'IntersectionObserver' in window) {
+    const links = new Map([...toc.querySelectorAll('[data-phl-toc-link]')].map((a) => [a.dataset.phlTocLink, a]));
+    const heads = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+    const visible = new Set();
+    const mark = () => {
+      const current = heads.find((h) => visible.has(h.id)) ?? [...heads].reverse().find((h) => h.getBoundingClientRect().top < 120);
+      links.forEach((a, id) => a.toggleAttribute('aria-current', current?.id === id));
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id)));
+        mark();
+      },
+      { rootMargin: '0px 0px -70% 0px' },
+    );
+    heads.forEach((h) => io.observe(h));
+  }
+
+  // Wide blocks: tables and screenshots (and code, with wideCode) wider than the text column get data-phl-wide.
+  // Measured against the column width itself, not the window, so the result is the same on a
+  // phone and a desktop. The CSS lets them grow only on large screens (styles/layout.css).
+  if (wideBlocks) {
+    const root = document.documentElement;
+    const raw = getComputedStyle(root).getPropertyValue('--phl-content-width').trim();
+    const rem = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const column = raw.endsWith('rem') ? parseFloat(raw) * rem : parseFloat(raw) || 736;
+    // With the info column (from 1680 px) a block next to it must not grow over it:
+    // such blocks get data-phl-wide="beside-info" and stay in the text column.
+    const info = document.querySelector('.phl-article-info');
+    const large = matchMedia('(min-width: 1680px)');
+    const wideEls = new Set();
+    const classify = () => {
+      const bottom = info && large.matches ? info.getBoundingClientRect().bottom + 24 : -Infinity;
+      // Top to bottom: a block that does not grow keeps the ones below in place, a growing one
+      // only pushes them further down, so one pass is stable.
+      [...wideEls].sort((x, y) => (x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)).forEach((el) => {
+        const value = el.getBoundingClientRect().top < bottom ? 'beside-info' : '';
+        if (el.getAttribute('data-phl-wide') !== value) el.setAttribute('data-phl-wide', value);
+      });
+    };
+    let queued = false;
+    const queue = () => {
+      if (queued) return;
+      queued = true;
+      // A timer, not requestAnimationFrame: that one never fires in hidden tabs and some previews.
+      setTimeout(() => { queued = false; classify(); }, 50);
+    };
+    const mark = (el) => {
+      if (!el || wideEls.has(el)) return;
+      el.setAttribute('data-phl-wide', 'beside-info');
+      wideEls.add(el);
+      queue();
+    };
+    if (info) {
+      // Image loads, an opened series list, a resized window all move blocks.
+      if ('ResizeObserver' in window) new ResizeObserver(queue).observe(document.querySelector('.phl-article') ?? document.body);
+      addEventListener('resize', queue);
+    }
+    if (wideCode) document.querySelectorAll('.phl-prose .expressive-code').forEach((ec) => {
+      const pre = ec.querySelector('pre');
+      if (pre && pre.scrollWidth > column + 1) mark(ec);
+    });
+    document.querySelectorAll('.phl-prose table').forEach((t) => {
+      if (t.scrollWidth > column + 1) mark(t);
+    });
+    // A screenshot: an image clearly larger than the column, alone in its paragraph or figure.
+    const block = (img) => {
+      const fig = img.closest('.phl-prose figure');
+      if (fig) return fig;
+      const p = img.closest('.phl-prose > p');
+      return p && p.querySelectorAll('img').length === 1 && !p.textContent.trim() ? p : null;
+    };
+    const check = (img) => {
+      const w = Number(img.getAttribute('width')) || img.naturalWidth;
+      if (w >= column * 1.25 && !img.closest('.phl-gallery, .phl-carousel, .phl-card, .phl-repo')) mark(block(img));
+    };
+    document.querySelectorAll('.phl-prose img').forEach((img) => {
+      if (img.getAttribute('width') || img.complete) check(img);
+      else img.addEventListener('load', () => check(img), { once: true });
+    });
+  }
+
+  // Wide tables: say that they scroll, and mark the side where columns are hidden.
+  document.querySelectorAll('.phl-prose table').forEach((table) => {
+    const hint = document.createElement('p');
+    hint.className = 'phl-table-hint';
+    hint.textContent = tableHint;
+    hint.hidden = true;
+    table.before(hint);
+    table.tabIndex = 0;
+    const update = () => {
+      const hidden = table.scrollWidth - table.clientWidth > 1;
+      const pos = Math.abs(table.scrollLeft);
+      const atStart = pos < 2;
+      const atEnd = pos >= table.scrollWidth - table.clientWidth - 2;
+      const sides = [];
+      if (hidden && !atStart) sides.push('start');
+      if (hidden && !atEnd) sides.push('end');
+      table.dataset.phlScroll = sides.join(' ');
+      hint.hidden = !hidden;
+    };
+    table.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  });
+
+  // Reading progress.
+  const bar = document.querySelector('.phl-progress span');
+  const article = document.querySelector('.phl-article');
+  if (bar && article) {
+    const update = () => {
+      const r = article.getBoundingClientRect();
+      const total = r.height - innerHeight;
+      const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 1;
+      bar.style.transform = `scaleX(${p})`;
+    };
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+
+  // Reading mode: hides everything but the text; remembered; Escape exits.
+  const zen = document.querySelector('[data-phl-zen]');
+  if (zen) {
+    const set = (on) => {
+      document.documentElement.classList.toggle('phl-zen', on);
+      zen.setAttribute('aria-pressed', String(on));
+      zen.textContent = on ? zen.dataset.off : zen.dataset.on;
+      try { localStorage.setItem('phl-zen', on ? '1' : ''); } catch (e) {}
+    };
+    let saved = false;
+    try { saved = localStorage.getItem('phl-zen') === '1'; } catch (e) {}
+    if (saved) set(true);
+    zen.addEventListener('click', () => set(!document.documentElement.classList.contains('phl-zen')));
+    addEventListener('keydown', (e) => e.key === 'Escape' && document.documentElement.classList.contains('phl-zen') && set(false));
+  }
+})();</script></main><footer class="phl-footer"><div class="phl-footer-inner"><nav class="phl-footer-nav" aria-label="Footer menu"><ul><li><a href="/en/tools/traefik-compose/">Docker Compose generator</a></li><li><a href="/en/tools/compose-quadlet/">Compose to Podman Quadlet</a></li><li><a href="/en/tools/proxmox-quorum/">Proxmox quorum</a></li><li><a href="/en/tools/opnsense-vlan-planner/">VLAN planner</a></li><li><a href="/en/tools/rackplan/">Rack planner</a></li><li><a href="/en/privacy/">Privacy policy</a></li></ul></nav><ul class="phl-social-links phl-footer-social" aria-label="Social links"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><div class="phl-footer-meta"><p><span>© 2025-2026 Stilicho2011. All Rights Reserved.</span><span class="phl-footer-credit">Theme: <a href="https://prohomelab.com">ProHomeLab</a></span><button type="button" class="phl-consent-open" data-phl-consent-open hidden>Analytics settings</button></p><div class="phl-footer-tools"><a class="phl-to-top" href="#top"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l7-7l7 7m-7 7V5"/></svg>Back to top</a></div></div></div></footer><div class="phl-consent" data-phl-consent data-mode="opt-in" role="region" aria-label="Analytics" hidden><p><span data-phl-consent-text>Allow anonymous visit statistics?</span> <a href="/en/privacy/" data-phl-consent-policy>Details</a></p><div class="phl-consent-actions"><button type="button" data-phl-consent-choice="granted">Accept</button><button type="button" data-phl-consent-choice="denied">Decline</button></div></div><script>(function(){const TEXTS = {"ru":{"lang":"ru-RU","label":"Аналитика","text":"Разрешить обезличенную статистику посещений?","policy":"Подробнее","href":"/privacy/","granted":"Разрешить","denied":"Отказаться","seen":"Понятно"},"en":{"lang":"en","label":"Analytics","text":"Allow anonymous visit statistics?","policy":"Details","href":"/en/privacy/","granted":"Accept","denied":"Decline","seen":"OK"}};
+const PAGE = "en";
+
+      (() => {
+        const box = document.querySelector('[data-phl-consent]');
+        if (!box) return;
+        const key = 'phl-consent';
+        let saved = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        const texts = TEXTS;
+        const reader = window.__phlReaderLocale && window.__phlReaderLocale();
+        const tx = reader && reader !== PAGE && texts[reader];
+        if (tx) {
+          box.lang = tx.lang;
+          box.setAttribute('aria-label', tx.label);
+          box.querySelector('[data-phl-consent-text]').textContent = tx.text;
+          const pol = box.querySelector('[data-phl-consent-policy]');
+          if (pol && tx.href) { pol.textContent = tx.policy; pol.href = tx.href; }
+          box.querySelectorAll('[data-phl-consent-choice]').forEach((b) => { b.textContent = tx[b.dataset.phlConsentChoice] || b.textContent; });
+        }
+        const show = () => { box.hidden = false; };
+        if (!saved) show();
+        box.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-phl-consent-choice]');
+          if (!b) return;
+          const value = b.dataset.phlConsentChoice;
+          try { localStorage.setItem(key, value); } catch (e) {}
+          box.hidden = true;
+          if (value === 'granted' && window.__phlAnalytics) window.__phlAnalytics();
+          // Declining after accepting: counters already loaded on this page stop with the next page.
+        });
+        document.querySelectorAll('[data-phl-consent-open]').forEach((el) => {
+          el.hidden = false;
+          el.addEventListener('click', (e) => { e.preventDefault(); show(); box.querySelector('button')?.focus(); });
+        });
+      })();
+    })();</script></body></html>

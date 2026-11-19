@@ -1,0 +1,1050 @@
+<!DOCTYPE html><html lang="ru-RU" dir="ltr" data-scheme="prohomelab" data-theme="light" data-mode="system" data-default-mode="system" data-mode-switch="1" data-fluid="1" data-social-colors="hover" style="--phl-content-width: 48rem"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script>(function(){const cur = "ru";
+const alts = {"en":"/en/posts/vaultwarden/"};
+
+      try {
+        const p = localStorage.getItem('phl-lang');
+        if (p && p !== cur && alts[p]) location.replace(alts[p] + location.hash);
+      } catch (e) {}
+    })();</script><title>Vaultwarden - установка на сервере, альтернатива Bitwarden | ProHomeLab</title><meta name="description" content="Полное руководство по установке Vaultwarden - облегченной версии Bitwarden на вашем сервере. Docker Compose с .env, хэш токена админки, SSO через Authentik, push-уведомления, HTTPS, 2FA, резервное копирование с проверкой восстановления и чек-лист безопасности."><link rel="canonical" href="https://prohomelab.com/posts/vaultwarden/"><link rel="alternate" hreflang="ru-RU" href="https://prohomelab.com/posts/vaultwarden/"><link rel="alternate" hreflang="en" href="https://prohomelab.com/en/posts/vaultwarden/"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32"><link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16"><link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180"><link rel="manifest" href="/site.webmanifest"><meta property="og:site_name" content="ProHomeLab"><meta property="og:title" content="Vaultwarden - установка на сервере, альтернатива Bitwarden"><meta property="og:description" content="Полное руководство по установке Vaultwarden - облегченной версии Bitwarden на вашем сервере. Docker Compose с .env, хэш токена админки, SSO через Authentik, push-уведомления, HTTPS, 2FA, резервное копирование с проверкой восстановления и чек-лист безопасности."><meta property="og:type" content="article"><meta property="og:url" content="https://prohomelab.com/posts/vaultwarden/"><meta property="og:locale" content="ru_RU"><meta property="og:image" content="https://prohomelab.com/_astro/featured.awOVf8Pn_1CLhJQ.jpg"><meta property="og:image:alt" content="Vaultwarden - установка на сервере, альтернатива Bitwarden"><meta property="article:published_time" content="2025-10-29T00:00:00.000Z"><meta property="article:modified_time" content="2026-11-10T00:00:00.000Z"><meta property="article:section" content="Self-Hosting"><meta property="article:tag" content="Vaultwarden"><meta property="article:tag" content="Docker"><meta property="article:tag" content="Self-Hosting"><meta property="article:tag" content="SSO"><meta name="twitter:card" content="summary_large_image"><meta name="yandex-verification" content="103870927"><link rel="alternate" type="application/rss+xml" title="ProHomeLab" href="https://prohomelab.com/index.xml"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","articleSection":"Self-Hosting","name":"Vaultwarden - установка на сервере, альтернатива Bitwarden","headline":"Vaultwarden - установка на сервере, альтернатива Bitwarden","description":"Полное руководство по установке Vaultwarden - облегченной версии Bitwarden на вашем сервере. Docker Compose с .env, хэш токена админки, SSO через Authentik, push-уведомления, HTTPS, 2FA, резервное копирование с проверкой восстановления и чек-лист безопасности.","inLanguage":"ru-RU","url":"https://prohomelab.com/posts/vaultwarden/","author":[{"@type":"Person","name":"Stilicho2011","image":"https://prohomelab.com/avatar-stilicho2011.webp","url":"https://prohomelab.com","sameAs":["https://github.com/stilicho2011/ubuntu_rep","https://t.me/stilicho2011_videos","https://www.youtube.com/@prohomelab","https://boosty.to/stilicho2011"]}],"copyrightYear":"2025","datePublished":"2025-10-29T00:00:00.000Z","dateModified":"2026-11-10T00:00:00.000Z","image":"https://prohomelab.com/_astro/featured.awOVf8Pn_1CLhJQ.jpg","keywords":["Vaultwarden","Docker","Self-Hosting","SSO"],"mainEntityOfPage":"https://prohomelab.com/posts/vaultwarden/","wordCount":5426}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Главная","item":"https://prohomelab.com/"},{"@type":"ListItem","position":2,"name":"Self-Hosting","item":"https://prohomelab.com/posts/selfhosting/"},{"@type":"ListItem","position":3,"name":"Vaultwarden - установка на сервере, альтернатива Bitwarden","item":"https://prohomelab.com/posts/vaultwarden/"}]}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoObject","name":"Vaultwarden - установка на сервере, альтернатива Bitwarden","description":"Полное руководство по установке Vaultwarden - облегченной версии Bitwarden на вашем сервере. Docker Compose с .env, хэш токена админки, SSO через Authentik, push-уведомления, HTTPS, 2FA, резервное копирование с проверкой восстановления и чек-лист безопасности.","thumbnailUrl":["https://i.ytimg.com/vi/zJhB5p6Xrt0/maxresdefault.jpg"],"uploadDate":"2025-10-29T00:00:00.000Z","embedUrl":"https://www.youtube.com/embed/zJhB5p6Xrt0","contentUrl":"https://www.youtube.com/watch?v=zJhB5p6Xrt0"}</script><script>
+      // Light or dark before first paint, so a dark page never flashes white.
+      // data-mode is the choice (system, light, dark), data-theme the result (light or dark).
+      (() => {
+        const d = document.documentElement;
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        let mode = d.dataset.defaultMode || 'system';
+        if (d.dataset.modeSwitch) {
+          try {
+            const saved = localStorage.getItem('phl-theme');
+            if (saved === 'system' || saved === 'light' || saved === 'dark') mode = saved;
+          } catch (e) {}
+        }
+        const apply = () => {
+          d.dataset.mode = mode;
+          d.dataset.theme = mode === 'system' ? (media.matches ? 'dark' : 'light') : mode;
+        };
+        apply();
+        media.addEventListener('change', () => mode === 'system' && apply());
+        window.__phlSetMode = (next) => {
+          mode = next;
+          try {
+            localStorage.setItem('phl-theme', next);
+          } catch (e) {}
+          apply();
+        };
+      })();
+    </script><style>:root:root{--phl-font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-heading:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';--phl-font-mono:'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, Courier, monospace}</style><script>(function(){const ym = {"id":"103870927","webvisor":true,"clickmap":true,"trackLinks":true,"accurateTrackBounce":true,"ecommerce":"dataLayer"};
+const ga = {"id":"G-VRHQGK81S9"};
+const umami = {"src":"https://stats.prohomelab.com/script.js","websiteId":"31518a04-7f00-4d16-99f3-759c057c7bf2","recorder":true,"recorderSrc":"https://stats.prohomelab.com/recorder.js"};
+const consent = "opt-in";
+
+      (() => {
+        let started = false;
+        const add = (src, attrs = {}) => {
+          const s = document.createElement('script');
+          s.async = true;
+          s.src = src;
+          for (const [k, v] of Object.entries(attrs)) s.setAttribute(k, v);
+          document.head.appendChild(s);
+        };
+        window.__phlAnalytics = () => {
+          if (started) return;
+          started = true;
+          if (ym) {
+            window.ym = window.ym || function () { (window.ym.a = window.ym.a || []).push(arguments); };
+            window.ym.l = Date.now();
+            add(`https://mc.yandex.ru/metrika/tag.js?id=${ym.id}`);
+            const opts = { ssr: true, webvisor: ym.webvisor, clickmap: ym.clickmap, accurateTrackBounce: ym.accurateTrackBounce, trackLinks: ym.trackLinks };
+            if (ym.ecommerce) opts.ecommerce = ym.ecommerce;
+            window.ym(Number(ym.id), 'init', opts);
+          }
+          if (ga) {
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () { window.dataLayer.push(arguments); };
+            window.gtag('js', new Date());
+            window.gtag('config', ga.id);
+            add(`https://www.googletagmanager.com/gtag/js?id=${ga.id}`);
+          }
+          if (umami) {
+            const attrs = { 'data-website-id': umami.websiteId };
+            if (umami.domains) attrs['data-domains'] = umami.domains;
+            add(umami.src, { ...attrs, defer: '' });
+            if (umami.recorder) add(umami.recorderSrc, { ...attrs, defer: '' });
+          }
+        };
+        let choice = null;
+        try { choice = localStorage.getItem('phl-consent'); } catch (e) {}
+        if (consent !== 'opt-in' || choice === 'granted') window.__phlAnalytics();
+      })();
+    })();</script><link rel="stylesheet" href="/_astro/Base.CNmgq2nC.css"></head><body id="top"><template id="phl-lang-en"><div class="phl-langbar" lang="en" role="region" aria-label="This page is available in English"><div class="phl-langbar-inner"><p>This page is available in English</p><div class="phl-langbar-actions"><a href="/en/posts/vaultwarden/" hreflang="en" data-phl-lang="en">Switch</a><button type="button" data-phl-lang-stay>Stay here</button></div></div></div></template><script>(function(){const data = {"cur":"ru","alts":{"en":"/en/posts/vaultwarden/"},"match":{"ru":["ru","uk","be","kk"],"en":["en"]},"byLang":{"ru-ru":"ru","en":"en"},"fallback":"en"};
+
+        (() => {
+          const store = (v) => { try { localStorage.setItem('phl-lang', v); } catch (e) {} };
+          // An explicit choice anywhere (language switcher, the bar) is remembered.
+          document.addEventListener('click', (e) => {
+            const go = e.target.closest('[data-phl-lang]');
+            if (go) return store(go.dataset.phlLang);
+            const link = e.target.closest('a[hreflang]');
+            const key = link && data.byLang[link.getAttribute('hreflang').toLowerCase()];
+            if (key) return store(key);
+            const stay = e.target.closest('[data-phl-lang-stay]');
+            if (stay) { store(data.cur); stay.closest('.phl-langbar')?.remove(); }
+          });
+          let saved = null;
+          try { saved = localStorage.getItem('phl-lang'); } catch (e) {}
+          const list = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''])
+            .map((l) => String(l).toLowerCase().split('-')[0]);
+          const fits = (key, code) => (data.match[key] || []).includes(code);
+          // The language this reader reads, for other parts of the page (the analytics banner):
+          // the stored choice, else the page language if the browser fits it, else the first
+          // locale the browser fits, else the fallback, else the page language.
+          window.__phlReaderLocale = () => {
+            if (saved && data.match[saved]) return saved;
+            if (list.some((code) => fits(data.cur, code))) return data.cur;
+            for (const code of list) {
+              const key = Object.keys(data.match).find((k) => fits(k, code));
+              if (key) return key;
+            }
+            return data.fallback || data.cur;
+          };
+          if (saved || !Object.keys(data.alts).length) return;
+          if (list.some((code) => fits(data.cur, code))) return;
+          let target = null;
+          for (const code of list) {
+            target = Object.keys(data.alts).find((key) => fits(key, code)) || null;
+            if (target) break;
+          }
+          if (!target && data.fallback && data.fallback !== data.cur && data.alts[data.fallback]) target = data.fallback;
+          const tpl = target && document.getElementById('phl-lang-' + target);
+          if (tpl) document.body.prepend(tpl.content.cloneNode(true));
+        })();
+      })();</script><a class="phl-skip" href="#phl-content">Перейти к тексту</a><header class="phl-header phl-header-sticky"><div class="phl-header-inner"><a class="phl-brand" href="/"><img class="phl-logo phl-logo-light" src="/prohomelab-mark.svg" alt><span class="phl-brand-name">ProHomeLab</span><span class="phl-brand-point" aria-hidden="true"></span></a><nav class="phl-nav" aria-label="Главное меню"><ul class="phl-nav-list"><li><a href="/blog/">Все статьи</a></li><li><details class="phl-dropdown" data-phl-dropdown><summary aria-current="true">Темы<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul class="phl-dropdown-panel"><li><a href="/posts/">Темы</a></li><li><a href="/posts/authentik/">Authentik</a></li><li><a href="/posts/backup/">Backup</a></li><li><a href="/posts/crowdsec/">Crowdsec</a></li><li><a href="/posts/docker-ui/">Docker UI</a></li><li><a href="/posts/hardware/">Hardware</a></li><li><a href="/posts/media-servers/">Media Servers</a></li><li><a href="/posts/network/">Network</a></li><li><a href="/posts/news/">Новости</a></li><li><a href="/posts/nextcloud/">Nextcloud</a></li><li><a href="/posts/opnsense/">OPNsense</a></li><li><a href="/posts/pkm/">PKM</a></li><li><a href="/posts/podman/">Podman</a></li><li><a href="/posts/proxmox/">Proxmox</a></li><li><a href="/posts/selfhosting/">Self-hosting</a></li><li><a href="/posts/single-sign-on/">Single Sign On</a></li><li><a href="/posts/terraform/">Terraform</a></li><li><a href="/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/categories/">Категории</a></li><li><a href="/tags/">Теги</a></li><li><a href="/tools/">Инструменты</a></li><li><a href="/about/">О проекте</a></li></ul></nav><div class="phl-header-tools phl-has-mobile-menu"><button type="button" class="phl-search-button" data-phl-search-open aria-label="Поиск" title="Поиск" hidden><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg></button><dialog class="phl-search" data-phl-search aria-label="Поиск"><div class="phl-search-box"><div class="phl-search-field"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/></g></svg><input type="search" data-phl-search-input placeholder="Поиск по статьям" aria-label="Поиск по статьям" autocomplete="off" spellcheck="false"><button type="button" class="phl-search-close" data-phl-search-close aria-label="Закрыть"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></button></div><p class="phl-search-status" data-phl-search-status role="status" aria-live="polite"></p><ol class="phl-search-results" data-phl-search-results></ol><button type="button" class="phl-search-more" data-phl-search-more hidden>Показать еще</button></div></dialog><script>(function(){const options = {"shortcut":true,"pageSize":8,"text":{"noResults":"Ничего не найдено","loading":"Ищу","unavailable":"Поиск работает на собранном сайте (astro build)","more":"Показать еще"}};
+
+  (() => {
+    const open = document.querySelector('[data-phl-search-open]');
+    const dialog = document.querySelector('[data-phl-search]');
+    if (!open || !dialog || typeof dialog.showModal !== 'function') return;
+    const input = dialog.querySelector('[data-phl-search-input]');
+    const list = dialog.querySelector('[data-phl-search-results]');
+    const status = dialog.querySelector('[data-phl-search-status]');
+    const more = dialog.querySelector('[data-phl-search-more]');
+    const t = options.text;
+    let pagefind = null;
+    let failed = false;
+    let results = [];
+    let shown = 0;
+    let query = 0;
+    open.hidden = false;
+
+    const load = async () => {
+      if (pagefind || failed) return pagefind;
+      try {
+        pagefind = await import(/* @vite-ignore */ '/pagefind/pagefind.js');
+        await pagefind.init();
+      } catch (e) {
+        failed = true;
+        pagefind = null;
+      }
+      return pagefind;
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const render = async () => {
+      const page = results.slice(shown, shown + options.pageSize);
+      const id = query;
+      const data = await Promise.all(page.map((r) => r.data()));
+      if (id !== query) return;
+      for (const d of data) {
+        const li = document.createElement('li');
+        const sub = (d.sub_results || []).filter((x) => x.url !== d.url).slice(0, 2);
+        li.innerHTML =
+          `<a class="phl-search-hit" href="${esc(d.url)}"><span class="phl-search-title">${esc(d.meta?.title || d.url)}</span>` +
+          `<span class="phl-search-excerpt">${d.excerpt || ''}</span></a>` +
+          (sub.length
+            ? `<ul class="phl-search-sub">${sub.map((x) => `<li><a href="${esc(x.url)}">${esc(x.title)}</a></li>`).join('')}</ul>`
+            : '');
+        list.appendChild(li);
+      }
+      shown += page.length;
+      more.hidden = shown >= results.length;
+    };
+    const run = async () => {
+      const term = input.value.trim();
+      const id = ++query;
+      list.innerHTML = '';
+      more.hidden = true;
+      shown = 0;
+      if (!term) { status.textContent = ''; return; }
+      status.textContent = t.loading;
+      const pf = await load();
+      if (id !== query) return;
+      if (!pf) { status.textContent = t.unavailable; return; }
+      const res = await pf.debouncedSearch(term, {}, 200);
+      if (res === null || id !== query) return;
+      results = res.results;
+      status.textContent = results.length ? '' : t.noResults;
+      await render();
+    };
+
+    const show = () => {
+      dialog.showModal();
+      input.focus();
+      input.select();
+      load();
+    };
+    open.addEventListener('click', show);
+    dialog.querySelector('[data-phl-search-close]').addEventListener('click', () => dialog.close());
+    // A click on the backdrop (outside the box) closes the dialog.
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    input.addEventListener('input', run);
+    more.addEventListener('click', render);
+    // Enter opens the first result.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const first = list.querySelector('a');
+        if (first) { e.preventDefault(); location.href = first.href; }
+      }
+    });
+    if (options.shortcut) {
+      document.addEventListener('keydown', (e) => {
+        if (dialog.open) return;
+        const typing = /^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable;
+        if ((e.key === '/' && !typing) || (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey))) {
+          e.preventDefault();
+          show();
+        }
+      });
+    }
+  })();
+})();</script><ul class="phl-social-links phl-header-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><a class="phl-lang-link" href="/en/posts/vaultwarden/" hreflang="en" lang="en" title="Язык" data-phl-lang="en">EN</a><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;Как в системе&quot;,&quot;light&quot;:&quot;Светлое&quot;,&quot;dark&quot;:&quot;Темное&quot;}" data-title="Оформление" aria-label="Оформление" title="Оформление"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script><details class="phl-mobile-menu" data-phl-dropdown><summary aria-label="Меню"><span class="phl-mobile-open"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 12h16M4 19h16"/></svg></span><span class="phl-mobile-close"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 6L6 18M6 6l12 12"/></svg></span></summary><nav class="phl-mobile-panel" aria-label="Главное меню"><ul class="phl-mobile-list"><li><a href="/blog/">Все статьи</a></li><li><details><summary>Темы<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon phl-chevron" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9l6 6l6-6"/></svg></summary><ul><li><a href="/posts/">Темы</a></li><li><a href="/posts/authentik/">Authentik</a></li><li><a href="/posts/backup/">Backup</a></li><li><a href="/posts/crowdsec/">Crowdsec</a></li><li><a href="/posts/docker-ui/">Docker UI</a></li><li><a href="/posts/hardware/">Hardware</a></li><li><a href="/posts/media-servers/">Media Servers</a></li><li><a href="/posts/network/">Network</a></li><li><a href="/posts/news/">Новости</a></li><li><a href="/posts/nextcloud/">Nextcloud</a></li><li><a href="/posts/opnsense/">OPNsense</a></li><li><a href="/posts/pkm/">PKM</a></li><li><a href="/posts/podman/">Podman</a></li><li><a href="/posts/proxmox/">Proxmox</a></li><li><a href="/posts/selfhosting/">Self-hosting</a></li><li><a href="/posts/single-sign-on/">Single Sign On</a></li><li><a href="/posts/terraform/">Terraform</a></li><li><a href="/posts/traefik/">Traefik</a></li></ul></details></li><li><a href="/categories/">Категории</a></li><li><a href="/tags/">Теги</a></li><li><a href="/tools/">Инструменты</a></li><li><a href="/about/">О проекте</a></li></ul><ul class="phl-social-links phl-mobile-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><p class="phl-mobile-mode"><span>Оформление</span><button type="button" class="phl-mode-switch" data-phl-mode-switch data-labels="{&quot;system&quot;:&quot;Как в системе&quot;,&quot;light&quot;:&quot;Светлое&quot;,&quot;dark&quot;:&quot;Темное&quot;}" data-title="Оформление" aria-label="Оформление" title="Оформление"><span class="phl-mode-icon" data-for="system"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></g></svg></span><span class="phl-mode-icon" data-for="light"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></g></svg></span><span class="phl-mode-icon" data-for="dark"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span></button><script>
+  (() => {
+    const order = ['system', 'light', 'dark'];
+    const label = (b) => {
+      const mode = document.documentElement.dataset.mode || 'system';
+      const names = JSON.parse(b.dataset.labels || '{}');
+      const text = `${b.dataset.title}: ${names[mode] || mode}`;
+      b.setAttribute('aria-label', text);
+      b.title = text;
+    };
+    document.querySelectorAll('[data-phl-mode-switch]:not([data-ready])').forEach((b) => {
+      b.dataset.ready = '';
+      label(b);
+      b.addEventListener('click', () => {
+        const now = document.documentElement.dataset.mode || 'system';
+        const next = order[(order.indexOf(now) + 1) % order.length];
+        if (window.__phlSetMode) window.__phlSetMode(next);
+        document.querySelectorAll('[data-phl-mode-switch]').forEach(label);
+      });
+    });
+  })();
+</script></p></nav></details></div></div></header><script>
+  // Close open menus on outside click, on Escape, and when another one opens.
+  (() => {
+    if (window.__phlDropdowns) return;
+    window.__phlDropdowns = true;
+    const all = () => document.querySelectorAll('[data-phl-dropdown][open]');
+    document.addEventListener('click', (e) => {
+      all().forEach((d) => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      all().forEach((d) => {
+        d.removeAttribute('open');
+        d.querySelector('summary')?.focus();
+      });
+    });
+    document.addEventListener(
+      'toggle',
+      (e) => {
+        const d = e.target;
+        if (!d.matches?.('[data-phl-dropdown]') || !d.open) return;
+        all().forEach((o) => o !== d && !o.contains(d) && o.removeAttribute('open'));
+      },
+      true,
+    );
+  })();
+</script><main class="phl-main" id="phl-content" tabindex="-1"><div class="phl-progress" aria-hidden="true"><span></span></div><div class="phl-article-grid phl-has-toc"><article class="phl-article" data-pagefind-body><nav class="phl-breadcrumbs" aria-label="Breadcrumbs"><ol><li><a href="/">Главная</a></li><li><a href="/posts/selfhosting/">Self-Hosting</a></li><li><span aria-current="page">Vaultwarden - установка на сервере, альтернатива Bitwarden</span></li></ol></nav><header class="phl-article-header"><p class="phl-eyebrow">Vaultwarden</p><h1 data-pagefind-meta="title">Vaultwarden - установка на сервере, альтернатива Bitwarden</h1><p class="phl-meta"><span class="phl-meta-authors"><a href="/authors/stilicho2011/">Stilicho2011</a></span><time datetime="2025-10-29T00:00:00.000Z">29 октября 2025 г.</time><span>Обновлено <time datetime="2026-11-10T00:00:00.000Z">10 ноября 2026 г.</time></span><span>22 мин чтения</span><span class="phl-views">295 просмотров</span></p></header><div class="phl-article-tools"><p class="phl-translations">Эта статья на других языках: <a href="/en/posts/vaultwarden/" hreflang="en">EN</a></p><button type="button" class="phl-zen-toggle" data-phl-zen data-on="Режим чтения" data-off="Выйти из режима чтения" aria-pressed="false">Режим чтения</button></div><div class="phl-embed phl-yt phl-article-video" data-yt-id="zJhB5p6Xrt0"><a class="phl-yt-link" href="https://www.youtube.com/watch?v=zJhB5p6Xrt0" target="_blank" rel="noopener" aria-label="Vaultwarden - установка на сервере, альтернатива Bitwarden"><img src="https://i.ytimg.com/vi/zJhB5p6Xrt0/hqdefault.jpg" alt="Vaultwarden - установка на сервере, альтернатива Bitwarden" width="480" height="360" loading="eager" decoding="async"><span class="phl-yt-play" aria-hidden="true"></span></a></div><details class="phl-series"><summary>Часть 5 из 24 в серии <a href="/series/self-hosting/">Self-Hosting</a></summary><ol><li><a href="/posts/fedora-server-42-in-proxmox/">Плюсы и минусы Fedora Server 42</a></li><li><a href="/posts/linkwarden/">Обзор Linkwarden - Современный self-hosted менеджер закладок</a></li><li><a href="/posts/postgres-p-1/">Начальная установка PostgreSQL и pgAdmin в Docker с помощью Docker Compose для новичков. Часть 1</a></li><li><a href="/posts/mealie/">Mealie - self-hosted приложение для рецептов, планирования питания и списка покупок</a></li><li><span aria-current="page">Vaultwarden - установка на сервере, альтернатива Bitwarden</span></li><li><a href="/posts/diun-docker-update-notifications/">Diun - уведомления об обновлениях Docker-образов</a></li><li><a href="/posts/update-linux-server/">Как обновлять серверные варианты дистрибутивов Linux</a></li><li><a href="/posts/homelabbing/">Homelab с нуля - какое железо взять, что поставить и какой сервис поднять первым</a></li><li><a href="/posts/best-apps-2025/">Лучшие self-hosted приложения 2025 года - личная подборка</a></li><li><a href="/posts/linkwarden-vs-karakeep/">Лучший менеджер закладок - Linkwarden или Karakeep</a></li><li><a href="/posts/booklore/">BookLore - self-hosted библиотека и читалка для вашей коллекции книг</a></li><li><a href="/posts/grimmory/">Grimmory - self-hosted библиотека и читалка для вашей коллекции книг</a></li><li><a href="/posts/pangolin/">Pangolin - простой способ открыть доступ к homelab</a></li><li><a href="/posts/netbird/">NetBird - публикация сервисов без белого IP и проброса портов</a></li><li><a href="/posts/postiz-youtube-vk-rutube/">Postiz - пытаюсь автоматизировать YouTube, VK и RuTube, и почему из трех работает только один</a></li><li><a href="/posts/postgres-p-2/">Подключаем приложения к общей PostgreSQL и учимся ее обслуживать. Часть 2</a></li><li><a href="/posts/dozzle/">Dozzle - удобный просмотр логов Docker-контейнеров в реальном времени</a></li><li><a href="/posts/docker-default-address-pools/">Docker уперся в лимит сетей - как я это диагностировал и починил через default-address-pools</a></li><li><a href="/posts/gotify-push-notifications/">Gotify - свой собственный сервер push-уведомлений для гипервизора и не только</a></li><li><a href="/posts/forgejo-komodo-gitops/">Forgejo + Komodo - превращаем Docker Compose в GitOps</a></li><li><a href="/posts/forgejo-komodo-gitops-tutorial/">GitOps для homelab - разворачиваем Forgejo и Komodo с нуля</a></li><li><a href="/posts/gitlab-vs-gitea-vs-forgejo/">GitLab, Gitea и Forgejo. Сравнение не для снобов - кому что подходит для homelab</a></li><li><a href="/posts/renovate-forgejo-komodo/">Автообновление Docker-контейнеров - Renovate + Forgejo + Komodo</a></li><li><a href="/posts/matrix-synapse-docker/">Matrix Synapse - разворачиваем свой сервер для децентрализованного чата</a></li></ol></details><details class="phl-toc" data-phl-toc><summary class="phl-toc-title">Содержание</summary><nav aria-label="Содержание"><ul><li class="depth-2"><a href="#vaultwarden" data-phl-toc-link="vaultwarden">Vaultwarden</a></li><li class="depth-3"><a href="#установка-vaultwarden" data-phl-toc-link="установка-vaultwarden">Установка Vaultwarden</a></li><li class="depth-3"><a href="#базовая-установка" data-phl-toc-link="базовая-установка">Базовая установка</a></li><li class="depth-3"><a href="#безопасный-admin_token" data-phl-toc-link="безопасный-admin_token">Безопасный ADMIN_TOKEN</a></li><li class="depth-3"><a href="#регистрация-первого-пользователя" data-phl-toc-link="регистрация-первого-пользователя">Регистрация первого пользователя</a></li><li class="depth-3"><a href="#первый-вход-в-панель-администратора" data-phl-toc-link="первый-вход-в-панель-администратора">Первый вход в панель администратора</a></li><li class="depth-3"><a href="#продвинутая-конфигурация---env-sso-и-push-уведомления" data-phl-toc-link="продвинутая-конфигурация---env-sso-и-push-уведомления">Продвинутая конфигурация - .env, SSO и push-уведомления</a></li><li class="depth-3"><a href="#пользовательские-настройки-user-settings" data-phl-toc-link="пользовательские-настройки-user-settings">Пользовательские настройки (User Settings)</a></li><li class="depth-3"><a href="#резервное-копирование" data-phl-toc-link="резервное-копирование">Резервное копирование</a></li><li class="depth-3"><a href="#типичные-ошибки" data-phl-toc-link="типичные-ошибки">Типичные ошибки</a></li><li class="depth-3"><a href="#чек-лист-безопасности" data-phl-toc-link="чек-лист-безопасности">Чек-лист безопасности</a></li><li class="depth-3"><a href="#faq" data-phl-toc-link="faq">FAQ</a></li><li class="depth-3"><a href="#итого" data-phl-toc-link="итого">Итого</a></li></ul></nav></details><div class="phl-prose"><!--phl-feed-start--><h2 id="vaultwarden">Vaultwarden</h2>
+<h3 id="установка-vaultwarden">Установка <strong>Vaultwarden</strong></h3>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Заметка</span></div>
+<div class="phl-callout-content">
+<p>Статья обновлена 10.11.2026 под видео «Vaultwarden 2026» и проверена на <strong>Vaultwarden 1.37.5</strong>: закрепленная версия образа, хэш токена встроенной командой, SSO через Authentik со всеми нюансами, push-уведомления, бэкапы с проверкой восстановления и чек-лист. <code>WEBSOCKET_ENABLED</code> и <code>ROCKET_ENV</code> из прошлых версий статьи больше не нужны.</p>
+</div>
+</div>
+<h4 id="что-такое-менеджер-паролей---кратко">Что такое менеджер паролей - кратко</h4>
+<p>Менеджер паролей - это приложение, которое безопасно хранит ваши логины, пароли, заметки и другие секреты в зашифрованной форме и помогает автоматически подставлять данные при входе в сайты/приложения. Преимущества: сильные уникальные пароли для каждого сервиса, генерация случайных паролей, синхронизация между устройствами, централизованное хранилище паролей и ssh-ключей, а также история изменений.</p>
+<h4 id="что-такое-vaultwarden">Что такое Vaultwarden</h4>
+<p><strong>Vaultwarden</strong> - это легкая, быстрая и совместимая с Bitwarden реализация сервера (написана на Rust), которая реализует API Bitwarden и позволяет использовать официальные клиенты Bitwarden (браузерные расширения, мобильные/десктоп приложения) с вашим собственным сервером. <strong>Vaultwarden</strong> ориентирован на self-host развертывание (контейнеры, Docker Compose, Kubernetes и т. п.).</p>
+<p>Хранит он не только пароли: TOTP-коды (клиент сам генерирует шестизначные коды для записи), SSH-ключи (десктопный клиент умеет работать как SSH-агент), банковские карты, личные данные для автозаполнения, защищенные заметки, вложения и Send (одноразовая передача текста или файла по ссылке), а также общие хранилища для семьи или команды - организации и коллекции.</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p>Если пароль и TOTP-код лежат в одном хранилище, это уже не совсем два фактора, а скорее удобство. Для почты и для самого Vaultwarden держите второй фактор отдельно, в идеале - аппаратный ключ.</p>
+</div>
+</div>
+<h4 id="почему-self-hosted">Почему self-hosted</h4>
+<p>Коротко - ключевые преимущества self-hosted Vaultwarden:</p>
+<ul>
+<li><strong>Контроль над данными</strong>: база и резервные копии находятся под вашим и только вашим контролем, не в облаке у третьих лиц.</li>
+<li><strong>Конфиденциальность</strong>: отсутствие передачи метаданных/бэкап-копий на внешние сервисы. Вы и только вы контролируете ваши данные.</li>
+<li><strong>Гибкость и интеграция</strong>: можно подключить LDAP/SMTP/внешнюю БД, SSO через свой identity provider, настроить резервные копии, использовать свой TLS (reverse proxy) и т.д.</li>
+<li><strong>Экономия и простота</strong>: Vaultwarden легче и дешевле по ресурсам, чем upstream Bitwarden Server.</li>
+</ul>
+<p><strong>Минусы/риски</strong>: вы сами отвечаете за безопасность (обновления, TLS, бэкапы, настройка брандмауэра, ротация секретов).
+Но тут есть один, для кого-то спорный, момент. По каким то причинам, люди считают, что Bitwarden более безопасен, так как это коммерческий продукт. Вроде бы, на первый взгляд, звучит логично. Но по факту, облачные сервисы компаний всегда по атакой, и иногда они ее пропускают. Тот же Bitwarden часто допускал утечки, а у пользователей его облака часто эти самые облака "угоняли". Как это не странно может показаться, ты защищаешь свою инстанцию Vaultwarden куда тщательней. И это не учитывая, что ты, только не обижайся, в принципе интереса не представляешь.</p>
+<p>Только за 2026 год: Dashlane признал, что у части клиентов увели хранилища (<a href="https://techcrunch.com/2026/06/02/password-manager-dashlane-says-hackers-stole-some-customers-password-vaults/">TechCrunch</a>), LastPass снова сообщил об утечке данных клиентов через подрядчика (<a href="https://techcrunch.com/2026/06/23/password-manager-maker-lastpass-says-hackers-stole-customer-support-case-data-during-klue-breach/">TechCrunch</a>), а отравленная версия Bitwarden CLI полтора часа лежала в npm и воровала токены разработчиков (<a href="https://thehackernews.com/2026/04/bitwarden-cli-compromised-in-ongoing.html">The Hacker News</a>).</p>
+<p>И еще момент: Vaultwarden - это сервер, а клиенты официальные, от Bitwarden. Сервер вы контролируете, клиенты - нет. Поэтому клиенты ставим только из официальных магазинов и держим свежими: после обновления сервера старый клиент может перестать входить, и наоборот - новый клиент может потребовать обновления сервера.</p>
+<p><img alt="Сервер и клиенты держим свежими" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-clients-version.BbbWJ3fE_sIYXO.webp"></p>
+<h4 id="что-изменилось-с-прошлой-версии-статьи">Что изменилось с прошлой версии статьи</h4>
+<table>
+<thead>
+<tr>
+<th>Было</th>
+<th>Сейчас</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>image: vaultwarden/server:latest</code></td>
+<td>закрепленная версия <code>vaultwarden/server:1.37.5</code>, обновления осознанно</td>
+</tr>
+<tr>
+<td><code>WEBSOCKET_ENABLED=true</code> и отдельный порт 3012</td>
+<td>не нужны: WebSocket работает через основной HTTP-порт 80 контейнера, переменная ни на что не влияет</td>
+</tr>
+<tr>
+<td><code>ROCKET_ENV=prod</code></td>
+<td>не нужна, убираем</td>
+</tr>
+<tr>
+<td><code>ADMIN_TOKEN</code> открытым текстом или хэш сторонней утилитой</td>
+<td>встроенная команда <code>vaultwarden hash --preset owasp</code>, хэш в <code>.env</code> в одинарных кавычках</td>
+</tr>
+<tr>
+<td>SSO только в отдельных сборках</td>
+<td>SSO (OpenID Connect) в официальном образе</td>
+</tr>
+<tr>
+<td>-</td>
+<td>push-уведомления на телефон через релей Bitwarden</td>
+</tr>
+<tr>
+<td>-</td>
+<td>функция «запомнить это устройство» для 2FA живет максимум 30 дней, появился архив записей</td>
+</tr>
+</tbody>
+</table>
+<h4 id="короткий-план-развертывания-что-сделаем">Короткий план развертывания (что сделаем)</h4>
+<ol>
+<li>Начнем с <strong>базового</strong> <code>docker-compose.yml</code> и <code>.env</code> - минимальный рабочий вариант из видео.</li>
+<li>Захэшируем <strong>токен админки</strong>, создадим первого пользователя, закроем регистрацию и включим 2FA.</li>
+<li>Разберем <strong>продвинутую конфигурацию</strong>: SMTP, логирование, SSO через Authentik, push-уведомления - вариант, который сейчас крутится у меня.</li>
+<li>Пройдемся по админ-панели, регистрации пользователей и организациям.</li>
+<li>Разберем бэкапы, типичные ошибки и чек-лист безопасности.</li>
+</ol>
+<hr>
+<h3 id="базовая-установка">Базовая установка</h3>
+<p>Если вам нужен просто рабочий сервер без SSO и лишних настроек - этого варианта достаточно. Дальше в статье будет и продвинутая версия, но начать проще с этой.</p>
+<p>Что понадобится: Docker с Compose, обратный прокси <strong>Traefik</strong> с внешней Docker-сетью <code>proxy</code>, точками входа <code>web</code>/<code>websecure</code> и настроенным механизмом выдачи сертификатов (в примере - resolver <code>cloudflare</code>), и домен, который ведет на сервер (в примере - <code>vault.stilicho.ru</code>). Если у вас другие имена сети, точек входа или resolver - подставьте свои. Сам Traefik здесь не устанавливаем, про него есть отдельная серия: <a href="https://prohomelab.com/posts/traefik-in-docker/">Traefik в Docker</a> и <a href="https://prohomelab.com/posts/traefik-in-lxc-part-1/">Traefik в LXC</a>.</p>
+<p>Создаем папку проекта и два файла. Данные храним в обычной папке рядом (bind mount) - так проще бэкапить и переносить.</p>
+<div class="expressive-code"><link rel="stylesheet" href="/_astro/ec.otfqh.css"><script type="module" src="/_astro/ec.0vx5m.js"></script><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">mkdir</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-p</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">~/vaultwarden</span></div></div><div class="ec-line"><div class="code"><span style="--0:#005CC5;--1:#79B8FF">cd</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">~/vaultwarden</span></div></div><div class="ec-line"><div class="code"><span style="--0:#005CC5;--1:#79B8FF">umask</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">077</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">touch</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">docker-compose.yml</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">.env</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="mkdir -p ~/vaultwardencd ~/vaultwardenumask 077touch docker-compose.yml .env"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Сервисы этого Compose-проекта.</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#616972;--1:#99A0A6"># Имя сервиса для команд docker compose.</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Фиксированное имя контейнера; должно быть уникальным на Docker-хосте.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Образ с закрепленной версией вместо меняющегося latest.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden/server:1.37.5</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Перезапускать после сбоя и старта Docker, кроме ручной остановки.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Подключения каталогов хоста к контейнеру.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Папка data рядом с Compose-файлом хранит данные из /data контейнера.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">./data:/data</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Переменные окружения с настройками Vaultwarden.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Полный адрес хранилища для доступа клиентов и формирования ссылок.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOMAIN=https://vault.stilicho.ru</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Хэш пароля админки; Compose подставляет значение из .env.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Открытая регистрация; после создания аккаунта ставим false в .env.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS_ALLOWED}</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Часовой пояс контейнера; расписания задач Vaultwarden используют UTC.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">TZ=Europe/Moscow</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Сети, к которым подключаем контейнер.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Общая с Traefik сеть proxy.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">proxy</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Метки для настройки маршрутизации через Docker-провайдер Traefik.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">labels</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Разрешаем Traefik обрабатывать этот контейнер.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.enable=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># HTTP-маршрутизатор использует настроенную в Traefik точку входа web.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden.entrypoints=web"</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Принимаем HTTP-запросы к домену vault.stilicho.ru.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden.rule=Host(`vault.stilicho.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Создаем обработчик перенаправления с HTTP на HTTPS.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.middlewares.vaultwarden-https-redirect.redirectscheme.scheme=https"</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Подключаем перенаправление к HTTP-маршрутизатору.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden.middlewares=vaultwarden-https-redirect"</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># HTTPS-маршрутизатор использует точку входа websecure.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden-secure.entrypoints=websecure"</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Принимаем HTTPS-запросы к тому же домену хранилища.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden-secure.rule=Host(`vault.stilicho.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Включаем TLS для соединения клиента с маршрутизатором Traefik.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden-secure.tls=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Используем уже настроенный в Traefik механизм выдачи сертификатов cloudflare.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden-secure.tls.certresolver=cloudflare"</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Передаем HTTPS-запросы сервису Traefik с именем vaultwarden.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.routers.vaultwarden-secure.service=vaultwarden"</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Traefik обращается к HTTP-порту 80 контейнера, а не к порту хоста.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.http.services.vaultwarden.loadbalancer.server.port=80"</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Для связи с контейнером Traefik использует Docker-сеть proxy.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">"traefik.docker.network=proxy"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Дополнительные параметры безопасности контейнера.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">security_opt</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Запрещаем процессам повышать привилегии при запуске программ, например через setuid.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">no-new-privileges:true</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Объявляем сети проекта на верхнем уровне, вне списка сервисов.</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#616972;--1:#99A0A6"># Имя общей Docker-сети для Vaultwarden и Traefik.</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">proxy</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Сеть уже должна существовать; этот Compose-проект ее не создает.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# Сервисы этого Compose-проекта.services:  # Имя сервиса для команд docker compose.  vaultwarden:    # Фиксированное имя контейнера; должно быть уникальным на Docker-хосте.    container_name: vaultwarden    # Образ с закрепленной версией вместо меняющегося latest.    image: vaultwarden/server:1.37.5    # Перезапускать после сбоя и старта Docker, кроме ручной остановки.    restart: unless-stopped    # Подключения каталогов хоста к контейнеру.    volumes:      # Папка data рядом с Compose-файлом хранит данные из /data контейнера.      - ./data:/data    # Переменные окружения с настройками Vaultwarden.    environment:      # Полный адрес хранилища для доступа клиентов и формирования ссылок.      - DOMAIN=https://vault.stilicho.ru      # Хэш пароля админки; Compose подставляет значение из .env.      - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}      # Открытая регистрация; после создания аккаунта ставим false в .env.      - SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS_ALLOWED}      # Часовой пояс контейнера; расписания задач Vaultwarden используют UTC.      - TZ=Europe/Moscow    # Сети, к которым подключаем контейнер.    networks:      # Общая с Traefik сеть proxy.      - proxy    # Метки для настройки маршрутизации через Docker-провайдер Traefik.    labels:      # Разрешаем Traefik обрабатывать этот контейнер.      - &#x22;traefik.enable=true&#x22;      # HTTP-маршрутизатор использует настроенную в Traefik точку входа web.      - &#x22;traefik.http.routers.vaultwarden.entrypoints=web&#x22;      # Принимаем HTTP-запросы к домену vault.stilicho.ru.      - &#x22;traefik.http.routers.vaultwarden.rule=Host(&#x60;vault.stilicho.ru&#x60;)&#x22;      # Создаем обработчик перенаправления с HTTP на HTTPS.      - &#x22;traefik.http.middlewares.vaultwarden-https-redirect.redirectscheme.scheme=https&#x22;      # Подключаем перенаправление к HTTP-маршрутизатору.      - &#x22;traefik.http.routers.vaultwarden.middlewares=vaultwarden-https-redirect&#x22;      # HTTPS-маршрутизатор использует точку входа websecure.      - &#x22;traefik.http.routers.vaultwarden-secure.entrypoints=websecure&#x22;      # Принимаем HTTPS-запросы к тому же домену хранилища.      - &#x22;traefik.http.routers.vaultwarden-secure.rule=Host(&#x60;vault.stilicho.ru&#x60;)&#x22;      # Включаем TLS для соединения клиента с маршрутизатором Traefik.      - &#x22;traefik.http.routers.vaultwarden-secure.tls=true&#x22;      # Используем уже настроенный в Traefik механизм выдачи сертификатов cloudflare.      - &#x22;traefik.http.routers.vaultwarden-secure.tls.certresolver=cloudflare&#x22;      # Передаем HTTPS-запросы сервису Traefik с именем vaultwarden.      - &#x22;traefik.http.routers.vaultwarden-secure.service=vaultwarden&#x22;      # Traefik обращается к HTTP-порту 80 контейнера, а не к порту хоста.      - &#x22;traefik.http.services.vaultwarden.loadbalancer.server.port=80&#x22;      # Для связи с контейнером Traefik использует Docker-сеть proxy.      - &#x22;traefik.docker.network=proxy&#x22;    # Дополнительные параметры безопасности контейнера.    security_opt:      # Запрещаем процессам повышать привилегии при запуске программ, например через setuid.      - no-new-privileges:true# Объявляем сети проекта на верхнем уровне, вне списка сервисов.networks:  # Имя общей Docker-сети для Vaultwarden и Traefik.  proxy:    # Сеть уже должна существовать; этот Compose-проект ее не создает.    external: true"><div></div></button></div></figure></div>
+<p><img alt="docker-compose.yml базовой установки" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-compose-base.BU87EFA0_2cCkTA.webp"></p>
+<p><code>.env</code> рядом с ним (хэш токена заполним в следующем разделе):</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">dotenv</span></figcaption><pre data-language="dotenv"><code><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_ADMIN_TOKEN</span><span style="--0:#BF3441;--1:#F97583">=</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_SIGNUPS_ALLOWED</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="VAULTWARDEN_ADMIN_TOKEN=VAULTWARDEN_SIGNUPS_ALLOWED=true"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">chmod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">600</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">.env</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="chmod 600 .env"><div></div></button></div></figure></div>
+<h5 id="примечания-к-базовому-файлу">Примечания к базовому файлу</h5>
+<ul>
+<li><code>DOMAIN</code> - полный внешний адрес хранилища, без слэша на конце. Этот же адрес указываем в клиентах. От него зависят ссылки и редиректы, а для WebAuthn (passkey, аппаратные ключи) важен правильный домен.</li>
+<li><code>ADMIN_TOKEN</code> - токен для входа в административную панель (<code>/admin</code>). Без него панель недоступна. Как захэшировать токен по всем правилам - см. раздел <strong>«Безопасный ADMIN_TOKEN»</strong> ниже.</li>
+<li><code>SIGNUPS_ALLOWED</code> - значение берем из <code>.env</code>. Разрешайте <code>true</code> только на время создания первого аккаунта, затем выключайте.</li>
+<li><strong>Лейблы</strong> говорят Traefik, куда направлять запросы и какой сертификат использовать. Порт контейнера наружу не публикуем: Traefik обращается к нему внутри сети <code>proxy</code>. Web Vault требует HTTPS с доверенным сертификатом - браузер дает доступ к криптографии только в защищенном контексте.</li>
+<li><strong>Версия закреплена</strong> (<code>1.37.5</code>): <code>latest</code> может измениться между записью и вашей установкой. Закрепить версию - не значит забыть про обновления: следим за релизами, делаем бэкап и обновляемся осознанно. Помогут <a href="https://prohomelab.com/posts/diun-%D1%83%D0%B2%D0%B5%D0%B4%D0%BE%D0%BC%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BE%D0%B1-%D0%BE%D0%B1%D0%BD%D0%BE%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D1%8F%D1%85-docker-%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%BE%D0%B2/">Diun</a> или связка <a href="https://prohomelab.com/posts/forgejo-komodo-gitops/">Komodo, Forgejo и Renovate bot</a>.</li>
+</ul>
+<hr>
+<h3 id="безопасный-admin_token">Безопасный ADMIN_TOKEN</h3>
+<p>Токен админки открытым текстом - плохая идея: Vaultwarden будет предупреждать об этом и в логах, и в самой админ-панели.</p>
+<p>Самый простой способ захэшировать токен - встроенная команда самого Vaultwarden, не требует установки дополнительных пакетов. Запускаем ее во временном контейнере, основной сервис для этого не нужен:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">run</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--rm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--no-deps</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">/vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">hash</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--preset</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">owasp</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="docker compose run --rm --no-deps vaultwarden /vaultwarden hash --preset owasp"><div></div></button></div></figure></div>
+<p>Команда дважды спросит отдельный длинный пароль для админки и выведет готовую строку вида <code>$argon2id$v=19$m=...$...</code>. Сам пароль сохраните отдельно: в админку вводится он, а не хэш.</p>
+<p>В <code>.env</code> вставляем строку с одиночными <code>$</code> и заключаем ее в <strong>одинарные кавычки</strong> - иначе Compose попытается подставить переменные:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">dotenv</span></figcaption><pre data-language="dotenv"><code><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_ADMIN_TOKEN</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">'$argon2id$v=19$m=19456,t=2,p=1$...'</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_SIGNUPS_ALLOWED</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="VAULTWARDEN_ADMIN_TOKEN=&#x27;$argon2id$v=19$m=19456,t=2,p=1$...&#x27;VAULTWARDEN_SIGNUPS_ALLOWED=true"><div></div></button></div></figure></div>
+<p><img alt="Хэш токена в .env - в одинарных кавычках" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-env-admin-token.BAHxITfc_Z122hqR.webp"></p>
+<p>Если вписываете значение прямо в <code>docker-compose.yml</code> без <code>.env</code>, каждый <code>$</code> нужно удвоить: <code>$$</code>. Одни YAML-кавычки от подстановки Compose не спасают.</p>
+<p>Подробности есть в <a href="https://github.com/dani-garcia/vaultwarden/wiki/Enabling-admin-page#secure-the-admin_token">wiki Vaultwarden</a>.</p>
+<p>После этого контейнер можно запускать и проверять:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">up</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">ps</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">logs</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--tail=50</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="docker compose up -ddocker compose psdocker compose logs --tail=50 vaultwarden"><div></div></button></div></figure></div>
+<p>Учти, что «Панель <code>/admin</code> " - самая привлекательная цель для брутфорса; если хотите закрыть ее дополнительным rate-limiting или банить сканеры на уровне Traefik, см. статью про middlewares в <a href="https://prohomelab.com/posts/traefik-middlewares-overview/">Traefik</a> и <a href="https://prohomelab.com/posts/crowdsec-in-docker/">CrowdSec</a>». А лучше вообще ограничить <code>/admin</code> на прокси доверенной сетью или VPN.</p>
+<h3 id="регистрация-первого-пользователя">Регистрация первого пользователя</h3>
+<p>Переходим по адресу вашего Vaultwarden (в моем случае <code>vault.stilicho.ru</code>) и выбираем <strong>Create Account</strong> («Создать аккаунт»).</p>
+<p><img alt="Форма регистрации первого пользователя Vaultwarden" loading="lazy" decoding="async" width="1650" height="690" src="/_astro/Vaultwarden_vaultwarden_cr.BooJSlvF_R5rkW.webp"></p>
+<p>Указываем почту и nickname.</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p>Для регистрации самого первого пользователя нужно временно разрешить простую регистрацию (<code>VAULTWARDEN_SIGNUPS_ALLOWED=true</code> в <code>.env</code>). После создания первого (админского) аккаунта - верните <code>false</code>.</p>
+<p>Если у вас включен SSO с <code>SSO_SIGNUPS_MATCH_EMAIL=true</code>, первого пользователя все равно проще создать через обычную регистрацию или инвайт, а затем просто входить через SSO - привязка произойдет автоматически по email.</p>
+</div>
+</div>
+<p>По умолчанию пароль должен быть не короче 12 символов, Vaultwarden проверяет его на сложность и предлагает проверить на утечки (не был ли такой пароль скомпрометирован ранее).</p>
+<p><img alt="Мастер-пароль хранилища" loading="lazy" decoding="async" width="843" height="719" src="/_astro/Vaultwarden_vaultwarden_ma.CV2_jgGR_Z2bc4DR.webp"></p>
+<div class="phl-callout" data-callout="important">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Важно</span></div>
+<div class="phl-callout-content">
+<p><strong>Мастер-пароль - ключ к вашему хранилищу.</strong> Кнопки «Забыл пароль, пришлите новый на почту» здесь нет: без заранее настроенного способа восстановления потеря мастер-пароля может означать потерю доступа к данным. Берите длинную уникальную фразу, а не <code>admin123</code>, и храните аварийную копию в надежном месте отдельно от самого сейфа. Содержимое записей шифруется на устройстве; сервер при этом все равно хранит служебные данные, например адрес аккаунта.</p>
+</div>
+</div>
+<p>После этого попадаем в хранилище.</p>
+<p><img alt="Хранилище Vaultwarden после первого входа" loading="lazy" decoding="async" width="2000" height="899" src="/_astro/Vaultwarden_vaultwarden_va.DKUTtobG_Z15J3p9.webp"></p>
+<p>Сверху подсказка о трех первых шагах: создать аккаунт, установить расширение для браузера, импортировать данные из другого менеджера паролей. Формат экспорта зависит от конкретного приложения-донора, но общий принцип один: экспортируете файл там, импортируете здесь. Файл экспорта (CSV или незашифрованный JSON) содержит все секреты открытым текстом - после проверки импорта удалите его, включая корзину.</p>
+<h4 id="закрываем-регистрацию">Закрываем регистрацию</h4>
+<p>Аккаунт есть - сразу ставим в <code>.env</code>:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">dotenv</span></figcaption><pre data-language="dotenv"><code><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_SIGNUPS_ALLOWED</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">false</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="VAULTWARDEN_SIGNUPS_ALLOWED=false"><div></div></button></div></figure></div>
+<p>и применяем через <code>docker compose up -d</code> (не просто <code>restart</code>: только так контейнер пересоздается с новыми переменными). Проверяем в приватном окне браузера: попытка создать второй аккаунт должна закончиться отказом. Новых пользователей дальше добавляем приглашениями; для отправки писем нужен настроенный SMTP.</p>
+<h4 id="двухфакторка-для-своего-аккаунта">Двухфакторка для своего аккаунта</h4>
+<p>Сразу включаем 2FA в самом Vaultwarden: «Настройки» - «Безопасность» - «Двухэтапная аутентификация». Подойдет приложение-аутентификатор, passkey или аппаратный ключ. <strong>Код восстановления сохраняем вне этого хранилища</strong>, иначе получится ключ от сейфа, лежащий внутри сейфа. После настройки выходим и проверяем вход заново.</p>
+<p><img alt="Двухэтапная аутентификация в настройках аккаунта" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-2fa.Wc-awntA_1gWsyJ.webp"></p>
+<h4 id="клиенты">Клиенты</h4>
+<p>Клиенты ставим официальные, Bitwarden: расширение из магазина вашего браузера, приложение из Google Play или App Store. На экране входа выбираем <strong>Self-hosted</strong> (свой сервер), вписываем адрес <code>https://vault.stilicho.ru</code>, затем почту и мастер-пароль.</p>
+<h3 id="первый-вход-в-панель-администратора">Первый вход в панель администратора</h3>
+<p>После того как контейнер запустится, можно посмотреть его логи командой <code>docker compose logs --tail=50 vaultwarden</code> или, например, в <strong>Portainer</strong>.</p>
+<p><img alt="Логи контейнера Vaultwarden после запуска" loading="lazy" decoding="async" width="663" height="348" src="/_astro/3_Vaultwarden_Screenshot_202.Cervh9kj_1gqccF.webp"></p>
+<p>Если все в порядке, приложение не будет ругаться - значение токена надежно захэшировано. В противном случае вы увидите предупреждение, что токен указан в открытом текстовом формате и это небезопасно (на работоспособность само по себе это не влияет, но снижает защиту админ-панели).</p>
+<p>Чтобы зайти в панель администратора, вводим в адресную строку браузера адрес Vaultwarden и обязательно добавляем в конце <strong>/admin</strong>.</p>
+<p><img alt="Форма входа в панель администратора Vaultwarden (/admin)" loading="lazy" decoding="async" width="1793" height="322" src="/_astro/1_Vaultwarden_Screenshot_202.Bbs0Wkqw_2p2JnG.webp"></p>
+<p>Для подтверждения вводим пароль администратора - исходный пароль, а не хэш - и попадаем в панель. После нескольких неудачных попыток Vaultwarden на время блокирует вход. Выбираем вкладку <strong>General settings</strong> - это центральный раздел конфигурации.</p>
+<p><img alt="Раздел General settings в панели администратора" loading="lazy" decoding="async" width="1491" height="834" src="/_astro/Vaultwarden_Screenshot_202.j3faUJXW_ZDoUBA.webp"></p>
+<p>В самом верху - напоминание, что любые значения, внесенные в настройках администратора, перезаписывают значения переменных окружения (например, данные почтового сервера) или настройки самого приложения. Значения, которые будут перезаписаны, выделены желтым.</p>
+<div class="phl-callout" data-callout="important">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Важно</span></div>
+<div class="phl-callout-content">
+<p>Настройки из админки хранятся в <code>data/config.json</code> и имеют приоритет над <code>docker-compose.yml</code> и <code>.env</code>. Не меняйте один и тот же параметр сразу двумя способами - потом трудно понять, какое значение действует.</p>
+</div>
+</div>
+<p><img alt="Список разделов настроек в админке" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-admin-settings.BhhrhLVc_Z1uByeP.webp"></p>
+<h4 id="раздел-general-settings---подробный-обзор">Раздел «General settings» - подробный обзор</h4>
+<h5 id="domain">Domain</h5>
+<ul>
+<li><strong>Описание:</strong> Основной домен, по которому доступен Vaultwarden.</li>
+<li><strong>Пример:</strong> <code>https://vault.stilicho.ru</code></li>
+<li><strong>Назначение:</strong> Используется в ссылках (приглашения, сброс пароля, email-уведомления, redirect для SSO).</li>
+<li><strong>Важно:</strong> если поменяете домен - обновите и redirect URI в настройках вашего OIDC-провайдера.</li>
+</ul>
+<h5 id="web-vault-enabled">Web Vault Enabled</h5>
+<ul>
+<li><strong>Описание:</strong> Включает или отключает веб-интерфейс хранилища.</li>
+<li><strong>По умолчанию:</strong> включено.</li>
+<li><strong>Зачем выключать:</strong> если хотите использовать Vaultwarden только через Bitwarden Desktop/Mobile клиенты.</li>
+</ul>
+<h5 id="user-registration-allow-new-signups">User Registration (Allow new signups)</h5>
+<ul>
+<li><strong>Переменная окружения:</strong> <code>SIGNUPS_ALLOWED</code></li>
+<li><strong>Варианты:</strong> <code>true</code> - любой может зарегистрироваться; <code>false</code> - только вручную (админ создает пользователей через <code>/admin</code> или приглашения).</li>
+<li><strong>Совет:</strong> на публичном сервере - выключить. Оставьте включенным временно только для регистрации первого аккаунта.</li>
+</ul>
+<h5 id="require-email-verification-on-signups">Require email verification on signups</h5>
+<ul>
+<li><strong>Переменная:</strong> <code>SIGNUPS_VERIFY</code></li>
+<li><strong>Рекомендация:</strong> включить при включенном SMTP - особенно если разрешены инвайты (<code>INVITATIONS_ALLOWED=true</code>), чтобы исключить опечатки в email.</li>
+</ul>
+<h5 id="invitation-allow-invitations">Invitation (Allow invitations)</h5>
+<ul>
+<li><strong>Переменная:</strong> <code>INVITATIONS_ALLOWED</code></li>
+<li><strong>Рекомендация:</strong> оставьте включенным, если используете Organizations - иначе никто не сможет присоединиться.</li>
+</ul>
+<h5 id="smtp-enabled">SMTP Enabled</h5>
+<ul>
+<li><strong>Переменные:</strong> <code>SMTP_*</code></li>
+<li><strong>Рекомендация:</strong> настройте SMTP до создания организаций или до того, как понадобится сброс пароля.</li>
+</ul>
+<h5 id="sso-enabled">SSO Enabled</h5>
+<ul>
+<li><strong>Переменная:</strong> <code>SSO_ENABLED</code></li>
+<li><strong>Описание:</strong> включает вход через OpenID Connect. В UI администратора можно посмотреть текущий статус подключения к провайдеру и диагностику - полезно, если что-то не срослось с <code>SSO_AUTHORITY</code>.</li>
+</ul>
+<h5 id="e-mail-domain-whitelist">E-mail Domain Whitelist</h5>
+<ul>
+<li><strong>Пример:</strong> <code>stilicho.ru,prohomelab.com</code></li>
+<li><strong>Назначение:</strong> ограничить регистрацию корпоративными/своими доменами.</li>
+</ul>
+<h5 id="allow-password-hints">Allow password hints</h5>
+<ul>
+<li><strong>Рекомендация:</strong> можно отключить, чтобы не давать потенциальному злоумышленнику подсказки.</li>
+</ul>
+<h5 id="yubikey-otps-enabled">YubiKey OTPs Enabled</h5>
+<ul>
+<li><strong>Переменные:</strong> <code>YUBICO_CLIENT_ID</code>, <code>YUBICO_SECRET_KEY</code></li>
+<li><strong>Назначение:</strong> двухфакторная аутентификация через аппаратные ключи YubiKey.</li>
+</ul>
+<h5 id="admin-token">Admin Token</h5>
+<ul>
+<li><strong>Описание:</strong> показывает текущий токен входа в админ-панель. Изменить можно только через переменную окружения (<code>ADMIN_TOKEN</code> в <code>.env</code>), панель не позволяет сменить его «на лету» без перезапуска контейнера.</li>
+</ul>
+<h5 id="disable-two-factor-remember">Disable Two-Factor remember</h5>
+<ul>
+<li><strong>Рекомендация:</strong> включить на публичных серверах для повышения безопасности. Учтите: с недавних версий Vaultwarden «запомненные» 2FA-токены в любом случае действуют не дольше 30 дней.</li>
+</ul>
+<div class="phl-callout" data-callout="important">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Важно</span></div>
+<div class="phl-callout-content">
+<p>Один из самых важных разделов - настройки почты в <strong>SMTP EMAIL SETTINGS</strong>. Если планируете приглашать пользователей (членов семьи, сотрудников) - эти настройки обязательны.</p>
+</div>
+</div>
+<p>Остальные настройки - по вашему желанию, но я бы отключил простую неконтролируемую регистрацию в приложении. Отключение регистрации не мешает приглашениям и SSO.</p>
+<h4 id="раздел-users">Раздел Users</h4>
+<p>Таблица «Users» показывает список всех пользователей хранилища, их статус, уровень подтверждения и активность. Здесь же можно приглашать новых пользователей и вручную подтверждать SSO-аккаунты, если <code>SSO_SIGNUPS_MATCH_EMAIL</code> не сработал автоматически.</p>
+<p><img alt="Раздел Users в админ-панели" loading="lazy" decoding="async" width="1529" height="575" src="/_astro/Vaultwarden_vaultwarden_us.B695HTX6_isylM.webp"></p>
+<h4 id="что-такое-organization">Что такое Organization</h4>
+<p><strong>Organization</strong> - группа пользователей, которые могут совместно использовать определенные записи (логины, пароли, безопасные заметки и т.п.). Аналог корпоративного или семейного хранилища в Bitwarden Cloud.</p>
+<p><img alt="Раздел Organizations в админ-панели" loading="lazy" decoding="async" width="1403" height="417" src="/_astro/Vaultwarden_vaultwarden_or.Bmftl5st_HeGAs.webp"></p>
+<h5 id="основная-идея">Основная идея</h5>
+<ul>
+<li>У вас есть личный сейф, видимый только вам.</li>
+<li>В рамках Organization можно создавать общие коллекции, например:
+<ul>
+<li>«DevOps» - пароли CI/CD, SSH-ключи, токены API</li>
+<li>«Маркетинг» - доступ к соцсетям и рекламным кабинетам</li>
+<li>«Семья» - совместные подписки (Netflix, Spotify и т.п.)</li>
+</ul>
+</li>
+</ul>
+<h5 id="как-это-работает">Как это работает</h5>
+<ol>
+<li>Администратор создает организацию (например, «ProHomelab»).</li>
+<li>Добавляет участников по e-mail (нужна учетка на этом же сервере - через обычную регистрацию, инвайт или SSO).</li>
+<li>Создает Collections (категории для общих данных).</li>
+<li>Назначает права доступа к каждой коллекции (чтение, запись, администрирование).</li>
+<li>Пользователи получают эти записи в своем клиенте Bitwarden (веб, десктоп, мобильный).</li>
+</ol>
+<h5 id="пример-структуры">Пример структуры</h5>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Organization</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">ProHomelab</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#1E7734;--1:#85E89D">├── Collection</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">Infrastructure</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">│    ├── Proxmox login</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">│    ├── Traefik dashboard</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">│    └── Grafana API key</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#1E7734;--1:#85E89D">├── Collection</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">Media</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">│    ├── Jellyfin admin</span></div></div><div class="ec-line"><div class="code"><span class="indent"> </span><span style="--0:#032F62;--1:#9ECBFF">│    └── Audiobookshelf credentials</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Organization: ProHomelab ├── Collection: Infrastructure │    ├── Proxmox login │    ├── Traefik dashboard │    └── Grafana API key ├── Collection: Media │    ├── Jellyfin admin │    └── Audiobookshelf credentials"><div></div></button></div></figure></div>
+<h5 id="типы-ролей">Типы ролей</h5>
+<ul>
+<li><strong>Owner</strong> - полный контроль над организацией.</li>
+<li><strong>Admin</strong> - управление пользователями и коллекциями.</li>
+<li><strong>Manager</strong> - управляет только своими коллекциями.</li>
+<li><strong>User</strong> - пользуется выданным доступом, без управления структурой.</li>
+</ul>
+<h5 id="важные-детали">Важные детали</h5>
+<ul>
+<li>Organizations не обязательны для личного использования.</li>
+<li>Для инвайтов нужны включенные <code>INVITATIONS_ALLOWED</code> и настроенный SMTP.</li>
+<li>Можно создать несколько организаций на одном сервере.</li>
+<li>Поддерживаются личные ключи шифрования - админ не видит содержимое паролей участников.</li>
+</ul>
+<hr>
+<h3 id="продвинутая-конфигурация---env-sso-и-push-уведомления">Продвинутая конфигурация - .env, SSO и push-уведомления</h3>
+<p>Когда сервис обрастает пользователями, хочется убрать секреты из compose-файла, подключить единый вход через свой identity provider (у меня это <strong><a href="https://prohomelab.com/posts/authentik-overview-proxy-oidc/">Authentik</a></strong>) и получать push-уведомления на мобильных клиентах. Вот конфигурация, которая сейчас работает у меня.</p>
+<h4 id="docker-composeyml">docker-compose.yml</h4>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">services</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">container_name</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">image</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden/server:1.37.5</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">restart</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">unless-stopped</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">volumes</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/path/to/docker/vaultwarden/data:/data</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">/path/to/docker/vaultwarden/logs:/data/logs</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">ports</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">18083:80</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">environment</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS_ALLOWED}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SIGNUPS_VERIFY=${VAULTWARDEN_SIGNUPS_VERIFY}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">INVITATIONS_ALLOWED=${VAULTWARDEN_INVITATIONS_ALLOWED}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">ROCKET_WORKERS=10</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">TZ=${VAULTWARDEN_TZ}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">LOG_LEVEL=error</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">EXTENDED_LOGGING=true</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">DOMAIN=${VAULTWARDEN_BASE_URL}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_HOST=${VAULTWARDEN_EMAIL__HOST}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_PORT=${VAULTWARDEN_EMAIL__PORT}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_FROM=${VAULTWARDEN_EMAIL__USERNAME}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_USERNAME=${VAULTWARDEN_EMAIL__USERNAME}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_PASSWORD=${VAULTWARDEN_EMAIL__PASSWORD}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SMTP_SECURITY=${VAULTWARDEN_EMAIL__SECURITY}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_ENABLED=true</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_AUTHORITY=https://authentik.domain.ru/application/o/vaultwarden/</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_CLIENT_ID=${VAULTWARDEN_SSO_CLIENT_ID}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_CLIENT_SECRET=${VAULTWARDEN_SSO_CLIENT_SECRET}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_SCOPES=openid email profile offline_access</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># без кавычек - иначе кавычки станут частью значения</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_ALLOW_UNKNOWN_EMAIL_VERIFICATION=false</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_CLIENT_CACHE_EXPIRATION=0</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_SIGNUPS_ALLOWED=false</span><span style="--0:#24292E;--1:#E1E4E8">     </span><span style="--0:#616972;--1:#99A0A6"># новых аккаунтов через SSO не создаем</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_ONLY=false</span><span style="--0:#24292E;--1:#E1E4E8">            </span><span style="--0:#616972;--1:#99A0A6"># true -полностью отключает вход по мастер-паролю, только SSO</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_SIGNUPS_MATCH_EMAIL=true</span><span style="--0:#24292E;--1:#E1E4E8">  </span><span style="--0:#616972;--1:#99A0A6"># первый вход через SSO привязывается к существующему аккаунту по email</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_ENABLED=true</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_INSTALLATION_ID=${VAULTWARDEN_PUSH_INSTALLATION_ID}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_INSTALLATION_KEY=${VAULTWARDEN_PUSH_INSTALLATION_KEY}</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_RELAY_URI=https://api.bitwarden.eu</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_IDENTITY_URI=https://identity.bitwarden.eu</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Reverse-proxy настраивается отдельно - см. раздел про Traefik/Nginx ниже.</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6"># Пример лейблов для Traefik (если контейнер в одной сети с прокси):</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#labels:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.enable=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden.entrypoints=web"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.domain.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.middlewares.vaultwarden-https-redirect.redirectscheme.scheme=https"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden.middlewares=vaultwarden-https-redirect"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden-secure.entrypoints=websecure"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden-secure.rule=Host(`vaultwarden.domain.ru`)"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden-secure.tls=true"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.routers.vaultwarden-secure.service=vaultwarden"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#616972;--1:#99A0A6">#  - "traefik.docker.network=proxy"</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">security_opt</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">no-new-privileges:true</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">networks</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#1E7734;--1:#85E89D">vaultwarden</span><span style="--0:#24292E;--1:#E1E4E8">:</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#1E7734;--1:#85E89D">external</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">true</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="services:  vaultwarden:    container_name: vaultwarden    image: vaultwarden/server:1.37.5    restart: unless-stopped    volumes:      - /path/to/docker/vaultwarden/data:/data      - /path/to/docker/vaultwarden/logs:/data/logs    ports:      - 18083:80    environment:      - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}      - SIGNUPS_ALLOWED=${VAULTWARDEN_SIGNUPS_ALLOWED}      - SIGNUPS_VERIFY=${VAULTWARDEN_SIGNUPS_VERIFY}      - INVITATIONS_ALLOWED=${VAULTWARDEN_INVITATIONS_ALLOWED}      - ROCKET_WORKERS=10      - TZ=${VAULTWARDEN_TZ}      - LOG_LEVEL=error      - EXTENDED_LOGGING=true      - DOMAIN=${VAULTWARDEN_BASE_URL}      - SMTP_HOST=${VAULTWARDEN_EMAIL__HOST}      - SMTP_PORT=${VAULTWARDEN_EMAIL__PORT}      - SMTP_FROM=${VAULTWARDEN_EMAIL__USERNAME}      - SMTP_USERNAME=${VAULTWARDEN_EMAIL__USERNAME}      - SMTP_PASSWORD=${VAULTWARDEN_EMAIL__PASSWORD}      - SMTP_SECURITY=${VAULTWARDEN_EMAIL__SECURITY}      - SSO_ENABLED=true      - SSO_AUTHORITY=https://authentik.domain.ru/application/o/vaultwarden/      - SSO_CLIENT_ID=${VAULTWARDEN_SSO_CLIENT_ID}      - SSO_CLIENT_SECRET=${VAULTWARDEN_SSO_CLIENT_SECRET}      - SSO_SCOPES=openid email profile offline_access   # без кавычек - иначе кавычки станут частью значения      - SSO_ALLOW_UNKNOWN_EMAIL_VERIFICATION=false      - SSO_CLIENT_CACHE_EXPIRATION=0      - SSO_SIGNUPS_ALLOWED=false     # новых аккаунтов через SSO не создаем      - SSO_ONLY=false            # true -полностью отключает вход по мастер-паролю, только SSO      - SSO_SIGNUPS_MATCH_EMAIL=true  # первый вход через SSO привязывается к существующему аккаунту по email      - PUSH_ENABLED=true      - PUSH_INSTALLATION_ID=${VAULTWARDEN_PUSH_INSTALLATION_ID}      - PUSH_INSTALLATION_KEY=${VAULTWARDEN_PUSH_INSTALLATION_KEY}      - PUSH_RELAY_URI=https://api.bitwarden.eu      - PUSH_IDENTITY_URI=https://identity.bitwarden.eu    networks:      - vaultwarden    # Reverse-proxy настраивается отдельно - см. раздел про Traefik/Nginx ниже.    # Пример лейблов для Traefik (если контейнер в одной сети с прокси):    #labels:    #  - &#x22;traefik.enable=true&#x22;    #  - &#x22;traefik.http.routers.vaultwarden.entrypoints=web&#x22;    #  - &#x22;traefik.http.routers.vaultwarden.rule=Host(&#x60;vaultwarden.domain.ru&#x60;)&#x22;    #  - &#x22;traefik.http.middlewares.vaultwarden-https-redirect.redirectscheme.scheme=https&#x22;    #  - &#x22;traefik.http.routers.vaultwarden.middlewares=vaultwarden-https-redirect&#x22;    #  - &#x22;traefik.http.routers.vaultwarden-secure.entrypoints=websecure&#x22;    #  - &#x22;traefik.http.routers.vaultwarden-secure.rule=Host(&#x60;vaultwarden.domain.ru&#x60;)&#x22;    #  - &#x22;traefik.http.routers.vaultwarden-secure.tls=true&#x22;    #  - &#x22;traefik.http.routers.vaultwarden-secure.service=vaultwarden&#x22;    #  - &#x22;traefik.http.services.vaultwarden.loadbalancer.server.port=80&#x22;    #  - &#x22;traefik.docker.network=proxy&#x22;    security_opt:      - no-new-privileges:truenetworks:  vaultwarden:    external: true"><div></div></button></div></figure></div>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Совет</span></div>
+<div class="phl-callout-content">
+<p>В этой версии контейнер публикует порт <code>18083:80</code> напрямую, а Traefik-лейблы закомментированы. Так удобно, если реверс-прокси настроен отдельно (например, через отдельный файл конфигурации Traefik, а не через Docker-лейблы) или проброс идет через другой прокси. Если вы используете лейблы, как в базовом варианте выше - раскомментируйте блок и уберите публикацию порта наружу, оставив ее только для внутренней сети.</p>
+</div>
+</div>
+<h4 id="env-файл">.env-файл</h4>
+<p>Секреты и то, что часто меняется между окружениями, выносим в <code>.env</code> рядом с <code>docker-compose.yml</code>:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">dotenv</span></figcaption><pre data-language="dotenv"><code><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_ADMIN_TOKEN</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">'&#x3C;захэшированный токен в одинарных кавычках, см. раздел выше>'</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Временные настройки для первой регистрации</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_SIGNUPS_ALLOWED</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">false</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_SIGNUPS_VERIFY</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">true</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_INVITATIONS_ALLOWED</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">true</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Почта для уведомлений</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_EMAIL__HOST</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">smtp.gmail.com</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_EMAIL__PORT</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#005CC5;--1:#79B8FF">465</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_EMAIL__USERNAME</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">&#x3C;ваш email/логин SMTP></span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_EMAIL__PASSWORD</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">"&#x3C;пароль приложения>"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_EMAIL__SECURITY</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">force_tls  </span><span style="--0:#616972;--1:#99A0A6"># варианты: starttls, force_tls, off</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># SSO (Authentik)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_SSO_CLIENT_ID</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">&#x3C;client id из Authentik></span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_SSO_CLIENT_SECRET</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">&#x3C;client secret из Authentik></span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Push-уведомления</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_PUSH_INSTALLATION_ID</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">&#x3C;installation id с bitwarden.com/host></span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_PUSH_INSTALLATION_KEY</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">&#x3C;installation key с bitwarden.com/host></span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Локаль</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_TZ</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">Europe/Moscow</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># Базовый URL (для корректной работы подтверждения email и SSO redirect)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#AE4B07;--1:#FFAB70">VAULTWARDEN_BASE_URL</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">https://vaultwarden.domain.ru</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="VAULTWARDEN_ADMIN_TOKEN=&#x27;<захэшированный токен в одинарных кавычках, см. раздел выше>&#x27;# Временные настройки для первой регистрацииVAULTWARDEN_SIGNUPS_ALLOWED=falseVAULTWARDEN_SIGNUPS_VERIFY=trueVAULTWARDEN_INVITATIONS_ALLOWED=true# Почта для уведомленийVAULTWARDEN_EMAIL__HOST=smtp.gmail.comVAULTWARDEN_EMAIL__PORT=465VAULTWARDEN_EMAIL__USERNAME=<ваш email/логин SMTP>VAULTWARDEN_EMAIL__PASSWORD=&#x22;<пароль приложения>&#x22;VAULTWARDEN_EMAIL__SECURITY=force_tls  # варианты: starttls, force_tls, off# SSO (Authentik)VAULTWARDEN_SSO_CLIENT_ID=<client id из Authentik>VAULTWARDEN_SSO_CLIENT_SECRET=<client secret из Authentik># Push-уведомленияVAULTWARDEN_PUSH_INSTALLATION_ID=<installation id с bitwarden.com/host>VAULTWARDEN_PUSH_INSTALLATION_KEY=<installation key с bitwarden.com/host># ЛокальVAULTWARDEN_TZ=Europe/Moscow# Базовый URL (для корректной работы подтверждения email и SSO redirect)VAULTWARDEN_BASE_URL=https://vaultwarden.domain.ru"><div></div></button></div></figure></div>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Внимание</span></div>
+<div class="phl-callout-content">
+<p><code>.env</code> содержит пароли и секреты в открытом виде на диске. Обязательно добавьте его в <code>.gitignore</code>, если храните compose-файлы в git-репозитории, и ограничьте права на файл (<code>chmod 600 .env</code>).</p>
+</div>
+</div>
+<h5 id="что-изменилось-по-сравнению-с-базовым-вариантом">Что изменилось по сравнению с базовым вариантом</h5>
+<table>
+<thead>
+<tr>
+<th>Параметр</th>
+<th>Зачем</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ROCKET_WORKERS=10</code></td>
+<td>Количество воркер-потоков, обрабатывающих запросы. По умолчанию значение скромное; для сервера с несколькими активными пользователями/организациями имеет смысл увеличить.</td>
+</tr>
+<tr>
+<td><code>LOG_LEVEL=error</code> + <code>EXTENDED_LOGGING=true</code></td>
+<td>Пишем в лог только ошибки, но с расширенным форматом (таймстемпы, модуль) - удобно для отладки, не засоряя логи лишним.</td>
+</tr>
+<tr>
+<td><code>/data/logs</code> отдельным томом</td>
+<td>Логи пишутся в файл, а не только в stdout контейнера - удобно забирать их, например, в Promtail/Alloy для стека мониторинга.</td>
+</tr>
+<tr>
+<td><code>SIGNUPS_VERIFY=true</code></td>
+<td>При регистрации требуется подтвердить email - актуально, когда <code>INVITATIONS_ALLOWED=true</code> и вы приглашаете людей напрямую.</td>
+</tr>
+<tr>
+<td><code>SMTP_*</code></td>
+<td>Почта для приглашений, подтверждений и уведомлений.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="настройка-sso-через-authentik">Настройка SSO через Authentik</h4>
+<p>Vaultwarden поддерживает вход через OpenID Connect - можно завести Authentik, Keycloak, Authelia или любой другой OIDC-совместимый провайдер. Общая логика одинакова, ниже - на примере Authentik.</p>
+<h5 id="scope-с-подтвержденной-почтой">Scope с подтвержденной почтой</h5>
+<p>Vaultwarden связывает вход через SSO с аккаунтом по почте и ждет от провайдера <code>email_verified: true</code>. Для этого в Authentik создаем свой scope, как описано в документации Authentik по интеграции с Vaultwarden.</p>
+<p><img alt="Документация Authentik: custom scope mapping для Vaultwarden" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-authentik-docs-scope.U2b-5X_Z_1D8lmS.webp"></p>
+<p><strong>Customization - Property Mappings - Create - Scope Mapping</strong>:</p>
+<ul>
+<li><strong>Name</strong>: понятное имя, например <code>Vaultwarden Email Scope</code>;</li>
+<li><strong>Scope name</strong>: <code>email</code> - это имя потом стоит в <code>SSO_SCOPES</code>;</li>
+<li><strong>Expression</strong>:</li>
+</ul>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">python</span></figcaption><pre data-language="python"><code><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">return</span><span style="--0:#24292E;--1:#E1E4E8"> {</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#032F62;--1:#9ECBFF">"email"</span><span style="--0:#24292E;--1:#E1E4E8">: request.user.email,</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#032F62;--1:#9ECBFF">"email_verified"</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#005CC5;--1:#79B8FF">True</span><span style="--0:#24292E;--1:#E1E4E8">,</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="return {    &#x22;email&#x22;: request.user.email,    &#x22;email_verified&#x22;: True,}"><div></div></button></div></figure></div>
+<p><img alt="Создание Scope Mapping в Authentik" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-authentik-scope-mapping._BvspeLt_npEiB.webp"></p>
+<h5 id="application-и-провайдер">Application и провайдер</h5>
+<ol>
+<li><strong>Applications - Applications - Create With Provider.</strong> Имя <code>Vaultwarden</code>, slug формируется автоматически (<code>vaultwarden</code>, отсюда и <code>SSO_AUTHORITY=.../application/o/vaultwarden/</code>). <strong>Launch URL</strong> лучше прописать руками - адрес вашего Vaultwarden.</li>
+<li><strong>Provider</strong> - тип <strong>OAuth2/OpenID Provider</strong>. <strong>Authorization flow</strong>: <code>default-provider-authorization-explicit-consent</code> - Authentik будет явно спрашивать разрешение на вход в приложение. <strong>Client type</strong>: <code>Confidential</code>.</li>
+<li><strong>Redirect URIs</strong> - режим <code>Strict</code>, тип <code>Authorization</code>, адрес вида <code>https://vault.stilicho.ru/identity/connect/oidc-signin</code> (домен Vaultwarden плюс этот путь).</li>
+</ol>
+<p><img alt="Redirect URI в провайдере Authentik" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-authentik-redirect-uri.C2-6VgUU_Z2b8Rcz.webp"></p>
+<ol start="4">
+<li><strong>Advanced protocol settings - Access Token Validity</strong>: по умолчанию <code>minutes=5</code>. С таким маленьким значением вход через SSO работает плохо - ставьте <strong>10-15 минут</strong>, но не меньше 10.</li>
+</ol>
+<p><img alt="Access Token Validity: увеличиваем с 5 до 10-15 минут" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-authentik-token-validity.COMJ5zhl_RDeWd.webp"></p>
+<ol start="5">
+<li><strong>Scopes - Selected Scopes</strong>: убираем стандартный <code>authentik default OAuth Mapping: OpenID 'email'</code>, добавляем свой <code>Vaultwarden Email Scope</code> и <strong>обязательно <code>offline_access</code></strong>. Без <code>offline_access</code> Vaultwarden не получит refresh-токен, и вас будет выкидывать.</li>
+</ol>
+<p><img alt="Selected Scopes: свой email scope и offline_access" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-authentik-scopes.BxDkpKfm_Z2pmKjh.webp"></p>
+<ol start="6">
+<li><strong>Bindings</strong> - при желании ограничьте, каким пользователям и группам Authentik разрешен вход в приложение.</li>
+<li>Скопируйте <strong>Client ID</strong> и <strong>Client Secret</strong> - они идут в <code>VAULTWARDEN_SSO_CLIENT_ID</code> и <code>VAULTWARDEN_SSO_CLIENT_SECRET</code>. Их всегда можно посмотреть заново в настройках провайдера.</li>
+</ol>
+<h5 id="переменные-sso">Переменные SSO</h5>
+<p>Блок из видео - добавляется в <code>environment</code> базового compose:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Включаем вход через OIDC-провайдера.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_ENABLED=true</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Адрес issuer провайдера Authentik для приложения vaultwarden.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_AUTHORITY=https://authentik.stilicho.ru/application/o/vaultwarden/</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Идентификатор OIDC-клиента из .env.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_CLIENT_ID=${VAULTWARDEN_SSO_CLIENT_ID}</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Секрет OIDC-клиента из .env.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_CLIENT_SECRET=${VAULTWARDEN_SSO_CLIENT_SECRET}</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Запрашиваем идентификацию, почту, профиль и обновление токенов через offline_access.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_SCOPES=openid email profile offline_access</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Разрешаем связать SSO с существующим аккаунтом по совпадающей почте.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_SIGNUPS_MATCH_EMAIL=true</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Не принимаем неизвестный статус подтверждения почты от провайдера.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_ALLOW_UNKNOWN_EMAIL_VERIFICATION=false</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Запрещаем создание новых аккаунтов через SSO, независимо от обычной регистрации.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_SIGNUPS_ALLOWED=false</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Оставляем обычный вход по почте и мастер-паролю наряду с SSO.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">SSO_ONLY=false</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="      # Включаем вход через OIDC-провайдера.      - SSO_ENABLED=true      # Адрес issuer провайдера Authentik для приложения vaultwarden.      - SSO_AUTHORITY=https://authentik.stilicho.ru/application/o/vaultwarden/      # Идентификатор OIDC-клиента из .env.      - SSO_CLIENT_ID=${VAULTWARDEN_SSO_CLIENT_ID}      # Секрет OIDC-клиента из .env.      - SSO_CLIENT_SECRET=${VAULTWARDEN_SSO_CLIENT_SECRET}      # Запрашиваем идентификацию, почту, профиль и обновление токенов через offline_access.      - SSO_SCOPES=openid email profile offline_access      # Разрешаем связать SSO с существующим аккаунтом по совпадающей почте.      - SSO_SIGNUPS_MATCH_EMAIL=true      # Не принимаем неизвестный статус подтверждения почты от провайдера.      - SSO_ALLOW_UNKNOWN_EMAIL_VERIFICATION=false      # Запрещаем создание новых аккаунтов через SSO, независимо от обычной регистрации.      - SSO_SIGNUPS_ALLOWED=false      # Оставляем обычный вход по почте и мастер-паролю наряду с SSO.      - SSO_ONLY=false"><div></div></button></div></figure></div>
+<p><img alt="SSO_AUTHORITY: слэш в конце обязателен" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-compose-sso.C4yw1sdy_Z1lnvpO.webp"></p>
+<ul>
+<li><strong>Слэш в конце <code>SSO_AUTHORITY</code> для Authentik обязателен</strong> - адрес должен буква в букву совпадать с issuer провайдера. Vaultwarden сам подтянет <code>.well-known/openid-configuration</code>.</li>
+<li><strong><code>SSO_SCOPES</code> - без кавычек.</strong> В списочной записи <code>environment</code> кавычки становятся частью значения, и SSO молча перестает работать.</li>
+<li><strong><code>SSO_SIGNUPS_MATCH_EMAIL=true</code></strong> - если у пользователя уже есть аккаунт в Vaultwarden, первый вход через SSO привяжется к нему по email, а не создаст дубликат. Поэтому доверяем только своему провайдеру с подтвержденными адресами и оставляем <code>SSO_ALLOW_UNKNOWN_EMAIL_VERIFICATION=false</code> - не отключайте эту проверку просто ради того, чтобы убрать ошибку входа.</li>
+<li><strong><code>SSO_SIGNUPS_ALLOWED=false</code></strong> отдельно закрывает создание аккаунтов через SSO: обычная регистрация и регистрация через SSO - разные настройки, закрыть нужно обе.</li>
+<li><strong><code>SSO_ONLY</code></strong> оставляйте <code>false</code>, пока не убедитесь, что вход через SSO точно работает - иначе рискуете остаться без доступа, если что-то пойдет не так на стороне провайдера.</li>
+</ul>
+<p>Применяем: <code>docker compose up -d --force-recreate</code>, смотрим логи.</p>
+<h5 id="проверка-входа">Проверка входа</h5>
+<p>Проверяйте в приватном окне: в обычном браузер уже помнит вашу сессию Authentik. На странице входа появилась кнопка <strong>«Использовать единый вход»</strong> - нажимаем, вводим почту, логинимся в Authentik и подтверждаем доступ.</p>
+<p><img alt="Кнопка единого входа на странице Vaultwarden" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-sso-login.DY12A5g9_Gj7lj.webp"></p>
+<p>После этого Vaultwarden <strong>все равно спрашивает мастер-пароль</strong> - так и должно быть. Authentik подтверждает, кто вы, а хранилище расшифровывается отдельно: доступ к Authentik сам по себе не дает ключ от сейфа. Но защищать провайдер все равно нужно - это важная часть цепочки входа.</p>
+<div class="phl-callout" data-callout="important">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Важно</span></div>
+<div class="phl-callout-content">
+<p>После первого успешного входа через SSO проверьте вход и по обычному мастер-паролю (если <code>SSO_ONLY=false</code>) - это ваш «запасной выход», если Authentik станет недоступен. Защитите его 2FA самого хранилища: ограничения на стороне Authentik этот обычный вход не защищают.</p>
+</div>
+</div>
+<h4 id="push-уведомления">Push-уведомления</h4>
+<p><code>PUSH_ENABLED</code> включает push-уведомления на мобильных клиентах Bitwarden: добавили запись на компьютере - приложение получает уведомление и подтягивает обновление, обычно за несколько секунд (зависит от сети и ограничений фоновой работы телефона). Ручная синхронизация работает и без push.</p>
+<p>Для этого нужны <code>PUSH_INSTALLATION_ID</code> и <code>PUSH_INSTALLATION_KEY</code> - их бесплатно выдают на <a href="https://bitwarden.com/host">bitwarden.com/host</a> после регистрации self-hosted инсталляции: вводим почту админа, выбираем <strong>регион</strong> (US или EU) и получаем Installation ID и Key.</p>
+<p><img alt="Получение Installation ID и Key на bitwarden.com/host" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-bitwarden-host.DLzXZt-O_TkIgp.webp"></p>
+<p>Блок из видео - добавляется в <code>environment</code> базового compose, ключи в <code>.env</code>:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Включаем мобильные push-уведомления через инфраструктуру Bitwarden.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_ENABLED=true</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Installation ID с bitwarden.com/host подставляется из .env.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_INSTALLATION_ID=${VAULTWARDEN_PUSH_INSTALLATION_ID}</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Секретный Installation Key из .env.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_INSTALLATION_KEY=${VAULTWARDEN_PUSH_INSTALLATION_KEY}</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Адрес push-релея для ключей региона EU.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_RELAY_URI=https://api.bitwarden.eu</span></div></div><div class="ec-line"><div class="code"><span class="indent">      </span><span style="--0:#616972;--1:#99A0A6"># Адрес сервиса авторизации Bitwarden в том же регионе EU.</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292E;--1:#E1E4E8">      </span></span><span style="--0:#24292E;--1:#E1E4E8">- </span><span style="--0:#032F62;--1:#9ECBFF">PUSH_IDENTITY_URI=https://identity.bitwarden.eu</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="      # Включаем мобильные push-уведомления через инфраструктуру Bitwarden.      - PUSH_ENABLED=true      # Installation ID с bitwarden.com/host подставляется из .env.      - PUSH_INSTALLATION_ID=${VAULTWARDEN_PUSH_INSTALLATION_ID}      # Секретный Installation Key из .env.      - PUSH_INSTALLATION_KEY=${VAULTWARDEN_PUSH_INSTALLATION_KEY}      # Адрес push-релея для ключей региона EU.      - PUSH_RELAY_URI=https://api.bitwarden.eu      # Адрес сервиса авторизации Bitwarden в том же регионе EU.      - PUSH_IDENTITY_URI=https://identity.bitwarden.eu"><div></div></button></div></figure></div>
+<p><img alt="Push-переменные в docker-compose.yml" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-compose-push.C9wLj9I2_Z2vgo1z.webp"></p>
+<p><strong>Регион ключей и релея должен совпадать.</strong> <code>PUSH_RELAY_URI</code>/<code>PUSH_IDENTITY_URI</code> в примере указывают на европейский релей (<code>api.bitwarden.eu</code> / <code>identity.bitwarden.eu</code>) - ключи для него получаем с выбором региона EU. Для ключей региона US эти две строки можно убрать: по умолчанию используются <code>api.bitwarden.com</code> / <code>identity.bitwarden.com</code>.</p>
+<p>Сборка Bitwarden для Android из F-Droid может не поддерживать этот механизм push. И это не полная независимость от облака: релей передает только сигнал об изменении, сами данные клиент синхронизирует с вашим сервером, но в доставке уведомлений участвует внешняя инфраструктура.</p>
+<hr>
+<h3 id="пользовательские-настройки-user-settings">Пользовательские настройки (User Settings)</h3>
+<p>Пользовательские настройки - то, что видит обычный пользователь Vaultwarden после входа в веб-интерфейс (Web Vault) по адресу <code>https://vaultwarden.&#x3C;ваш-домен>.ru</code>.</p>
+<p>Разберем раздел <strong>Vaults</strong> - «сердце» всей системы, где хранятся и управляются пароли, токены, заметки и другие секреты.</p>
+<p>💡 Чтобы не путать:</p>
+<ul>
+<li><strong>Vaults</strong> - личное хранилище (и общие через Organizations).</li>
+<li><strong>Settings</strong> - настройки поведения хранилища.</li>
+<li><strong>Admin Panel</strong> (<code>/admin</code>) - серверные параметры.</li>
+</ul>
+<h4 id="основная-структура">Основная структура</h4>
+<h5 id="1-items-элементы-хранилища">1. Items (элементы хранилища)</h5>
+<table>
+<thead>
+<tr>
+<th>Тип</th>
+<th>Назначение</th>
+<th>Пример</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Login</strong></td>
+<td>Логин + пароль + URL</td>
+<td>Сайт GitHub, SSH-панель, Grafana</td>
+</tr>
+<tr>
+<td><strong>Card</strong></td>
+<td>Данные банковской карты</td>
+<td>Visa, MasterCard</td>
+</tr>
+<tr>
+<td><strong>Identity</strong></td>
+<td>Личные данные</td>
+<td>ФИО, адрес, email</td>
+</tr>
+<tr>
+<td><strong>Secure Note</strong></td>
+<td>Произвольный текст</td>
+<td>Токен API, конфиг</td>
+</tr>
+<tr>
+<td><strong>SSH Key</strong></td>
+<td>SSH-ключ</td>
+<td>Ключ для серверов, десктопный клиент работает как SSH-агент</td>
+</tr>
+</tbody>
+</table>
+<p>Каждый элемент содержит имя, тип, поля (username, password, URL и пр.), при желании - TOTP-код, вложения, заметки, привязку к Organization/Collection.</p>
+<h5 id="2-collections">2. Collections</h5>
+<p>Если вы участвуете в Organization, в левой панели появится список Collections - общих папок с записями, доступными группе пользователей. Без организации эти секции не отображаются.</p>
+<h5 id="3-навигационные-вкладки">3. Навигационные вкладки</h5>
+<table>
+<thead>
+<tr>
+<th>Вкладка</th>
+<th>Назначение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>All Items</strong></td>
+<td>Все записи, личные и общие</td>
+</tr>
+<tr>
+<td><strong>Favorites</strong></td>
+<td>Отмеченные «звездочкой» элементы</td>
+</tr>
+<tr>
+<td><strong>Folders</strong></td>
+<td>Личные папки (только для структуры пользователя)</td>
+</tr>
+<tr>
+<td><strong>Trash</strong></td>
+<td>Удаленные записи, которые можно восстановить</td>
+</tr>
+<tr>
+<td><strong>Organizations</strong></td>
+<td>Доступ к общим хранилищам</td>
+</tr>
+</tbody>
+</table>
+<h5 id="4-добавление-новых-записей">4. Добавление новых записей</h5>
+<p>Кнопка <strong>+ New Item</strong> открывает форму создания записи. Доступны «Generate password» (встроенный генератор), «Add TOTP» (одноразовый 2FA-код), «Attach file» (вложения).</p>
+<h5 id="5-поиск-и-фильтрация">5. Поиск и фильтрация</h5>
+<p>Поиск по названию, имени пользователя, домену, заметкам - выполняется локально, данные не передаются серверу в открытом виде. Фильтры: по типу элемента, по организации/коллекции, по меткам.</p>
+<h5 id="6-папки-folders">6. Папки (Folders)</h5>
+<p>Личная логическая структура, не связанная с организациями. Данные в папке не передаются другим пользователям, даже если у них та же организация.</p>
+<h5 id="7-trash-корзина">7. Trash (Корзина)</h5>
+<p>Удаленные записи не исчезают сразу - попадают в корзину, откуда их можно восстановить или удалить навсегда.</p>
+<h5 id="8-context-menu-записи">8. Context menu записи</h5>
+<p>View, Edit, Clone, Move to Folder/Collection, Add Favorite, Delete.</p>
+<h5 id="9-password-generator">9. Password Generator</h5>
+<p>Генерация пароля нужной длины и сложности (буквы, цифры, символы, исключение похожих знаков) - доступен прямо из Vault.</p>
+<hr>
+<h3 id="резервное-копирование">Резервное копирование</h3>
+<p>В интернете можно часто встретить вопрос, как именно бэкапить Vaultwarden. Менеджер паролей без бэкапа - бомба с таймером: умер диск, и вы не можете войти никуда.</p>
+<p>Для SQLite можно сделать консистентную копию самой базы без остановки сервиса через <code>sqlite3 .backup</code>. Но это еще не весь бэкап: отдельно нужны вложения, Send, <code>config.json</code>, ключи сервера (<code>rsa_key*</code>), а без <code>docker-compose.yml</code> и <code>.env</code> восстановить ту же установку сложнее. Для небольшого домашнего сервера самый понятный вариант полной копии - короткая остановка контейнера и архив всего каталога данных вместе с настройками запуска:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#005CC5;--1:#79B8FF">cd</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">~/vaultwarden</span></div></div><div class="ec-line"><div class="code"><span style="--0:#005CC5;--1:#79B8FF">umask</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">077</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">mkdir</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-p</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">~/backups/vaultwarden</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292E;--1:#E1E4E8">backup</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$HOME</span><span style="--0:#032F62;--1:#9ECBFF">/backups/vaultwarden/vaultwarden-$(</span><span style="--0:#6F42C1;--1:#B392F0">date</span><span style="--0:#032F62;--1:#9ECBFF"> +%F-%H%M%S).tar.gz"</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">stop</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">if</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">tar</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-czf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$backup</span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">data</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">docker-compose.yml</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">.env</span><span style="--0:#24292E;--1:#E1E4E8">; </span><span style="--0:#BF3441;--1:#F97583">then</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">up</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">tar</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-tzf</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8">$backup</span><span style="--0:#032F62;--1:#9ECBFF">"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">></span><span style="--0:#032F62;--1:#9ECBFF">/dev/null</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">else</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#6F42C1;--1:#B392F0">docker</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">up</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">vaultwarden</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#005CC5;--1:#79B8FF">echo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">"Ошибка резервного копирования"</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">>&#x26;2</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#005CC5;--1:#79B8FF">exit</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">1</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">fi</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cd ~/vaultwardenumask 077mkdir -p ~/backups/vaultwardenbackup=&#x22;$HOME/backups/vaultwarden/vaultwarden-$(date +%F-%H%M%S).tar.gz&#x22;docker compose stop vaultwardenif sudo tar -czf &#x22;$backup&#x22; data docker-compose.yml .env; then  docker compose up -d vaultwarden  sudo tar -tzf &#x22;$backup&#x22; >/dev/nullelse  docker compose up -d vaultwarden  echo &#x22;Ошибка резервного копирования&#x22; >&#x26;2  exit 1fi"><div></div></button></div></figure></div>
+<p>Повесьте это на cron (например, раз в сутки), оформив скриптом с абсолютными путями, проверкой ошибок и контролем свободного места. Старые копии этот пример не удаляет - ротацию добавьте сами.</p>
+<p><img alt="Сервер, NAS и внешнее хранилище" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-backups._dMsP64Q_1HI0gQ.webp"></p>
+<ul>
+<li><strong>Архив содержит все секреты и не зашифрован.</strong> Бэкап должен уезжать с сервера - на NAS, в другое место, в облако - и перед отправкой обязательно шифруется. Для этого подойдут <a href="https://prohomelab.com/posts/duplicati/">Duplicati</a> или <a href="https://prohomelab.com/posts/zerobyte/">Zerobyte</a>.</li>
+<li><strong>Пароль от бэкапа и коды восстановления 2FA храните вне Vaultwarden</strong> - так, чтобы добраться до них, когда сервер недоступен.</li>
+<li><strong>Обязательно проверьте, что бэкапы реально восстанавливаются</strong> - «бэкап, который никогда не разворачивали», как известно, это просто файл, занимающий место. Разверните архив в отдельную папку и отдельный проект с той же версией образа, не подключая к рабочему домену и Traefik, не используя тот же <code>container_name</code> и не перезаписывая рабочий <code>data</code>. Откройте хранилище, проверьте вход, несколько записей и вложения.</li>
+</ul>
+<p>Если используете PostgreSQL/MySQL - соответственно <code>pg_dump</code>/<code>mysqldump</code> вместо копирования файла SQLite.</p>
+<h3 id="типичные-ошибки">Типичные ошибки</h3>
+<ul>
+<li><strong>Не совпадает <code>DOMAIN</code> с реальным HTTPS-адресом</strong> - это ломает подтверждение email и TOTP/2FA. Проверьте, что значение точно совпадает с тем, что видит браузер (включая протокол, без завершающего слэша).</li>
+<li><strong>В compose остались <code>WEBSOCKET_ENABLED</code> и <code>ROCKET_ENV</code> из старых гайдов</strong> - их можно удалить: WebSocket идет через основной HTTP-порт, отдельный порт 3012 больше не нужен.</li>
+<li><strong>SSO редиректит на ошибку</strong> - не совпадает redirect URI в настройках OIDC-провайдера с реальным адресом Vaultwarden, либо <code>SSO_AUTHORITY</code> не совпадает с issuer провайдера (для Authentik - нужен слэш в конце).</li>
+<li><strong>SSO молча не работает</strong> - <code>SSO_SCOPES</code> записан в кавычках внутри списочного <code>environment</code>.</li>
+<li><strong>После входа через SSO выкидывает</strong> - в провайдере не выбран scope <code>offline_access</code> или слишком маленький Access Token Validity (5 минут по умолчанию; ставьте 10-15).</li>
+<li><strong>Не приходят push-уведомления</strong> - устаревшие или неверные <code>PUSH_INSTALLATION_ID</code>/<code>PUSH_INSTALLATION_KEY</code>, либо выбран не тот регион релея (<code>.com</code> вместо <code>.eu</code> или наоборот).</li>
+<li><strong>Предупреждение про открытый ADMIN_TOKEN в логах</strong> - токен не захэширован, см. раздел про <code>vaultwarden hash --preset owasp</code>.</li>
+<li><strong>В логах вместо IP клиента адрес Traefik или Cloudflare</strong> - проверьте цепочку передачи IP: доверенные forwarded-заголовки на Traefik, а на Vaultwarden - <code>IP_HEADER</code> и <code>IP_HEADER_TRUSTED_PROXIES</code>. Доверять заголовкам от всех подряд нельзя: подмененный IP ломает ограничения входа и блокировки.</li>
+</ul>
+<h3 id="чек-лист-безопасности">Чек-лист безопасности</h3>
+<p><img alt="Чек-лист безопасности Vaultwarden" loading="lazy" decoding="async" width="1920" height="1080" src="/_astro/vw26-checklist.D0LjnzYB_ovBUI.webp"></p>
+<ul>
+<li>Регистрация выключена (<code>SIGNUPS_ALLOWED=false</code>, при SSO - и <code>SSO_SIGNUPS_ALLOWED=false</code>).</li>
+<li>Токен админки захэширован.</li>
+<li>2FA включена на вашем аккаунте - TOTP, passkey или аппаратный ключ; код восстановления лежит вне этого хранилища.</li>
+<li>Сервер обновляется: подписка на релизы на GitHub, Diun или Komodo сообщат о новой версии.</li>
+<li>Клиенты на телефоне и в браузере тоже свежие.</li>
+<li>Админка <code>/admin</code> ограничена на прокси: доступ только из доверенной сети или через VPN. CrowdSec можно добавить как дополнительную защиту, но он не заменяет ограничение доступа.</li>
+<li>Если включен SSO, создание аккаунтов через него закрыто, а обычный резервный вход проверен и защищен 2FA.</li>
+<li>Бэкап есть, и вы проверили, что он восстанавливается.</li>
+</ul>
+<h3 id="faq">FAQ</h3>
+<p><strong>Можно ли использовать Vaultwarden без своего домена?</strong>
+Технически да (по IP), но Web Vault требует защищенного контекста (HTTPS) для Web Crypto API, а без домена сложнее получить нормальный TLS-сертификат. По факту - без реального домена система не взлетит.</p>
+<p><strong>Обязательно ли использовать SSO?</strong>
+Нет, это опциональная надстройка. Обычная регистрация с мастер-паролем работает и без него. Более того, использование SSO не отключает встроенную аутентификацию, а мастер-пароль для расшифровки хранилища нужен в любом случае.</p>
+<p><strong>Можно ли перенести данные из Bitwarden Cloud?</strong>
+Да - экспортируете хранилище из Bitwarden Cloud (Settings → Export Vault) и импортируете в свежесозданный аккаунт на Vaultwarden.</p>
+<p><strong>Что делать, если забыл ADMIN_TOKEN?</strong>
+Сгенерировать новый через <code>vaultwarden hash --preset owasp</code> и обновить <code>.env</code>/переменную окружения, затем пересоздать контейнер (<code>docker compose up -d</code>). К пользовательским данным это отношения не имеет.</p>
+<h3 id="итого">Итого</h3>
+<table>
+<thead>
+<tr>
+<th>Раздел / Элемент</th>
+<th>Назначение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>All Items</strong></td>
+<td>Все записи пользователя</td>
+</tr>
+<tr>
+<td><strong>Folders</strong></td>
+<td>Личные категории</td>
+</tr>
+<tr>
+<td><strong>Collections</strong></td>
+<td>Общие категории (в организациях)</td>
+</tr>
+<tr>
+<td><strong>Trash</strong></td>
+<td>Корзина</td>
+</tr>
+<tr>
+<td><strong>Add Item</strong></td>
+<td>Добавление логина / заметки / карты</td>
+</tr>
+<tr>
+<td><strong>Search</strong></td>
+<td>Поиск по Vault</td>
+</tr>
+<tr>
+<td><strong>Password Generator</strong></td>
+<td>Создание надежных паролей</td>
+</tr>
+<tr>
+<td><strong>SSO</strong></td>
+<td>Единый вход через внешний identity provider</td>
+</tr>
+<tr>
+<td><strong>Push</strong></td>
+<td>Мгновенные push-уведомления на мобильных клиентах</td>
+</tr>
+</tbody>
+</table>
+<p>К сожалению, в одной статье невозможно описать все возможности этого замечательного приложения, поэтому подробнее обо всех настройках можно почитать в <a href="https://github.com/dani-garcia/vaultwarden/wiki">официальной документации Vaultwarden</a>: <a href="https://github.com/dani-garcia/vaultwarden/blob/1.37.5/.env.template">все настройки 1.37.5</a>, <a href="https://github.com/dani-garcia/vaultwarden/wiki/Enabling-SSO-support-using-OpenId-Connect">SSO через OpenID Connect</a>, <a href="https://github.com/dani-garcia/vaultwarden/wiki/Enabling-Mobile-Client-push-notification">push-уведомления</a>, <a href="https://github.com/dani-garcia/vaultwarden/wiki/Backing-up-your-vault">резервное копирование</a>.</p><!--phl-feed-end--></div><footer class="phl-article-footer"><p class="phl-article-terms"><a class="phl-term-cat" href="/categories/vaultwarden/">Vaultwarden</a><a href="/tags/vaultwarden/">#Vaultwarden</a><a href="/tags/docker/">#Docker</a><a href="/tags/self-hosting/">#Self-Hosting</a><a href="/tags/sso/">#SSO</a></p><p class="phl-license">Лицензия: CC BY 4.0</p><div class="phl-share"><span class="phl-share-label">Поделиться</span><a href="https://t.me/share/url?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fvaultwarden%2F&amp;text=Vaultwarden%20-%20%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0%20%D0%BD%D0%B0%20%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D0%B5%2C%20%D0%B0%D0%BB%D1%8C%D1%82%D0%B5%D1%80%D0%BD%D0%B0%D1%82%D0%B8%D0%B2%D0%B0%20Bitwarden" target="_blank" rel="noopener noreferrer" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://x.com/intent/post?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fvaultwarden%2F&amp;text=Vaultwarden%20-%20%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0%20%D0%BD%D0%B0%20%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D0%B5%2C%20%D0%B0%D0%BB%D1%8C%D1%82%D0%B5%D1%80%D0%BD%D0%B0%D1%82%D0%B8%D0%B2%D0%B0%20Bitwarden" target="_blank" rel="noopener noreferrer" aria-label="X" title="X" style="--phl-brand-l:#000000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M14.234 10.162L22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299l-.929-1.329L3.076 1.56h3.182l5.965 8.532l.929 1.329l7.754 11.09h-3.182z"/></svg></a><a href="https://www.reddit.com/submit?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fvaultwarden%2F&amp;title=Vaultwarden%20-%20%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0%20%D0%BD%D0%B0%20%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D0%B5%2C%20%D0%B0%D0%BB%D1%8C%D1%82%D0%B5%D1%80%D0%BD%D0%B0%D1%82%D0%B8%D0%B2%D0%B0%20Bitwarden" target="_blank" rel="noopener noreferrer" aria-label="Reddit" title="Reddit" style="--phl-brand-l:#ff4500;--phl-brand-d:#ff4500" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 0C5.373 0 0 5.373 0 12c0 3.314 1.343 6.314 3.515 8.485l-2.286 2.286A.72.72 0 0 0 1.738 24H12c6.627 0 12-5.373 12-12S18.627 0 12 0m4.388 3.199a1.999 1.999 0 1 1-1.947 2.46v.002a2.37 2.37 0 0 0-2.032 2.341v.007c1.776.067 3.4.567 4.686 1.363a2.802 2.802 0 1 1 2.908 4.753c-.088 3.256-3.637 5.876-7.997 5.876c-4.361 0-7.905-2.617-7.998-5.87a2.8 2.8 0 0 1 1.189-5.34c.645 0 1.239.218 1.712.585c1.275-.79 2.881-1.291 4.64-1.365v-.01a3.23 3.23 0 0 1 2.88-3.207a2 2 0 0 1 1.959-1.595m-8.085 8.376c-.784 0-1.459.78-1.506 1.797s.64 1.429 1.426 1.429s1.371-.369 1.418-1.385s-.553-1.841-1.338-1.841m7.406 0c-.786 0-1.385.824-1.338 1.841s.634 1.385 1.418 1.385c.785 0 1.473-.413 1.426-1.429c-.046-1.017-.721-1.797-1.506-1.797m-3.703 4.013c-.974 0-1.907.048-2.77.135a.222.222 0 0 0-.183.305a3.2 3.2 0 0 0 2.953 1.964a3.2 3.2 0 0 0 2.953-1.964a.222.222 0 0 0-.184-.305a28 28 0 0 0-2.769-.135"/></svg></a><a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fprohomelab.com%2Fposts%2Fvaultwarden%2F" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" title="LinkedIn" style="--phl-brand-l:#0a66c2;--phl-brand-d:#0b73da" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037c-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85c3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.06 2.06 0 0 1-2.063-2.065a2.064 2.064 0 1 1 2.063 2.065m1.782 13.019H3.555V9h3.564zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z"/></svg></a><a href="mailto:?subject=Vaultwarden%20-%20%D1%83%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BA%D0%B0%20%D0%BD%D0%B0%20%D1%81%D0%B5%D1%80%D0%B2%D0%B5%D1%80%D0%B5%2C%20%D0%B0%D0%BB%D1%8C%D1%82%D0%B5%D1%80%D0%BD%D0%B0%D1%82%D0%B8%D0%B2%D0%B0%20Bitwarden&amp;body=https%3A%2F%2Fprohomelab.com%2Fposts%2Fvaultwarden%2F" rel="noopener noreferrer" aria-label="Email" title="Email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a></div><section class="phl-author-box"><h2>Автор</h2><div class="phl-author"><img class="phl-author-image" src="/avatar-stilicho2011.webp" alt="" width="64" height="64" loading="lazy"><div class="phl-author-body"><p class="phl-author-name"><a href="/authors/stilicho2011/">Stilicho2011</a></p><p class="phl-author-bio">Пишу о homelab, self-hosting, автоматизации и open-source решениях</p><p class="phl-author-links"><a href="mailto:pavel@prohomelab.com" rel="me noopener" aria-label="email" title="email"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="m22 7l-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect width="20" height="16" x="2" y="4" rx="2"/></g></svg></a><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener" target="_blank" aria-label="github" title="github" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a><a href="https://t.me/stilicho2011_videos" rel="me noopener" target="_blank" aria-label="telegram" title="telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a><a href="https://www.youtube.com/@prohomelab" rel="me noopener" target="_blank" aria-label="youtube" title="youtube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a><a href="https://boosty.to/stilicho2011" rel="me noopener" target="_blank" aria-label="boosty" title="boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></p></div></div></section></footer><nav class="phl-prevnext" aria-label="Предыдущая / Следующая"><a class="phl-prevnext-prev" href="/posts/mealie/" rel="prev"><span class="phl-prevnext-label">Предыдущая</span><span class="phl-prevnext-title">Mealie - self-hosted приложение для рецептов, планирования питания и списка покупок</span></a><a class="phl-prevnext-next" href="/posts/diun-docker-update-notifications/" rel="next"><span class="phl-prevnext-label">Следующая</span><span class="phl-prevnext-title">Diun - уведомления об обновлениях Docker-образов</span></a></nav><section class="phl-related"><h2>Похожие статьи</h2><div class="phl-cards"><article class="phl-card"><a class="phl-card-cover" href="/posts/authentik-overview-proxy-oidc/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.FM-hjN3Y_1z483g.webp" srcset="/_astro/featured.FM-hjN3Y_1Sq1QA.webp 320w, /_astro/featured.FM-hjN3Y_zkRyK.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">SSO</span><time datetime="2025-11-16T00:00:00.000Z">16 ноября 2025 г.</time><span class="phl-views">49 просмотров</span></p><h3 class="phl-card-title"><a href="/posts/authentik-overview-proxy-oidc/">OIDC, OAuth2 и Proxy Provider в Authentik - как защитить любое приложение</a></h3><p class="phl-card-summary">Подробно объясняем, как Proxy Provider в Authentik добавляет аутентификацию и SSO к любым приложениям. Простая схема потока, ключевые понятия и примеры использования.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/posts/authentik-setup/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured2.Cirzp2l__Z135jN5.webp" srcset="/_astro/featured2.Cirzp2l__1UOI1i.webp 320w, /_astro/featured2.Cirzp2l__2kap3G.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1344" height="768"></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">SSO</span><time datetime="2025-11-16T00:00:00.000Z">16 ноября 2025 г.</time><span class="phl-views">89 просмотров</span></p><h3 class="phl-card-title"><a href="/posts/authentik-setup/">Authentik - первая настройка после установки</a></h3><p class="phl-card-summary">Подробный обзор первичной настройки Authentik - open source системы для централизованной аутентификации и авторизации (IdP/SSO). Рассмотрим самые первые шаги по настройке Authentik.</p></div></article><article class="phl-card"><a class="phl-card-cover" href="/posts/authentik-password-recovery/" tabindex="-1" aria-hidden="true"><img src="/_astro/featured.D_BRxKk2_KykWc.webp" srcset="/_astro/featured.D_BRxKk2_HLRpn.webp 320w, /_astro/featured.D_BRxKk2_ZAigRs.webp 640w" alt sizes="(min-width: 640px) 240px, 100vw" loading="lazy" decoding="async" width="1536" height="1024"><span class="phl-card-play"></span></a><div class="phl-card-body"><p class="phl-card-meta"><span class="phl-card-cat">SSO</span><time datetime="2026-01-12T00:00:00.000Z">12 января 2026 г.</time><span class="phl-card-video">▶ видео</span><span class="phl-views">22 просмотра</span></p><h3 class="phl-card-title"><a href="/posts/authentik-password-recovery/">Настройка восстановления пароля в Authentik</a></h3><p class="phl-card-summary">Подробное руководство по настройке восстановления пароля в Authentik с разбором flows, stages и policies, а также рекомендациями по защите от username enumeration атак.</p></div></article></div></section></article></div><script type="module" src="/_astro/MermaidLoader.astro_astro_type_script_index_0_lang.D0cD853-.js"></script><script type="module">document.querySelectorAll(`.phl-yt`).forEach(e=>{let t=e.querySelector(`.phl-yt-link`);t?.addEventListener(`click`,n=>{n.preventDefault();let r=e.dataset.ytId,i=e.dataset.ytParams?`&${e.dataset.ytParams}`:``,a=document.createElement(`iframe`);a.src=`https://www.youtube-nocookie.com/embed/${r}?autoplay=1${i}`,a.title=t.getAttribute(`aria-label`)??`YouTube video`,a.allow=`accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share`,a.allowFullscreen=!0,e.replaceChildren(a)})});var e=matchMedia(`(prefers-reduced-motion: reduce)`).matches;document.querySelectorAll(`.phl-carousel`).forEach(t=>{let n=t.querySelector(`.phl-carousel-track`),r=n?[...n.children]:[];if(!n||r.length<2)return;let i=t=>{let i=(t+r.length)%r.length;n.scrollTo({left:r[i].offsetLeft-n.offsetLeft,behavior:e?`auto`:`smooth`})},a=()=>Math.round(n.scrollLeft/n.clientWidth),o=document.createElement(`div`);o.className=`phl-carousel-nav`,o.innerHTML=`<button type="button" class="phl-carousel-prev" aria-label="Previous">‹</button><span class="phl-carousel-dots"></span><button type="button" class="phl-carousel-next" aria-label="Next">›</button>`;let s=o.querySelector(`.phl-carousel-dots`);r.forEach((e,t)=>{let n=document.createElement(`button`);n.type=`button`,n.setAttribute(`aria-label`,`${t+1} / ${r.length}`),n.addEventListener(`click`,()=>i(t)),s.appendChild(n)});let c=()=>[...s.children].forEach((e,t)=>e.toggleAttribute(`aria-current`,t===a()));n.addEventListener(`scroll`,()=>requestAnimationFrame(c),{passive:!0}),o.querySelector(`.phl-carousel-prev`).addEventListener(`click`,()=>i(a()-1)),o.querySelector(`.phl-carousel-next`).addEventListener(`click`,()=>i(a()+1)),t.appendChild(o),c();let l=Number(t.dataset.interval);if(l>0&&!e){let e=!1;t.addEventListener(`mouseenter`,()=>e=!0),t.addEventListener(`mouseleave`,()=>e=!1),t.addEventListener(`focusin`,()=>e=!0),setInterval(()=>!e&&i(a()+1),Math.max(l,1500))}});var t=e=>`phl-tabs:${e}`,n=[...document.querySelectorAll(`.phl-tabs`)],r=(e,i,a=!0)=>{let o=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!o.some(e=>e.dataset.label===i))return;o.forEach(e=>e.hidden=e.dataset.label!==i),e.querySelectorAll(`:scope > .phl-tablist button`).forEach(e=>e.setAttribute(`aria-selected`,String(e.dataset.label===i)));let s=e.dataset.group;if(a&&s){try{localStorage.setItem(t(s),i)}catch{}n.filter(t=>t!==e&&t.dataset.group===s).forEach(e=>r(e,i,!1))}};n.forEach((e,n)=>{let i=[...e.querySelectorAll(`:scope > .phl-tab`)];if(!i.length)return;let a=document.createElement(`div`);a.className=`phl-tablist`,a.setAttribute(`role`,`tablist`),i.forEach((t,o)=>{let s=document.createElement(`button`);s.type=`button`,s.setAttribute(`role`,`tab`),s.id=`phl-tab-${n}-${o}`,s.dataset.label=t.dataset.label,s.innerHTML=t.querySelector(`.phl-tab-label`)?.innerHTML??t.dataset.label??``,t.setAttribute(`role`,`tabpanel`),t.setAttribute(`aria-labelledby`,s.id),s.addEventListener(`click`,()=>r(e,t.dataset.label)),s.addEventListener(`keydown`,e=>{let t=e.key===`ArrowRight`?1:e.key===`ArrowLeft`?-1:0;if(!t)return;let n=a.children[(o+t+i.length)%i.length];n.focus(),n.click()}),a.appendChild(s)}),e.prepend(a),e.classList.add(`phl-tabs-ready`);let o=null;try{o=e.dataset.group?localStorage.getItem(t(e.dataset.group)):null}catch{}r(e,o??e.dataset.default??i[0].dataset.label,!1)}),document.querySelectorAll(`.phl-accordion[data-mode="collapse"]`).forEach(e=>{let t=[...e.querySelectorAll(`:scope > .phl-accordion-item`)];t.forEach(e=>e.addEventListener(`toggle`,()=>e.open&&t.forEach(t=>t!==e&&(t.open=!1))))});var i=document.querySelectorAll(`.phl-prose img:not(.nozoom)`);if(i.length){let e=document.createElement(`dialog`);e.className=`phl-lightbox`,e.innerHTML=`<img alt=""><button type="button" class="phl-lightbox-close" aria-label="Close">×</button>`,document.body.appendChild(e);let t=e.querySelector(`img`);e.addEventListener(`click`,()=>e.close()),i.forEach(n=>{n.closest(`a, .phl-yt, .phl-repo`)||(n.classList.add(`phl-zoomable`),n.addEventListener(`click`,()=>{t.src=n.currentSrc||n.src,t.alt=n.alt,e.showModal()}))})}</script><script type="module" src="/_astro/ChartTypeitClient.astro_astro_type_script_index_0_lang.CjHU9QBU.js"></script><script>(function(){const smartToc = true;
+const tableHint = "Таблицу можно прокрутить вбок";
+const wideBlocks = true;
+const wideCode = false;
+
+  // TOC: collapsed on phones, open from 768 px (decision 0007).
+  // Follows width changes too (rotating a tablet, resizing the window).
+  const toc = document.querySelector('[data-phl-toc]');
+  const wide = matchMedia('(min-width: 768px)');
+  const syncToc = () => toc && toc.toggleAttribute('open', wide.matches);
+  syncToc();
+  wide.addEventListener('change', syncToc);
+
+  // Current section in the TOC.
+  if (toc && smartToc && 'IntersectionObserver' in window) {
+    const links = new Map([...toc.querySelectorAll('[data-phl-toc-link]')].map((a) => [a.dataset.phlTocLink, a]));
+    const heads = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+    const visible = new Set();
+    const mark = () => {
+      const current = heads.find((h) => visible.has(h.id)) ?? [...heads].reverse().find((h) => h.getBoundingClientRect().top < 120);
+      links.forEach((a, id) => a.toggleAttribute('aria-current', current?.id === id));
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id)));
+        mark();
+      },
+      { rootMargin: '0px 0px -70% 0px' },
+    );
+    heads.forEach((h) => io.observe(h));
+  }
+
+  // Wide blocks: tables and screenshots (and code, with wideCode) wider than the text column get data-phl-wide.
+  // Measured against the column width itself, not the window, so the result is the same on a
+  // phone and a desktop. The CSS lets them grow only on large screens (styles/layout.css).
+  if (wideBlocks) {
+    const root = document.documentElement;
+    const raw = getComputedStyle(root).getPropertyValue('--phl-content-width').trim();
+    const rem = parseFloat(getComputedStyle(root).fontSize) || 16;
+    const column = raw.endsWith('rem') ? parseFloat(raw) * rem : parseFloat(raw) || 736;
+    // With the info column (from 1680 px) a block next to it must not grow over it:
+    // such blocks get data-phl-wide="beside-info" and stay in the text column.
+    const info = document.querySelector('.phl-article-info');
+    const large = matchMedia('(min-width: 1680px)');
+    const wideEls = new Set();
+    const classify = () => {
+      const bottom = info && large.matches ? info.getBoundingClientRect().bottom + 24 : -Infinity;
+      // Top to bottom: a block that does not grow keeps the ones below in place, a growing one
+      // only pushes them further down, so one pass is stable.
+      [...wideEls].sort((x, y) => (x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1)).forEach((el) => {
+        const value = el.getBoundingClientRect().top < bottom ? 'beside-info' : '';
+        if (el.getAttribute('data-phl-wide') !== value) el.setAttribute('data-phl-wide', value);
+      });
+    };
+    let queued = false;
+    const queue = () => {
+      if (queued) return;
+      queued = true;
+      // A timer, not requestAnimationFrame: that one never fires in hidden tabs and some previews.
+      setTimeout(() => { queued = false; classify(); }, 50);
+    };
+    const mark = (el) => {
+      if (!el || wideEls.has(el)) return;
+      el.setAttribute('data-phl-wide', 'beside-info');
+      wideEls.add(el);
+      queue();
+    };
+    if (info) {
+      // Image loads, an opened series list, a resized window all move blocks.
+      if ('ResizeObserver' in window) new ResizeObserver(queue).observe(document.querySelector('.phl-article') ?? document.body);
+      addEventListener('resize', queue);
+    }
+    if (wideCode) document.querySelectorAll('.phl-prose .expressive-code').forEach((ec) => {
+      const pre = ec.querySelector('pre');
+      if (pre && pre.scrollWidth > column + 1) mark(ec);
+    });
+    document.querySelectorAll('.phl-prose table').forEach((t) => {
+      if (t.scrollWidth > column + 1) mark(t);
+    });
+    // A screenshot: an image clearly larger than the column, alone in its paragraph or figure.
+    const block = (img) => {
+      const fig = img.closest('.phl-prose figure');
+      if (fig) return fig;
+      const p = img.closest('.phl-prose > p');
+      return p && p.querySelectorAll('img').length === 1 && !p.textContent.trim() ? p : null;
+    };
+    const check = (img) => {
+      const w = Number(img.getAttribute('width')) || img.naturalWidth;
+      if (w >= column * 1.25 && !img.closest('.phl-gallery, .phl-carousel, .phl-card, .phl-repo')) mark(block(img));
+    };
+    document.querySelectorAll('.phl-prose img').forEach((img) => {
+      if (img.getAttribute('width') || img.complete) check(img);
+      else img.addEventListener('load', () => check(img), { once: true });
+    });
+  }
+
+  // Wide tables: say that they scroll, and mark the side where columns are hidden.
+  document.querySelectorAll('.phl-prose table').forEach((table) => {
+    const hint = document.createElement('p');
+    hint.className = 'phl-table-hint';
+    hint.textContent = tableHint;
+    hint.hidden = true;
+    table.before(hint);
+    table.tabIndex = 0;
+    const update = () => {
+      const hidden = table.scrollWidth - table.clientWidth > 1;
+      const pos = Math.abs(table.scrollLeft);
+      const atStart = pos < 2;
+      const atEnd = pos >= table.scrollWidth - table.clientWidth - 2;
+      const sides = [];
+      if (hidden && !atStart) sides.push('start');
+      if (hidden && !atEnd) sides.push('end');
+      table.dataset.phlScroll = sides.join(' ');
+      hint.hidden = !hidden;
+    };
+    table.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  });
+
+  // Reading progress.
+  const bar = document.querySelector('.phl-progress span');
+  const article = document.querySelector('.phl-article');
+  if (bar && article) {
+    const update = () => {
+      const r = article.getBoundingClientRect();
+      const total = r.height - innerHeight;
+      const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 1;
+      bar.style.transform = `scaleX(${p})`;
+    };
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+
+  // Reading mode: hides everything but the text; remembered; Escape exits.
+  const zen = document.querySelector('[data-phl-zen]');
+  if (zen) {
+    const set = (on) => {
+      document.documentElement.classList.toggle('phl-zen', on);
+      zen.setAttribute('aria-pressed', String(on));
+      zen.textContent = on ? zen.dataset.off : zen.dataset.on;
+      try { localStorage.setItem('phl-zen', on ? '1' : ''); } catch (e) {}
+    };
+    let saved = false;
+    try { saved = localStorage.getItem('phl-zen') === '1'; } catch (e) {}
+    if (saved) set(true);
+    zen.addEventListener('click', () => set(!document.documentElement.classList.contains('phl-zen')));
+    addEventListener('keydown', (e) => e.key === 'Escape' && document.documentElement.classList.contains('phl-zen') && set(false));
+  }
+})();</script></main><footer class="phl-footer"><div class="phl-footer-inner"><nav class="phl-footer-nav" aria-label="Меню в подвале"><ul><li><a href="/tools/traefik-compose/">Генератор docker-compose</a></li><li><a href="/tools/compose-quadlet/">Compose в Podman Quadlet</a></li><li><a href="/tools/proxmox-quorum/">Кворум Proxmox</a></li><li><a href="/tools/opnsense-vlan-planner/">Планировщик VLAN</a></li><li><a href="/tools/rackplan/">Планировщик стойки</a></li><li><a href="/privacy/">Политика конфиденциальности</a></li></ul></nav><ul class="phl-social-links phl-footer-social" aria-label="Соцсети"><li><a href="https://www.youtube.com/@prohomelab" rel="me noopener noreferrer" target="_blank" aria-label="YouTube" title="YouTube" style="--phl-brand-l:#ff0000;--phl-brand-d:#ff0000" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M23.498 6.186a3.02 3.02 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.02 3.02 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.02 3.02 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.02 3.02 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814M9.545 15.568V8.432L15.818 12z"/></svg></a></li><li><a href="https://github.com/stilicho2011/ubuntu_rep" rel="me noopener noreferrer" target="_blank" aria-label="GitHub" title="GitHub" style="--phl-brand-l:#181717" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a></li><li><a href="https://t.me/stilicho2011_videos" rel="me noopener noreferrer" target="_blank" aria-label="Telegram" title="Telegram" style="--phl-brand-l:#1991cd;--phl-brand-d:#26a5e4" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0zm4.962 7.224c.1-.002.321.023.465.14a.5.5 0 0 1 .171.325c.016.093.036.306.02.472c-.18 1.898-.962 6.502-1.36 8.627c-.168.9-.499 1.201-.82 1.23c-.696.065-1.225-.46-1.9-.902c-1.056-.693-1.653-1.124-2.678-1.8c-1.185-.78-.417-1.21.258-1.91c.177-.184 3.247-2.977 3.307-3.23c.007-.032.014-.15-.056-.212s-.174-.041-.249-.024q-.159.037-5.061 3.345q-.72.495-1.302.48c-.428-.008-1.252-.241-1.865-.44c-.752-.245-1.349-.374-1.297-.789q.04-.324.893-.663q5.247-2.286 6.998-3.014c3.332-1.386 4.025-1.627 4.476-1.635"/></svg></a></li><li><a href="https://boosty.to/stilicho2011" rel="me noopener noreferrer" target="_blank" aria-label="Boosty" title="Boosty" style="--phl-brand-l:#f05822;--phl-brand-d:#f15f2c" data-phl-brand><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="currentColor" d="M2.661 14.337L6.801 0h6.362L11.88 4.444l-.038.077l-3.378 11.733h3.15q-1.982 4.934-3.086 7.733c-5.816-.063-7.442-4.228-6.02-9.155M8.554 24l7.67-11.035h-3.25l2.83-7.073c4.852.508 7.137 4.33 5.791 8.952C20.16 19.81 14.344 24 8.68 24h-.127z"/></svg></a></li></ul><div class="phl-footer-meta"><p><span>© 2025-2026 Stilicho2011. All Rights Reserved.</span><span class="phl-footer-credit">Тема: <a href="https://prohomelab.com">ProHomeLab</a></span><button type="button" class="phl-consent-open" data-phl-consent-open hidden>Настройки аналитики</button></p><div class="phl-footer-tools"><a class="phl-to-top" href="#top"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" class="phl-icon" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m5 12l7-7l7 7m-7 7V5"/></svg>Наверх</a></div></div></div></footer><div class="phl-consent" data-phl-consent data-mode="opt-in" role="region" aria-label="Аналитика" hidden><p><span data-phl-consent-text>Разрешить обезличенную статистику посещений?</span> <a href="/privacy/" data-phl-consent-policy>Подробнее</a></p><div class="phl-consent-actions"><button type="button" data-phl-consent-choice="granted">Разрешить</button><button type="button" data-phl-consent-choice="denied">Отказаться</button></div></div><script>(function(){const TEXTS = {"ru":{"lang":"ru-RU","label":"Аналитика","text":"Разрешить обезличенную статистику посещений?","policy":"Подробнее","href":"/privacy/","granted":"Разрешить","denied":"Отказаться","seen":"Понятно"},"en":{"lang":"en","label":"Analytics","text":"Allow anonymous visit statistics?","policy":"Details","href":"/en/privacy/","granted":"Accept","denied":"Decline","seen":"OK"}};
+const PAGE = "ru";
+
+      (() => {
+        const box = document.querySelector('[data-phl-consent]');
+        if (!box) return;
+        const key = 'phl-consent';
+        let saved = null;
+        try { saved = localStorage.getItem(key); } catch (e) {}
+        const texts = TEXTS;
+        const reader = window.__phlReaderLocale && window.__phlReaderLocale();
+        const tx = reader && reader !== PAGE && texts[reader];
+        if (tx) {
+          box.lang = tx.lang;
+          box.setAttribute('aria-label', tx.label);
+          box.querySelector('[data-phl-consent-text]').textContent = tx.text;
+          const pol = box.querySelector('[data-phl-consent-policy]');
+          if (pol && tx.href) { pol.textContent = tx.policy; pol.href = tx.href; }
+          box.querySelectorAll('[data-phl-consent-choice]').forEach((b) => { b.textContent = tx[b.dataset.phlConsentChoice] || b.textContent; });
+        }
+        const show = () => { box.hidden = false; };
+        if (!saved) show();
+        box.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-phl-consent-choice]');
+          if (!b) return;
+          const value = b.dataset.phlConsentChoice;
+          try { localStorage.setItem(key, value); } catch (e) {}
+          box.hidden = true;
+          if (value === 'granted' && window.__phlAnalytics) window.__phlAnalytics();
+          // Declining after accepting: counters already loaded on this page stop with the next page.
+        });
+        document.querySelectorAll('[data-phl-consent-open]').forEach((el) => {
+          el.hidden = false;
+          el.addEventListener('click', (e) => { e.preventDefault(); show(); box.querySelector('button')?.focus(); });
+        });
+      })();
+    })();</script></body></html>

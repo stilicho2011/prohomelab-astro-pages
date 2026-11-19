@@ -1,0 +1,878 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Podman | ProHomeLab</title>
+    <link>https://prohomelab.com/en/posts/podman/</link>
+    <description>Сайт про homelab, self-hosting и IT: инструкции по установке серверов, виртуализация, Docker, Proxmox, безопасность и автоматизация.</description>
+    <language>en</language>
+    <lastBuildDate>Sat, 05 Sep 2026 00:00:00 GMT</lastBuildDate>
+    <generator>ProHomeLab theme for Astro</generator>
+    <atom:link href="https://prohomelab.com/en/posts/podman/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Podman - The Other Side of the Coin, Drawbacks Worth Knowing About Upfront</title>
+      <link>https://prohomelab.com/en/posts/podman-disadvantages/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/podman-disadvantages/</guid>
+      <pubDate>Sat, 05 Sep 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Containerization</category>
+      <category>Podman</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <description>Going over the real limitations of Podman: networking and ports in rootless mode, incomplete Docker Compose compatibility, a VM standing in for the promised daemonless setup on macOS/Windows, no multi-host orchestration, a less mature ecosystem, and a steeper learning curve for newcomers.</description>
+      <content:encoded><![CDATA[<h2 id="introduction">Introduction</h2>
+<p>In <a href="https://prohomelab.com/en/posts/what-is-podman/">the article about Podman</a> I went into detail on why Podman replaced Docker in my homelab: a daemonless architecture, full rootless mode out of the box, native systemd integration via Quadlet. All of that is true, and I still think the switch was worth it. But it would be dishonest to talk only about the upsides and stay quiet about what you actually have to put up with. And, honestly, in the comments on my Telegram channel people flat out called me out for not covering Podman's downsides.</p>
+<p>Podman has some very concrete drawbacks - some of them are a direct consequence of the same architectural decisions that turn into advantages in other scenarios. In this article I'll try to describe the drawbacks that cause genuinely serious inconvenience in practice: from rootless networking quirks to a less mature ecosystem around the project.</p>
+<h2 id="rootless-mode---not-just-upsides">Rootless Mode - Not Just Upsides</h2>
+<p>Rootless mode is Podman's headline feature, but it has a flip side, and it's worth knowing about before you run into it.</p>
+<h3 id="ports-below-1024">Ports Below 1024</h3>
+<p>An unprivileged process on Linux can't listen on ports below 1024 - that's a kernel restriction, not a Podman one, but rootless containers are the ones that hit it first. You can't publish <code>PublishPort=80:80</code> from a rootless container directly: you either need to change <code>net.ipv4.ip_unprivileged_port_start</code> via sysctl, or put a reverse proxy on a higher unprivileged port and forward it further using the host. And you have to keep in mind that the whole world expects a web server or reverse proxy on ports 80 and 443. It seems kind of illogical to even allow publishing ports below 1024 - that's literally the whole point of Podman. I solved this by moving my reverse proxy into a separate LXC container, decoupling it from any backend entirely. But that particular option isn't for everyone, for various reasons.</p>
+<h3 id="the-clients-real-ip-gets-lost">The Client's Real IP Gets Lost</h3>
+<p>There's another port-related annoyance you usually discover after the fact. By default, published ports on rootless containers are handled by a separate middleman process, <code>rootlessport</code>, so connections reach the app inside the container not from the real client's address but from Podman's own internal one. For a regular service that hardly matters, but for a reverse proxy it matters a lot: its logs fill up with the same internal IP instead of your visitors' addresses, and with that, IP-based restrictions, rate limiting, and <a href="https://prohomelab.com/en/posts/crowdsec-in-docker/">CrowdSec</a> - which is supposed to ban specific attackers, not all traffic at once - lose their point.</p>
+<p>Podman 6 added an experimental alternative: switching port forwarding over to pasta (the <code>rootless_port_forwarder="pasta"</code> setting in <code>containers.conf</code>), which preserves the client's source IP. But for now it really is an experiment, and <code>rootlessport</code> remains the default. My reverse proxy living in its own LXC, which I mentioned above, sidesteps this problem as a bonus: the proxy sees real client addresses because it has nothing to do with rootless containers in the first place.</p>
+<h3 id="rootless-containers-live-only-while-youre-logged-in">Rootless Containers Live Only While You're Logged In</h3>
+<p>Rootless services, Quadlet units in <code>~/.config/containers/systemd/</code> included, run in the per-user systemd instance. And by default that instance only starts when the user logs in, and stops - taking all the containers with it - when the last session closes. So the picture goes like this: everything works during the day, you exit SSH, and your services quietly die; after a host reboot they don't come up at all until you log in again.</p>
+<p>The fix is one command:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">loginctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">enable-linger</span><span style="--0:#24292E;--1:#E1E4E8"> $USER</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo loginctl enable-linger $USER"><div></div></button></div></figure></div>
+<p>But it's exactly the kind of command you need to know about in advance. Docker doesn't have this problem at all - the daemon is started by the system and doesn't care about user sessions.</p>
+<h3 id="theres-no-docker-swarm-equivalent-in-podman">There's No Docker Swarm Equivalent in Podman</h3>
+<p>If you're still using Swarm mode (or were planning to) - it just doesn't exist in Podman, rootless or rootful, and it's not coming. This is a deliberate architectural decision, not something to hold out hope for. Though, to be fair, I personally think Docker Swarm doesn't have much of a future anyway.</p>
+<h3 id="bind-mount-permissions-and-uid-mapping">Bind-Mount Permissions and UID Mapping</h3>
+<p>Rootless containers use user namespaces: UID 0 inside the container turns into an unprivileged UID outside via <code>subuid</code>/<code>subgid</code>. Sounds elegant, right up until you start bind-mounting existing directories from the host. Files created by a process inside the container end up owned, on the host, by a completely "alien" UID from the subuid range, and a plain <code>chown</code>/<code>chmod</code> by hand turns into a whole separate ordeal, not for the faint of heart.
+There's <code>podman unshare</code> for this, which drops you into the same namespaces the container sees - but that's yet another command you need to know and explain to newcomers, whereas this problem almost never comes up in Docker (especially when running as root).
+There's also a more systemic workaround: the <code>--userns=keep-id</code> flag maps UID 0 inside the container not to a random <code>subuid</code>, but to the same UID you're logged in as on the host - so files on bind mounts get created with a familiar owner, no <code>podman unshare</code> dance required.
+In recent Podman versions you can get the same thing scoped to a single volume, via the <code>:U</code> suffix - Podman will <code>chown</code> the content itself at mount time. But that's specifically there to work around a limitation. You don't need to learn any new commands, sure, but you're still "working around" a limitation of the technology, which gives the whole thing a faint smell of illogicality.</p>
+<h3 id="filesystem-requirements-for-rootless-overlay">Filesystem Requirements for Rootless Overlay</h3>
+<p>A separate, less obvious problem - rootless overlay storage for images requires the filesystem to support <code>d_type</code> (i.e., the file type has to come back directly in the directory entry, without a separate <code>stat()</code> call). Without <code>d_type</code>, rootless overlay simply won't come up - Podman falls back to <code>vfs</code>, which works reliably but is noticeably slower and much heavier on disk space, since it can't reuse layers between images as efficiently as overlay does. In practice, on a home server with plain ext4/XFS (XFS, if you're a Red Hat disciple), <code>d_type</code> is there out of the box and this rarely becomes a problem, but on some network filesystems like NFS, or if you move to something exotic, it's worth keeping in mind.</p>
+<h2 id="incomplete-docker-compose-compatibility">Incomplete Docker Compose Compatibility</h2>
+<p>The Podman CLI itself really is close to zero-effort compatible with the Docker CLI - I showed that in the first article. Docker Compose is a different story, and not as smooth as you'd want.</p>
+<p><code>podman-compose</code> is a separate project, independent from Podman itself, not a built-in equivalent of <code>docker compose</code>.
+Its contributors are upfront in the README that the goal is to run <code>docker-compose.yml</code> <strong>unmodified</strong>, but in practice that doesn't always pan out (in my case, never):</p>
+<ul>
+<li>for services attached to several user-defined networks in a single compose file, DNS resolution by service name doesn't always work reliably from neighboring networks the service wasn't attached to first;</li>
+<li><code>external: true</code> for an already-existing network sometimes isn't recognized correctly, because <code>podman-compose</code> prefixes network names with the project name by default - and if the names don't match literally, instead of reusing the existing network you get an attempt to create a new one;</li>
+<li>container and network names generated by <code>podman-compose</code> use a different separator by default (<code>_</code> instead of the <code>-</code> adopted in newer Docker Compose versions) - for some automation and scripts that parse container names, this can break logic, though the developers have already added a separate compatibility flag;</li>
+<li>not every version of <code>docker-compose.yml</code> is supported identically (in particular complex healthcheck constructs, conditional <code>depends_on</code>, some profiles) - part of the functionality works "close enough," part requires edits to the compose file itself, and part you'll just have to drop.</li>
+</ul>
+<p>There's also a middle ground that a lot of people don't know about. The <code>podman compose</code> command is a thin wrapper that, by default, looks for and runs the <strong>original</strong> <code>docker-compose</code> if it's installed, and only falls back to <code>podman-compose</code> if it isn't. The wrapper also sets up the environment so <code>docker-compose</code> talks to Podman's Docker-compatible socket. In other words, your compose files get parsed by the reference implementation of the spec, while the containers themselves are run by Podman. It obviously doesn't fix anything at the networking or rootless level, but discrepancies in parsing the compose files themselves drop noticeably.</p>
+<p>Formally, you can move to native Quadlet+Podlet, which I wrote about in <a href="https://prohomelab.com/en/posts/quadelts-vs-podlets/">a separate article</a>, and that genuinely removes most of the problems (and, frankly, that's the correct way to use Podman) - but that's no longer "the exact same docker-compose.yml, unmodified," it's a migration to a different configuration format.
+If your project has dozens of ready-made compose files from other people's repos (and in self-hosting that's basically always the case), you need to be ready for the fact that point fixes will be necessary.</p>
+<p>To see the fixes you'll need ahead of time, run the compose file through the <a href="https://prohomelab.com/en/tools/compose-quadlet/">Docker Compose to Podman Quadlet converter</a>: it flags everything that carries over to Quadlet differently or not at all.</p>
+<h2 id="on-macos-and-windows-podman-is-also-a-vm">On macOS and Windows, Podman Is Also a VM</h2>
+<p>One of the main arguments in Podman's favor is the lack of a daemon. But that's only true for Linux. On macOS and Windows, containers fundamentally can't run natively (different kernel), and both Docker Desktop and <code>podman machine</code> solve this the same way - they spin up a lightweight Linux VM and run the real Podman inside it.</p>
+<p>Meaning: on macOS and Windows the daemonless advantage disappears - you're back to having a background process (in this case, the VM itself) that you need to start, watch the resource usage of, and update the image of separately from Podman itself.</p>
+<p>And there's one more small nuance on top of that. It's not just one background process - alongside the VM, there's also <code>gvproxy</code> running on the host, which tunnels network access and the Docker-compatible socket into the machine over SSH, so "just a VM" is, in practice, a VM plus the plumbing around it.</p>
+<p>For a homelab, where the server is usually on Linux, this isn't critical - but if you're running production, with part of the team on Macs and part on Windows, the actual difference from Docker Desktop is a lot smaller than marketing comparisons make it look.</p>
+<h2 id="no-built-in-multi-host-orchestration">No Built-In Multi-Host Orchestration</h2>
+<p>Podman handles single-host workloads great - that's a deliberate design choice, by design, so to speak. But if tomorrow you need:</p>
+<ul>
+<li>
+<p>horizontal scaling of a service under load;</p>
+</li>
+<li>
+<p>an HA cluster across several physical nodes;</p>
+</li>
+<li>
+<p>service discovery between nodes out of the box;</p>
+</li>
+<li>
+<p>there's no ready answer from Podman. Generating Kubernetes manifests via <code>podman generate kube</code> makes migration easier, but the migration itself still means deploying a full Kubernetes stack (k3s, MicroK8s, RKE2 - doesn't matter which) with all the accompanying weight: etcd or an equivalent, a control plane, CNI plugins.</p>
+</li>
+</ul>
+<p>Docker Swarm, for all its flaws, at least offered a reasonably simple native path from one host to several - Podman has no such "intermediate step" at all, and isn't going to get one anytime soon.</p>
+<h2 id="podmans-ecosystem-and-tooling-are-still-playing-catch-up-with-docker">Podman's Ecosystem and Tooling Are Still Playing Catch-Up With Docker</h2>
+<p>Technically, Podman is a fairly mature project by now, but in terms of ecosystem reach Docker is still way out ahead, and you feel it in practice:</p>
+<ul>
+<li><strong>GUI.</strong> Podman Desktop is actively developed and already quite usable for day-to-day work, but in terms of the number of built-in extensions, ready-made integrations, and sheer interface polish, Docker Desktop is far ahead of it;</li>
+<li><strong>Ready-made tutorials.</strong> The overwhelming majority of self-hosting instructions online are written by default for <code>docker run</code>/<code>docker-compose up</code>. Working with them means either going through <code>alias docker=podman</code> (which covers 90% of cases, but still), or manually adapting things for rootless specifics - volume labels <code>:Z</code>/<code>:z</code> for SELinux systems, for example, are almost never mentioned in the original docs, even though, in my view, that should be mandatory. Not everyone is aware of SELinux quirks;</li>
+<li><strong>Tools hard-wired to <code>docker.sock</code>.</strong> Some popular self-hosted utilities (certain dashboards, some CI runners, a few monitoring agents) historically talk directly to the Docker socket and its API semantics. Podman offers a Docker-compatible REST API via <code>podman system service</code>, but it's not a perfect solution, not everything works exactly as it should, and for niche tools you sometimes have to either find a fork with Podman support, or leave that particular service running on Docker;</li>
+<li><strong>Docker Hub vs. Red Hat registries.</strong> Podman by default isn't tied to a single registry, which is more of a plus, but at first it trips up newcomers with the need to spell out the full image path (<code>docker.io/library/nginx</code> instead of just <code>nginx</code>) unless <code>registries.conf</code> has unqualified-search registries configured the way you need. And on any distro not tied to Red Hat, you do need to configure them. In fact, in real life this is probably the very first problem anyone runs into - I'm just listing it last for the sake of the article's structure.</li>
+</ul>
+<h2 id="a-steeper-learning-curve-for-newcomers">A Steeper Learning Curve for Newcomers</h2>
+<p>Worth talking separately about the mental model, as they like to say abroad. Docker was, for years, synonymous with containerization precisely because it hid the complexity behind a simple shell: one daemon, one <code>docker run</code> command, and everything "just works" (which is what most beginners want) as root, with no need to get into user namespaces or other such semiotics. Podman demands a lot more understanding of what's happening under the hood and how the system actually works:</p>
+<ul>
+<li>what subuid/subgid are, and what happens if the ranges aren't configured or overlap between users;</li>
+<li>the difference between rootless and rootful mode, and when it's actually justified to switch to the latter;</li>
+<li>SELinux labels on volumes on the Fedora/RHEL family, without which a container simply won't see the mounted directory;</li>
+<li>cgroups v2 - Podman 6 can't live without them, since cgroups v1 support was removed entirely, so on older systems you'll be sorting out cgroups first and Podman second.</li>
+</ul>
+<p>For someone who's already set up (and re-set-up) homelab infrastructure more than once and isn't afraid to read a <code>man</code> page, this isn't a problem - it's practically part of the fun. But if your goal is to just get a service up quickly and not spend a few cozy evenings reading documentation, followed by tearing your hair out and throwing it at the monitor, then a first encounter with Podman can feel noticeably more painful than with Docker.</p>
+<h2 id="major-versions-break-compatibility">Major Versions Break Compatibility</h2>
+<p>Over the years Docker has trained us to think of engine upgrades as boring. Podman is bolder about it. Podman 6 came out in summer 2026, and the list of things it simply removed is impressive:</p>
+<ul>
+<li>cgroups v1 support;</li>
+<li>iptables - nftables only now;</li>
+<li>the CNI network stack - Netavark only now;</li>
+<li><code>slirp4netns</code> for rootless networking - pasta only now;</li>
+<li>the BoltDB database - on first start, Podman will try to migrate it to SQLite on its own.</li>
+</ul>
+<p>On top of that, some defaults changed: network isolation is now on, and <code>podman volume prune</code> only removes anonymous volumes. Each of these decisions makes sense on its own, and most of them even bring Podman closer to how Docker behaves. But taken together, it means a major Podman upgrade needs to be planned like a small migration, not kicked off with <code>dnf upgrade</code> on a Friday evening. Especially if your server has something that was set up "somehow" a long time ago and hasn't been touched since.</p>
+<p>The flip side of the same coin is long-term-support distros. Podman there can lag several versions behind, and guides from the internet written for a fresh release don't always work with whatever's in your repository.</p>
+<h2 id="when-these-drawbacks-actually-matter">When These Drawbacks Actually Matter</h2>
+<p>Putting it all together, I'd single out three situations where Podman's downsides outweigh its architectural upsides:</p>
+<ul>
+<li>you need multi-host orchestration here and now, not down the road - in that case either Docker Swarm as a stopgap, or go straight to Kubernetes;</li>
+<li>your infrastructure is tied exclusively to tools that strictly require access to <code>docker.sock</code>, with no Podman-compatible alternative;</li>
+<li>your dev team works primarily on macOS/Windows (probably the most common case, and the best example of all) and was hoping to drop the VM layer by moving off Docker Desktop.</li>
+</ul>
+<p>In every other scenario - and for homelabs and self-hosted servers on Linux that's the overwhelming majority of cases - the drawbacks are more of a "you need to sit down and figure this out once" than a "categorically won't work for you."</p>
+<h2 id="conclusions">Conclusions</h2>
+<p>None of the points above cancel out what I wrote in the first article about Podman's advantages. But its drawbacks are more than real, not made up, the way people sometimes claim online when arguing about one solution or another:</p>
+<ul>
+<li>rootless networking sometimes limits you more than you'd like - from ports below 1024 to losing the client's real IP;</li>
+<li>rootless services without <code>loginctl enable-linger</code> only live until you log out;</li>
+<li>Docker Compose compatibility is incomplete;</li>
+<li>major upgrades break compatibility, and you need to prepare for them;</li>
+<li>the ecosystem around the project is still playing catch-up with Docker, both in tooling coverage and in available guides.</li>
+</ul>
+<p>If you're planning a switch, the sensible approach is not to rewrite your entire infrastructure at once, but to migrate one not-too-critical service at a time, same as I recommended last time, and to budget time in advance for running into one or two items from this article's list of problems. This isn't a reason to give up on Podman - it's a reason not to get discouraged when something doesn't work the first time around. And that "something" will happen, guaranteed.</p>
+<hr>
+<p>Useful links:</p>
+<ul>
+<li><a href="https://podman.io">Official Podman website</a></li>
+<li><a href="https://github.com/containers/podman-compose">podman-compose repository on GitHub</a></li>
+<li><a href="https://docs.podman.io/en/latest/markdown/podman-compose.1.html">podman compose documentation</a></li>
+<li><a href="https://docs.podman.io">Podman documentation</a></li>
+<li><a href="https://podman-desktop.io">Podman Desktop</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>Podman - A Modern Alternative to Docker</title>
+      <link>https://prohomelab.com/en/posts/what-is-podman/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/what-is-podman/</guid>
+      <pubDate>Sat, 10 Jan 2026 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Containerization</category>
+      <category>Podman</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <description>Podman is a daemonless container engine focused on security and rootless operation. A look at the project's history, architecture, differences from Docker, pods, Quadlet, and Podlet - and when it's worth switching.</description>
+      <content:encoded><![CDATA[<h2 id="introduction">Introduction</h2>
+<p>If you enjoyed this article, you can support the author by becoming a sponsor on Boosty (link in the contacts section).</p>
+<p>When people talk about containers, nine out of ten by default mean Docker. It really has been synonymous with containerization for years: <code>docker run</code>, <code>docker-compose up</code>, and <code>Dockerfile</code> are the minimal set of things almost anyone who has ever deployed a service on something other than bare metal knows. But Docker has an architectural quirk that has, over time, raised questions for part of the community, myself included - a constantly running daemon with root privileges.</p>
+<p><strong>Podman</strong> is an attempt to solve exactly this problem, not cosmetically but at the architectural level. It's a daemonless container engine, with a full rootless mode out of the box and native systemd integration. It replaced Docker in my homelab a long time ago, and in this article I want to go through where Podman came from, how it's built internally, how it fundamentally differs from Docker, and what pods, Quadlet, and Podlet are - terms that usually cause the most confusion.</p>
+<h2 id="where-podman-came-from">Where Podman came from</h2>
+<p>Podman's history isn't the most obvious, and it's useful to know it in order to understand why the project is built the way it is.</p>
+<p>It all started in 2017 inside the <strong>CRI-O</strong> project (a container runtime for <a href="https://prohomelab.com/en/posts/docker-podman-kubernetes/">Kubernetes</a>) with a small utility working under the name <strong>kpod</strong> - built by Red Hat engineers who needed a way to debug and inspect containers created by CRI-O without having to spin up a full Docker installation. Nobody on the team liked the name kpod, and after a few months of development the tool was split off into a separate project - the <strong>libpod</strong> library, responsible for managing pods and containers without a daemon. A few months after that, in early 2018, the first public release came out under a new name - <strong>Podman</strong>, standing for "POD MANager."</p>
+<p>An important nuance: Podman is <strong>not a Docker fork</strong>. It's an independent implementation written from scratch, which at the same time uses the same low-level standards and largely the same ecosystem components as Docker:</p>
+<ul>
+<li><code>runc</code> or <code>crun</code> - the low-level OCI runtime that directly launches the container;</li>
+<li><code>conmon</code> - a lightweight supervisor that watches the container process;</li>
+<li><code>containers/storage</code> - a library for storing images and layers;</li>
+<li><code>containers/image</code> - handling registries and image formats.</li>
+</ul>
+<p>Red Hat still does most of the development, but the project stopped being one company's in-house affair a while ago: on January 21, 2025, Podman was accepted into the CNCF (the Cloud Native Computing Foundation - the same foundation Kubernetes lives under) at the Sandbox level, and with Podman 6 its repositories moved from the <strong>containers</strong> organization to the CNCF-owned <strong>podman-container-tools</strong> organization on GitHub. Meanwhile, Podman is still the default container engine in RHEL, Fedora, CentOS Stream, and a number of other distributions where Docker hasn't shipped out of the box for several years now.</p>
+<h2 id="what-podman-is-used-for">What Podman is used for</h2>
+<p>Essentially Podman covers the same tasks as Docker - building images, running containers, working with registries - but with an eye toward different use cases:</p>
+<ul>
+<li>local development and testing of containerized applications;</li>
+<li>running containers and pods on servers and in homelabs, especially where you want to avoid a daemon;</li>
+<li>running containers without root access, which is critical for multi-tenant environments;</li>
+<li>generating Kubernetes manifests straight from running containers - handy if Kubernetes is just being planned;</li>
+<li>replacing Docker in CI/CD, where Podman can run inside the CI runner itself without a privileged daemon.</li>
+</ul>
+<p>In practice, Podman is most often chosen for home labs and small servers with elevated security requirements, for edge devices with limited resources, and in places where Kubernetes is already in use or clearly on the roadmap - manifest generation significantly simplifies the migration.</p>
+<h2 id="architecture---why-theres-no-daemon">Architecture - why there's no daemon</h2>
+<p>Podman's key architectural feature is the <strong>daemonless model</strong>. Docker has <code>dockerd</code>, a constantly running background process with root privileges that accepts commands from the client and manages the lifecycle of all containers. Podman has no such process at all: the <code>podman run</code> command directly, with no intermediaries, calls <code>conmon</code> and <code>runc</code>/<code>crun</code>, which launch the container as a regular child process of the system.</p>
+<p>This has several practical consequences:</p>
+<ul>
+<li>a Podman container shows up in <code>ps</code> as an independent process, not as something hidden inside a daemon - this noticeably simplifies debugging;</li>
+<li>if something crashes in one container, it doesn't affect the others and certainly doesn't require restarting a shared daemon;</li>
+<li>there's no single point of failure: if the daemon goes away, all containers don't go away at once, as sometimes happens with Docker after a botched <code>dockerd</code> update;</li>
+<li>systemd handles such processes naturally, without workarounds like running <code>docker run</code> inside <code>ExecStart</code> - more on that in the Quadlet section.</li>
+</ul>
+<h2 id="rootless-containers-and-networking">Rootless containers and networking</h2>
+<p>Rootless mode in Podman isn't a hack bolted onto an existing architecture - it's largely what the project was built for in the first place. A container can be started by a regular, unprivileged user, and inside the container the process still gets its own "root" - it just isn't the real root of the host system.</p>
+<p>Technically this is implemented through:</p>
+<ul>
+<li><strong>user namespaces</strong> - remapping UID/GID inside the container to unprivileged ranges on the host;</li>
+<li><strong>subuid/subgid</strong> - the ID ranges the administrator allocates to a user for this remapping (<code>/etc/subuid</code>, <code>/etc/subgid</code>);</li>
+<li>a user-space network stack that doesn't require privileges on the host.</li>
+</ul>
+<p>Worth a separate note on networking here, because it's changed noticeably over the past couple of years. In the past, rootless networking in Podman almost always meant <code>slirp4netns</code> - a working but fairly slow solution. Starting with Podman 5.x, <strong>pasta</strong> is being promoted as the modern replacement - it's noticeably faster, has full IPv6 support, and, particularly nicely, "mirrors" the host's network configuration directly into the container instead of classic NAT. Podman 5 made pasta the default backend for rootless networking, and Podman 6 dropped <code>slirp4netns</code> entirely. So if you've still got an old config or script somewhere that explicitly asks for <code>slirp4netns</code>, it'll simply stop working once you upgrade to version 6 - switching to pasta is no longer a "when you get around to it" thing, it's mandatory.</p>
+<p>The upshot of this approach: even if a container is compromised, the attacker ends up not in the host's root environment, but in an isolated namespace of a regular user - the potential damage is fundamentally smaller.</p>
+<h2 id="how-podman-differs-from-docker">How Podman differs from Docker</h2>
+<h3 id="comparison-by-key-parameters">Comparison by key parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Docker</th>
+<th>Podman</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Architecture</td>
+<td>Client-daemon (<code>dockerd</code>)</td>
+<td>Daemonless</td>
+</tr>
+<tr>
+<td>Daemon privileges</td>
+<td>root</td>
+<td>no daemon</td>
+</tr>
+<tr>
+<td>Rootless</td>
+<td>Exists, but requires separate setup and has limitations</td>
+<td>Full "out of the box" mode</td>
+</tr>
+<tr>
+<td>systemd integration</td>
+<td>Via workarounds</td>
+<td>Native (Quadlet)</td>
+</tr>
+<tr>
+<td>Kubernetes manifests</td>
+<td>Requires third-party tools</td>
+<td>Built-in YAML generation</td>
+</tr>
+<tr>
+<td>Pods</td>
+<td>Not a first-class entity</td>
+<td>Present, as in Kubernetes</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td>Docker CLI</td>
+<td>Compatible with Docker CLI</td>
+</tr>
+</tbody>
+</table>
+<h3 id="compatibility-with-docker">Compatibility with Docker</h3>
+<p>Probably the best news for those switching from Docker - there's almost nothing to relearn. Podman's CLI is deliberately made as similar as possible:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">alias</span><span style="--0:#24292E;--1:#E1E4E8"> docker</span><span style="--0:#BF3441;--1:#F97583">=</span><span style="--0:#24292E;--1:#E1E4E8">podman</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="alias docker=podman"><div></div></button></div></figure></div>
+<p>After such an alias, the vast majority of familiar commands just keep working:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">run</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-p</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">8080:80</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">build</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-t</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">myapp</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">.</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">pull</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">docker.io/library/redis</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">push</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">myapp</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">registry.example.com/myapp</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="podman run -d -p 8080:80 nginxpodman build -t myapp .podman pull docker.io/library/redispodman push myapp registry.example.com/myapp"><div></div></button></div></figure></div>
+<p>The <code>Dockerfile</code> format is also supported without any changes - Podman can build images from regular Dockerfiles, additionally offering its own more flexible <code>Containerfile</code> format (essentially the same thing, just a different filename).</p>
+<h2 id="pods-in-podman">Pods in Podman</h2>
+<h3 id="what-a-pod-is">What a pod is</h3>
+<p>A <strong>pod</strong> is a group of one or more containers that:</p>
+<ul>
+<li>share a single network namespace, i.e. a common IP address and a common port space;</li>
+<li>can optionally share an IPC namespace;</li>
+<li>logically represent a single application that's convenient to start and stop as a unit.</li>
+</ul>
+<p>The concept is entirely borrowed from Kubernetes, and that's not a coincidence but a deliberate architectural decision - Podman was designed from the start so that the local development model would be as close as possible to how an application would later behave in a cluster. A typical pod is, for example, an application container, a reverse-proxy container in front of it, and a sidecar container for logging or metrics, which together form one logical service.</p>
+<h3 id="example---creating-a-pod-by-hand">Example - creating a pod by hand</h3>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">pod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">create</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--name</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">web-pod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-p</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">8080:80</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">run</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--pod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">web-pod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">run</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--pod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">web-pod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">busybox</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">sleep</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">infinity</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="podman pod create --name web-pod -p 8080:80podman run -d --pod web-pod nginxpodman run -d --pod web-pod busybox sleep infinity"><div></div></button></div></figure></div>
+<p>All containers inside <code>web-pod</code> get one shared IP address and see each other via <code>localhost</code>, like processes on the same machine - you can freely address each other via <code>127.0.0.1:&#x3C;port></code> without configuring a separate docker network, as you'd have to do in Docker.</p>
+<p>Practical upsides of this approach: networking within the pod becomes trivial, the configuration is closer to the Kubernetes model, and the containers are logically grouped, which is convenient both for monitoring and for a later migration.</p>
+<h3 id="generating-kubernetes-manifests">Generating Kubernetes manifests</h3>
+<p>A separate strength of Podman is the ability to generate a ready-made Kubernetes YAML directly from a running pod:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">generate</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">kube</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">web-pod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#BF3441;--1:#F97583">></span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">pod.yaml</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="podman generate kube web-pod > pod.yaml"><div></div></button></div></figure></div>
+<p>This lets you assemble and test an application's architecture locally on a single machine, then carry the configuration over to a cluster without rewriting it from scratch - in this sense Podman works reasonably well as a "local Kubernetes" for development and testing.</p>
+<h2 id="podman-and-systemd">Podman and systemd</h2>
+<p>Podman natively integrates with systemd - and this can be done in two ways.</p>
+<p>The first, older way - generating a unit file from an already-created container or pod:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">generate</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">systemd</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--name</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--files</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--new</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="podman generate systemd --name nginx --files --new"><div></div></button></div></figure></div>
+<p>The command creates a <code>.service</code> file that can be placed among the systemd units and managed with standard <code>systemctl start/stop/enable</code>. This method works, but requires the container to already exist, and is poorly suited for declaratively describing infrastructure "from scratch." On top of that, <code>podman generate systemd</code> is officially deprecated: it's not going away, but it won't get any new features either, and the docs flat-out point you to Quadlet instead.</p>
+<p>The second, modern and recommended way - <strong>Quadlet</strong>.</p>
+<p>Quadlet and its helper Podlet get a much deeper look in a separate article, <a href="https://prohomelab.com/en/posts/quadelts-vs-podlets/">Quadlets and Podlets in Podman</a> - here I'll just stick to the basics.</p>
+<h3 id="what-quadlet-is">What Quadlet is</h3>
+<p>Quadlet is a mechanism built into Podman that lets you describe containers, pods, networks, volumes, and images <strong>declaratively</strong>, using ordinary systemd unit files of a special format. On startup systemd itself translates these files into full <code>.service</code> units and runs them via Podman - nothing needs to be generated manually.</p>
+<p>In total Quadlet supports several file types:</p>
+<table>
+<thead>
+<tr>
+<th>Extension</th>
+<th>What it describes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.container</code></td>
+<td>a single container</td>
+</tr>
+<tr>
+<td><code>.pod</code></td>
+<td>a pod (group of containers)</td>
+</tr>
+<tr>
+<td><code>.volume</code></td>
+<td>a named volume</td>
+</tr>
+<tr>
+<td><code>.network</code></td>
+<td>a network</td>
+</tr>
+<tr>
+<td><code>.image</code></td>
+<td>an image that needs to be pulled in advance</td>
+</tr>
+<tr>
+<td><code>.build</code></td>
+<td>building an image from a Containerfile</td>
+</tr>
+<tr>
+<td><code>.kube</code></td>
+<td>deployment from a Kubernetes YAML (<code>podman kube play</code>)</td>
+</tr>
+<tr>
+<td><code>.artifact</code></td>
+<td>an OCI artifact</td>
+</tr>
+</tbody>
+</table>
+<p>Files are placed in one of the standard paths, depending on whether a system (root) or user (rootless) service is needed:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">/etc/containers/systemd/</span><span style="--0:#24292E;--1:#E1E4E8">            </span><span style="--0:#616972;--1:#99A0A6"># system quadlets, root</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">~</span><span style="--0:#24292E;--1:#E1E4E8">/.config/containers/systemd/       </span><span style="--0:#616972;--1:#99A0A6"># user, rootless</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="/etc/containers/systemd/            # system quadlets, root~/.config/containers/systemd/       # user, rootless"><div></div></button></div></figure></div>
+<h3 id="example-container-file">Example <code>.container</code> file</h3>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">ini</span></figcaption><pre data-language="ini"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Container]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Image</span><span style="--0:#24292E;--1:#E1E4E8">=docker.io/library/nginx:latest</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">PublishPort</span><span style="--0:#24292E;--1:#E1E4E8">=8080:80</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Volume</span><span style="--0:#24292E;--1:#E1E4E8">=nginx-data:/usr/share/nginx/html:Z</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Service]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Restart</span><span style="--0:#24292E;--1:#E1E4E8">=always</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Install]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">WantedBy</span><span style="--0:#24292E;--1:#E1E4E8">=multi-user.target</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[Container]Image=docker.io/library/nginx:latestPublishPort=8080:80Volume=nginx-data:/usr/share/nginx/html:Z[Service]Restart=always[Install]WantedBy=multi-user.target"><div></div></button></div></figure></div>
+<p>Once the file is created (say, <code>nginx.container</code>), it's enough to reload systemd's configuration and start the service. Mind the name, though: from <code>nginx.container</code>, systemd generates a unit called <code>nginx.service</code>, and that's the one you talk to:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">daemon-reload</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">start</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx.service</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="systemctl daemon-reloadsystemctl start nginx.service"><div></div></button></div></figure></div>
+<p>From there it's a full systemd service: autostart at boot via <code>[Install]</code>, a unified journal via <code>journalctl -u nginx.service</code>, dependency management via standard <code>After=</code>/<code>Requires=</code>. What you can't do is <code>systemctl enable</code> it - systemd treats generated units as transient, so autostart is handled only by the <code>[Install]</code> section in the <code>.container</code> file itself.</p>
+<p>If the service is rootless and the file lives in <code>~/.config/containers/systemd/</code>, it's all the same, just with <code>--user</code> (<code>systemctl --user daemon-reload</code>, <code>systemctl --user start nginx.service</code>), and <code>[Install]</code> gets <code>WantedBy=default.target</code> instead of <code>multi-user.target</code>. More on the rootless quirks - and on why such a service won't come back after a reboot without <code>loginctl enable-linger</code> - in the article on <a href="https://prohomelab.com/en/posts/quadelts-vs-podlets/">Quadlet and Podlet</a>. For a homelab where there's no Kubernetes and none is planned, but systemd is there - this is, in my view, the optimal way to keep container infrastructure.</p>
+<h3 id="podlet---a-helper-for-writing-quadlet-files">Podlet - a helper for writing Quadlet files</h3>
+<p>Writing <code>.container</code> files by hand isn't always convenient, especially when you already have a working <code>docker run</code> command or <code>docker-compose.yml</code> that you don't want to rewrite from scratch. There's a separate tool for this - <strong>Podlet</strong> (not to be confused with Quadlet, they're different things, even though the names look similar).</p>
+<p>Podlet is a standalone utility written in Rust, not part of Podman itself, but used closely alongside it. It can generate Quadlet files three ways: from a <code>podman run</code> command (or <code>docker run</code> - the syntax is almost identical), from an existing compose file, and even from an already-running container, pod, network, or volume via <code>podlet generate</code>.</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podlet</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">run</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-p</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">8080:80</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="podlet podman run -d -p 8080:80 nginx"><div></div></button></div></figure></div>
+<p>The command above will print a ready-made <code>.container</code> file with all the necessary sections to the console - all that's left is to save it in the right directory. For compose files, Podlet splits services into separate <code>.container</code> files by default, and with the <code>--pod</code> flag gathers them into a single <code>.pod</code> together with the accompanying containers - which one to pick is up to you, depending on what's closer to the application's original architecture.</p>
+<p>In practice Podlet is especially useful specifically during the migration stage from Docker Compose: no need to manually work out the syntax of Quadlet sections - just feed it an existing <code>docker-compose.yml</code>, then fine-tune the generated file to suit your needs.</p>
+<p>Without installing anything, you can also turn a compose file into Quadlet units with the <a href="https://prohomelab.com/en/tools/compose-quadlet/">converter on this site</a> - it runs right in the browser and also writes a README with the install commands.</p>
+<h2 id="what-changed-in-podman-6">What changed in Podman 6</h2>
+<p>Podman 6 landed in summer 2026, and this is one of those major version bumps worth taking seriously. Here's what might bite a home server:</p>
+<ul>
+<li><strong>cgroups v2 only</strong> - cgroups v1 support is gone, and on older systems Podman 6 simply won't run;</li>
+<li><strong>nftables only</strong> - iptables support has been removed too;</li>
+<li><strong>Netavark only</strong> - the CNI network stack is no longer supported;</li>
+<li><strong>slirp4netns is gone</strong> - pasta is the only option left for rootless networking (more on it above);</li>
+<li><strong>no more BoltDB</strong> - on first start, Podman 6 will try to migrate it to SQLite on its own, but a backup before upgrading won't hurt;</li>
+<li><strong>network isolation is now on by default</strong> - closer to how Docker behaves, but if your containers on different networks were talking to each other "just because they could," check that after upgrading;</li>
+<li><strong><code>podman volume prune</code> now only removes anonymous volumes</strong>, like Docker does; the old behavior needs the new <code>--all</code> flag.</li>
+</ul>
+<p>If your distro is still on the 5.x branch, it's still getting fixes - but plan the move to version 6 ahead of time, not in the middle of a routine <code>dnf upgrade</code>.</p>
+<h2 id="when-its-worth-choosing-podman">When it's worth choosing Podman</h2>
+<p>From my own experience, Podman is especially justified if:</p>
+<ul>
+<li>security and rootless mode by default matter to you, not as an option that needs to be bolted on separately;</li>
+<li>the server already uses systemd, and you want to manage containers with the same familiar <code>systemctl</code> commands rather than a separate daemon;</li>
+<li>Kubernetes is already in use or clearly planned - carrying the configuration over via <code>podman generate kube</code> is more convenient than writing manifests from scratch;</li>
+<li>you need a daemonless architecture with no single point of failure;</li>
+<li>you're building a homelab or self-hosted infrastructure and don't want everything to hinge on a single privileged process.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>Podman isn't "Docker, but free," and it's not a clone made just to be a clone. It's a separate, by now fairly mature implementation of a container engine that solves specific architectural problems in Docker: it removes the root-privileged daemon, makes rootless mode complete rather than optional, and integrates natively into systemd via Quadlet.</p>
+<p>For homelab and small servers, moving from Docker to Podman personally required almost no compromises for me - the CLI is compatible, Dockerfile works as-is, and in return I got fewer points of failure and much more transparent systemd integration. If you've been eyeing Podman for a while but haven't decided - the best way to find out if it's for you is to simply try it on one not-too-critical service. And to avoid surprises, have a look at <a href="https://prohomelab.com/en/posts/podman-disadvantages/">Podman - the other side of the coin</a> first - that's where I honestly listed everything you'll have to put up with.</p>
+<hr>
+<p>Useful links:</p>
+<ul>
+<li><a href="https://podman.io">Official Podman website</a></li>
+<li><a href="https://github.com/podman-container-tools/podman">Podman repository on GitHub</a></li>
+<li><a href="https://docs.podman.io">Podman documentation</a></li>
+<li><a href="https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html">Quadlet documentation (man podman-systemd.unit)</a></li>
+<li><a href="https://github.com/containers/podlet">Podlet repository on GitHub</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>Docker vs Podman vs Kubernetes - A Detailed Comparison of Container Technologies</title>
+      <link>https://prohomelab.com/en/posts/docker-podman-kubernetes/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/docker-podman-kubernetes/</guid>
+      <pubDate>Mon, 22 Dec 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Containerization</category>
+      <category>Podman</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <category>Kubernetes</category>
+      <description>Comparing Docker, Podman, and Kubernetes: architecture, security, overhead, and real-world use cases - from homelab to production clusters.</description>
+      <content:encoded><![CDATA[<h2 id="docker-vs-podman-vs-kubernetes---a-detailed-comparison-of-container-technologies">Docker vs Podman vs Kubernetes - A Detailed Comparison of Container Technologies</h2>
+<p>If you enjoyed this article, you can support the author by becoming a sponsor on Boosty (link in the contacts section).</p>
+<p>Containerization has long become the de facto standard for shipping and running applications, but the umbrella term "containers" actually hides tools of completely different levels. Docker and Podman are engines for running and building containers on a single machine. Kubernetes is an orchestrator that manages a cluster of such machines. They're often confused or compared directly, even though, strictly speaking, they're in different weight classes. In this article I'll go through the architecture, overhead, and use cases of all three in detail, so it's clear what actually makes sense to compare with what.</p>
+<hr>
+<h3 id="1-how-these-solutions-relate-to-each-other">1. How these solutions relate to each other</h3>
+<table>
+<thead>
+<tr>
+<th>Solution</th>
+<th>Level</th>
+<th>Primary purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Docker</td>
+<td>Container runtime + tooling</td>
+<td>Packaging, running, and managing containers</td>
+</tr>
+<tr>
+<td>Podman</td>
+<td>Container runtime (daemonless)</td>
+<td>An alternative to Docker with a focus on security</td>
+</tr>
+<tr>
+<td>Kubernetes</td>
+<td>Container orchestration</td>
+<td>Managing clusters and application lifecycles</td>
+</tr>
+</tbody>
+</table>
+<p>It's worth stating upfront: Kubernetes is not a replacement for Docker or Podman, but a layer on top of them. A Kubernetes cluster still uses a container runtime somewhere inside (containerd, CRI-O, and historically Docker itself via dockershim, which, incidentally, was removed from Kubernetes long ago). So the correct comparison looks like this: Docker vs Podman is a choice of runtime for a single machine, while Kubernetes is a separate question of whether you need orchestration at all.</p>
+<hr>
+<h3 id="2-docker">2. Docker</h3>
+<h4 id="21-architecture">2.1 Architecture</h4>
+<p>Docker works on the classic client-server model:</p>
+<ul>
+<li><strong>Docker CLI</strong> - what the user interacts with;</li>
+<li><strong>dockerd</strong> - a daemon that runs constantly in the background with root privileges and actually manages the containers;</li>
+<li><strong>containerd</strong> and <strong>runc</strong> - lower-level components that directly launch the processes.</li>
+</ul>
+<p>The call chain looks like this: <code>Docker CLI → dockerd → containerd → runc → container</code>. The key detail here is <code>dockerd</code>: it's always present, runs with maximum privileges, and is the single point through which literally all container operations pass.</p>
+<h4 id="22-key-features">2.2 Key features</h4>
+<ul>
+<li>image building via <code>Dockerfile</code>;</li>
+<li>Docker Compose for multi-container applications;</li>
+<li>Docker Hub and compatibility with any OCI registries;</li>
+<li>its own volume and network drivers;</li>
+<li>to this day, the widest ecosystem of ready-made images, plugins, and learning materials.</li>
+</ul>
+<h4 id="23-overhead">2.3 Overhead</h4>
+<p>From a resource standpoint, the main price Docker pays for convenience is a constantly running daemon. Even with no containers running at all, <code>dockerd</code> already takes up some amount of memory (usually around 50-150 MB, depending on version and configuration) and adds an extra layer of system calls between the user's command and the actual process launch.</p>
+<p>From a security standpoint - <code>dockerd</code> runs as root by default, meaning a theoretical compromise of the daemon potentially gives a compromise of the whole host. Rootless mode exists in Docker and is gradually becoming more convenient, but it still requires separate setup and has more practical limitations (for example, around networking and some storage features) than rootless in Podman, where it's the base mode of operation rather than an add-on.</p>
+<h4 id="24-advantages">2.4 Advantages</h4>
+<ul>
+<li>low barrier to entry - a huge number of ready-made tutorials, compose files, and images "out of the box";</li>
+<li>maximum compatibility with existing CI/CD pipelines and cloud services;</li>
+<li>a mature ecosystem of tools (Docker Desktop, Docker Scout, and so on).</li>
+</ul>
+<h4 id="25-disadvantages">2.5 Disadvantages</h4>
+<ul>
+<li>a root daemon as a potential single point of failure and attack;</li>
+<li>rootless mode is less mature than Podman's;</li>
+<li>Docker Desktop requires a paid subscription for commercial use at companies past a certain size - worth keeping in mind when choosing for work tasks, although the Docker Engine itself remains open source.</li>
+</ul>
+<hr>
+<h3 id="3-podman">3. Podman</h3>
+<h4 id="31-architecture">3.1 Architecture</h4>
+<p>Podman is built on a fundamentally different principle - no daemon:</p>
+<p><code>Podman CLI → conmon → runc/crun → container</code></p>
+<p>Each container runs as a regular child process of the current user, with no permanently running intermediary in the background. This isn't a cosmetic difference but the foundation of the whole architecture: no daemon means no single point of failure and no single target for an attack.</p>
+<h4 id="32-key-features">3.2 Key features</h4>
+<ul>
+<li>rootless containers by default, not as an option;</li>
+<li>full support for <code>Dockerfile</code> and its own <code>Containerfile</code> format;</li>
+<li>running regular <code>docker-compose.yml</code> files via <code>podman compose</code> - a thin wrapper that calls either the original <code>docker-compose</code> or the separate <code>podman-compose</code> project;</li>
+<li>native generation of systemd units via Quadlet - I have a <a href="https://prohomelab.com/en/posts/quadelts-vs-podlets/">separate article</a> on this in more detail;</li>
+<li>a CLI practically compatible with Docker (<code>alias docker=podman</code> works without surprises in most cases).</li>
+</ul>
+<h4 id="33-overhead">3.3 Overhead</h4>
+<p>Podman uses fewer resources at idle precisely because there's nothing running in the background - there's simply no daemon. From a security standpoint, containers are isolated by default through user namespaces, modern rootless networking is built on <strong>pasta</strong> (Podman 6 dropped the old <code>slirp4netns</code> entirely), and Podman itself works well for multi-tenant environments, where several users on the same machine shouldn't be able to affect each other's containers.</p>
+<h4 id="34-advantages">3.4 Advantages</h4>
+<ul>
+<li>improved security thanks to the daemonless architecture and a full rootless mode;</li>
+<li>less overhead, which is especially noticeable on servers and VPS instances with limited resources;</li>
+<li>fully open source with no commercial restrictions on use, and since 2025 a CNCF project too, so it isn't tied to a single company.</li>
+</ul>
+<h4 id="35-disadvantages">3.5 Disadvantages</h4>
+<ul>
+<li>noticeably fewer learning materials and ready-made recipes than Docker - a lot has to be googled or figured out from the documentation;</li>
+<li><code>podman-compose</code> is historically less mature and not 100% compatible with the full Docker Compose syntax (you can partly work around this by running the original <code>docker-compose</code> on top of Podman's socket - details in the drawbacks article linked below);</li>
+<li>some Docker-oriented tools and GUIs out of the box are built specifically around the <code>dockerd</code> socket, and with Podman require either a compatible API socket (<code>podman system service</code>) or some manual tweaking.</li>
+</ul>
+<p>If you want to go deeper on Podman than a comparison piece like this one allows, I've got two dedicated articles: a detailed look at the project's architecture and history in <a href="https://prohomelab.com/en/posts/what-is-podman/">Podman - A Modern Alternative to Docker</a>, and an honest rundown of its real-world limitations in <a href="https://prohomelab.com/en/posts/podman-disadvantages/">Podman - The Other Side of the Coin</a>.</p>
+<hr>
+<h3 id="4-kubernetes">4. Kubernetes</h3>
+<h4 id="41-architecture">4.1 Architecture</h4>
+<p>Kubernetes is a distributed orchestration system, not a runtime by itself. It operates on a fundamentally different scale: not a single host, but a cluster of nodes.</p>
+<p><strong>Control Plane</strong> is responsible for the state of the entire cluster:</p>
+<ul>
+<li>API Server - the entry point for all requests;</li>
+<li>Scheduler - decides which node to run a pod on;</li>
+<li>Controller Manager - makes sure the actual state matches the desired state;</li>
+<li>etcd - a distributed store for the cluster's state.</li>
+</ul>
+<p><strong>Worker Nodes</strong> directly run the workloads:</p>
+<ul>
+<li>kubelet - the agent that manages pods on the node;</li>
+<li>container runtime (containerd, CRI-O - this is exactly the level where Kubernetes talks to what we discussed above);</li>
+<li>kube-proxy - network rules and load balancing within the cluster.</li>
+</ul>
+<h4 id="42-key-features">4.2 Key features</h4>
+<ul>
+<li>self-healing - automatic restart of crashed pods;</li>
+<li>horizontal and vertical autoscaling;</li>
+<li>service discovery and built-in load balancing;</li>
+<li>rolling updates with no downtime;</li>
+<li>fully declarative configuration via YAML manifests.</li>
+</ul>
+<h4 id="43-overhead">4.3 Overhead</h4>
+<p>Here Kubernetes honestly loses on simplicity: even a single-node cluster (say, k3s or minikube) requires noticeably more resources than Docker or Podman - a realistic minimum for comfortable work starts at 1-2 GB of RAM, <code>etcd</code> is fairly demanding on disk IOPS, and installing and subsequently maintaining a cluster is its own area of expertise, not a couple of terminal commands.</p>
+<h4 id="44-advantages">4.4 Advantages</h4>
+<ul>
+<li>the de facto industry standard for orchestration;</li>
+<li>high scalability and fault tolerance;</li>
+<li>effectively a mandatory choice for serious production and high availability.</li>
+</ul>
+<h4 id="45-disadvantages">4.5 Disadvantages</h4>
+<ul>
+<li>clear overkill for a single server or a home lab;</li>
+<li>a high barrier to entry - concepts like Ingress, Services, ConfigMaps, and RBAC need to be learned separately;</li>
+<li>excessive complexity for small workloads, where a single server running Podman with Quadlet units would handle the job perfectly well.</li>
+</ul>
+<hr>
+<h3 id="5-direct-comparison">5. Direct comparison</h3>
+<h4 id="51-docker-vs-podman">5.1 Docker vs Podman</h4>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Docker</th>
+<th>Podman</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daemon</td>
+<td>Yes (<code>dockerd</code>, root)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Rootless</td>
+<td>Limited, requires setup</td>
+<td>Full mode by default</td>
+</tr>
+<tr>
+<td>Security</td>
+<td>Medium</td>
+<td>High</td>
+</tr>
+<tr>
+<td>CLI/Dockerfile compatibility</td>
+<td>Reference implementation</td>
+<td>Nearly full</td>
+</tr>
+<tr>
+<td>Idle resource usage</td>
+<td>Higher</td>
+<td>Lower</td>
+</tr>
+<tr>
+<td>systemd integration</td>
+<td>Via workarounds</td>
+<td>Native (Quadlet)</td>
+</tr>
+</tbody>
+</table>
+<p>For servers and homelabs where there's no hard requirement specifically for the Docker Desktop ecosystem, Podman looks like a logical, and in my view more secure, replacement.</p>
+<h4 id="52-dockerpodman-vs-kubernetes">5.2 Docker/Podman vs Kubernetes</h4>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Docker / Podman</th>
+<th>Kubernetes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Purpose</td>
+<td>Running containers</td>
+<td>Cluster orchestration</td>
+</tr>
+<tr>
+<td>Scale</td>
+<td>Single host</td>
+<td>Multiple nodes</td>
+</tr>
+<tr>
+<td>Auto-recovery</td>
+<td>Partial (via <code>Restart=</code> in systemd/Compose)</td>
+<td>Full, built-in</td>
+</tr>
+<tr>
+<td>Barrier to entry</td>
+<td>Low</td>
+<td>High</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="6-typical-use-cases">6. Typical use cases</h3>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Recommended solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Homelab</td>
+<td>Podman or Docker - depends on habits</td>
+</tr>
+<tr>
+<td>Single VPS</td>
+<td>Podman (less overhead, rootless by default)</td>
+</tr>
+<tr>
+<td>CI/CD runners</td>
+<td>Docker or Podman - both are common</td>
+</tr>
+<tr>
+<td>Enterprise production with multiple servers</td>
+<td>Kubernetes</td>
+</tr>
+<tr>
+<td>Edge / IoT devices</td>
+<td>Podman - lower resource usage</td>
+</tr>
+<tr>
+<td>Microservices with autoscaling</td>
+<td>Kubernetes</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="7-final-conclusions">7. Final conclusions</h3>
+<p><strong>When to choose Docker:</strong> you need the fastest possible start, you're learning or doing desktop development, maximum compatibility with existing tutorials and pipelines matters - Docker still has no equal in this sense in terms of the volume of material available.</p>
+<p><strong>When to choose Podman:</strong> it's about a server or VPS with elevated security requirements, and you want rootless containers without jumping through hoops, and the infrastructure is already built around systemd - for homelab and self-hosting, I personally consider Podman the more sensible default choice.</p>
+<p><strong>When to choose Kubernetes:</strong> you need real scaling, high availability, and a production cluster of multiple nodes, or you're building a cloud-native architecture from the start. For a single server at home, Kubernetes is almost always overkill - Podman with Quadlet units will handle the job more simply and with less overhead.</p>
+<p>There's no universal winner here - these are three tools for tasks of different scale, and the choice should be driven by the actual use case, not by "everyone does it that way."</p>
+<hr>
+<p>Useful links:</p>
+<ul>
+<li><a href="https://www.docker.com">Official Docker website</a></li>
+<li><a href="https://podman.io">Official Podman website</a></li>
+<li><a href="https://kubernetes.io">Official Kubernetes website</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>Quadlet and Podlet in Podman - How to Stop Writing Long podman run Commands and Run Containers under systemd</title>
+      <link>https://prohomelab.com/en/posts/quadelts-vs-podlets/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/quadelts-vs-podlets/</guid>
+      <pubDate>Mon, 22 Dec 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Containerization</category>
+      <category>Podman</category>
+      <category>Docker</category>
+      <category>Self-Hosting</category>
+      <category>Kubernetes</category>
+      <description>Quadlet is Podman's declarative systemd unit format, and Podlet is a utility that generates those units from podman run and docker-compose.yml. A hands-on look at both tools, compared against Docker Compose.</description>
+      <content:encoded><![CDATA[<h2 id="quadlet-and-podlet-in-podman">Quadlet and Podlet in Podman</h2>
+<h3 id="containers-without-kubernetes-and-docker-compose">Containers without Kubernetes and Docker Compose</h3>
+<p>If you enjoyed this article, you can support the author by becoming a sponsor on Boosty (link in the contacts section).</p>
+<p>When I first switched from Docker Compose to Podman, I had a bit of confusion in my head between two very similarly-sounding terms - <strong>Quadlet</strong> and <strong>Podlet</strong>. They sound almost identical, both are related to containers, both come up in the same context - and for a while, I'll admit, I mixed them up. The actual difference is fundamental: Quadlet is Podman's built-in format for describing containers via systemd, while Podlet is a separate utility that helps generate those descriptions rather than writing them by hand from scratch. In this article I'll go through both tools in detail, show configuration examples, and compare this approach with the familiar Docker Compose.</p>
+<p>If you haven't read the general overview of Podman itself yet, that's the better place to start - it covers the daemonless architecture, rootless mode, and the project's overall logic in more depth: <a href="https://prohomelab.com/en/posts/what-is-podman/">Podman - A Modern Alternative to Docker</a>.</p>
+<hr>
+<h3 id="1-quadlet">1. Quadlet</h3>
+<h4 id="what-quadlet-is">What Quadlet is</h4>
+<p><strong>Quadlet</strong> is a mechanism built into Podman that lets you declaratively describe containers, pods, networks, volumes, and images using ordinary systemd unit files of a special format. On system startup, systemd itself translates these files into full-fledged <code>.service</code> units and runs them through Podman - nothing needs to be generated by hand, a <code>daemon-reload</code> is enough.</p>
+<p>Quadlet emerged as an evolution of the <code>podman generate systemd</code> idea, except instead of the imperative "generate a unit from an already-running container," here it's the opposite - you declaratively describe the desired state, and systemd brings the system to that state itself, including after a host reboot. <code>podman generate systemd</code> itself is officially deprecated, by the way: it's not being removed, but it won't be developed any further, and the docs send everyone straight to Quadlet.</p>
+<h4 id="types-of-quadlet-files">Types of Quadlet files</h4>
+<table>
+<thead>
+<tr>
+<th>Extension</th>
+<th>What it describes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.container</code></td>
+<td>a single container</td>
+</tr>
+<tr>
+<td><code>.pod</code></td>
+<td>a pod - a group of containers sharing a network</td>
+</tr>
+<tr>
+<td><code>.volume</code></td>
+<td>a named volume</td>
+</tr>
+<tr>
+<td><code>.network</code></td>
+<td>a network</td>
+</tr>
+<tr>
+<td><code>.image</code></td>
+<td>an image that needs to be pulled in advance</td>
+</tr>
+<tr>
+<td><code>.build</code></td>
+<td>building an image from a Containerfile</td>
+</tr>
+<tr>
+<td><code>.kube</code></td>
+<td>deployment from a Kubernetes YAML (<code>podman kube play</code>)</td>
+</tr>
+<tr>
+<td><code>.artifact</code></td>
+<td>an OCI artifact</td>
+</tr>
+</tbody>
+</table>
+<h4 id="where-quadlet-files-live">Where Quadlet files live</h4>
+<ul>
+<li><code>/etc/containers/systemd/</code> - system (root) units;</li>
+<li><code>~/.config/containers/systemd/</code> - user, rootless units.</li>
+</ul>
+<h4 id="example-container-file">Example <code>.container</code> file</h4>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">ini</span></figcaption><pre data-language="ini"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Container]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Image</span><span style="--0:#24292E;--1:#E1E4E8">=docker.io/library/nginx:latest</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">ContainerName</span><span style="--0:#24292E;--1:#E1E4E8">=nginx</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">PublishPort</span><span style="--0:#24292E;--1:#E1E4E8">=8080:80</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Volume</span><span style="--0:#24292E;--1:#E1E4E8">=nginx-data:/usr/share/nginx/html:Z</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Service]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Restart</span><span style="--0:#24292E;--1:#E1E4E8">=always</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Install]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">WantedBy</span><span style="--0:#24292E;--1:#E1E4E8">=multi-user.target</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[Container]Image=docker.io/library/nginx:latestContainerName=nginxPublishPort=8080:80Volume=nginx-data:/usr/share/nginx/html:Z[Service]Restart=always[Install]WantedBy=multi-user.target"><div></div></button></div></figure></div>
+<h4 id="example-pod-file">Example <code>.pod</code> file</h4>
+<p>If you need to group several containers into one pod with a shared network, there's a separate unit type for that, <code>.pod</code>:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">ini</span></figcaption><pre data-language="ini"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># web-pod.pod</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Pod]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">PublishPort</span><span style="--0:#24292E;--1:#E1E4E8">=8080:80</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# web-pod.pod[Pod]PublishPort=8080:80"><div></div></button></div></figure></div>
+<p>The containers themselves then connect to this pod via a reference to the <code>.pod</code> file:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">ini</span></figcaption><pre data-language="ini"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># web-app.container</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Container]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Image</span><span style="--0:#24292E;--1:#E1E4E8">=myapp:latest</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Pod</span><span style="--0:#24292E;--1:#E1E4E8">=web-pod.pod</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Service]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Restart</span><span style="--0:#24292E;--1:#E1E4E8">=always</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# web-app.container[Container]Image=myapp:latestPod=web-pod.pod[Service]Restart=always"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">ini</span></figcaption><pre data-language="ini"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># web-cache.container</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Container]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Image</span><span style="--0:#24292E;--1:#E1E4E8">=docker.io/library/redis:latest</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Pod</span><span style="--0:#24292E;--1:#E1E4E8">=web-pod.pod</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Service]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Restart</span><span style="--0:#24292E;--1:#E1E4E8">=always</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# web-cache.container[Container]Image=docker.io/library/redis:latestPod=web-pod.pod[Service]Restart=always"><div></div></button></div></figure></div>
+<p>All containers attached to the same pod share a common network namespace and see each other via <code>localhost</code> - exactly as if the pod had been created manually with <code>podman pod create</code>.</p>
+<h4 id="managing-quadlet-units">Managing Quadlet units</h4>
+<p>There's one detail that trips up almost everyone (me included): from the file <code>nginx.container</code>, systemd generates a unit called <code>nginx.service</code>, and every command works with that unit, not with the source file:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">daemon-reload</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">start</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx.service</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">status</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx.service</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">journalctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-u</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx.service</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-f</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="systemctl daemon-reloadsystemctl start nginx.servicesystemctl status nginx.servicejournalctl -u nginx.service -f"><div></div></button></div></figure></div>
+<p>And a second one: the usual <code>systemctl enable</code> won't work here. systemd treats generated units as transient, so autostart at boot is controlled solely by the <code>[Install]</code> section in the <code>.container</code> file itself - the Quadlet generator applies it on every <code>daemon-reload</code>, essentially doing for you what <code>enable</code> normally would.</p>
+<p>From this point on, the container is a full systemd service: autostart at boot via <code>[Install]</code>, dependency management via <code>After=</code>/<code>Requires=</code>, unified logging via <code>journalctl</code>, standard <code>Restart=</code> instead of homegrown wrapper scripts.</p>
+<h4 id="rootless-units---three-differences">Rootless units - three differences</h4>
+<p>If the file lives in <code>~/.config/containers/systemd/</code> - meaning the service is rootless - keep three things in mind:</p>
+<ul>
+<li>every command gets the <code>--user</code> flag: <code>systemctl --user daemon-reload</code>, <code>systemctl --user start nginx.service</code>, <code>journalctl --user -u nginx.service</code>;</li>
+<li>the <code>[Install]</code> section uses <code>WantedBy=default.target</code>, not <code>multi-user.target</code> - the per-user systemd instance has its own boot target;</li>
+<li>without "linger," the per-user systemd only runs while you're logged in, and it shuts down - along with all your containers - when your last session ends. For rootless services to start at host boot and live independently of SSH sessions, you need to enable it once:</li>
+</ul>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">sudo</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">loginctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">enable-linger</span><span style="--0:#24292E;--1:#E1E4E8"> $USER</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sudo loginctl enable-linger $USER"><div></div></button></div></figure></div>
+<p>Skipping that last step is a classic: everything works fine during the day, and then after a server reboot your rootless containers quietly stay down until you SSH in.</p>
+<h4 id="the-podman-quadlet-command">The podman quadlet command</h4>
+<p>Recent Podman versions added a dedicated set of commands for working with Quadlets, so you don't have to shuffle files between directories by hand:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">quadlet</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">install</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx.container</span><span style="--0:#24292E;--1:#E1E4E8">   </span><span style="--0:#616972;--1:#99A0A6"># put the file into the right directory</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">quadlet</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">list</span><span style="--0:#24292E;--1:#E1E4E8">                      </span><span style="--0:#616972;--1:#99A0A6"># which Quadlet units exist and what state they're in</span></div></div><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">quadlet</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">rm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx.container</span><span style="--0:#24292E;--1:#E1E4E8">        </span><span style="--0:#616972;--1:#99A0A6"># remove the unit</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="podman quadlet install nginx.container   # put the file into the right directorypodman quadlet list                      # which Quadlet units exist and what state they&#x27;re inpodman quadlet rm nginx.container        # remove the unit"><div></div></button></div></figure></div>
+<p>Handy, but optional: Quadlet works just as well with files you drop into the directory yourself.</p>
+<h4 id="automatic-container-updates">Automatic container updates</h4>
+<p>Here's a nice feature that rarely gets mentioned for some reason: Quadlet can update containers automatically. Add one line to the <code>[Container]</code> section:</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">ini</span></figcaption><pre data-language="ini"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">[Container]</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">Image</span><span style="--0:#24292E;--1:#E1E4E8">=docker.io/library/nginx:latest</span></div></div><div class="ec-line"><div class="code"><span style="--0:#BF3441;--1:#F97583">AutoUpdate</span><span style="--0:#24292E;--1:#E1E4E8">=registry</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="[Container]Image=docker.io/library/nginx:latestAutoUpdate=registry"><div></div></button></div></figure></div>
+<p>and enable the stock timer (with the same <code>--user</code> flag for rootless services):</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">systemctl</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">enable</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--now</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">podman-auto-update.timer</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="systemctl enable --now podman-auto-update.timer"><div></div></button></div></figure></div>
+<p>By default the timer fires once a day, at midnight: it checks whether the registry has a newer image for the same tag, and if so, pulls it and restarts the service. And if the service fails to start after the update, Podman rolls it back to the previous image. One important condition: the image name has to be fully qualified, registry included (<code>docker.io/library/nginx:latest</code>, not just <code>nginx:latest</code>), otherwise Podman has no idea where to look for updates. It's no substitute for deliberately upgrading between versions, but for services on floating tags like <code>:latest</code> or <code>:stable</code> it's very convenient. And if you'd rather update everything by hand but still want to know when new versions come out, take a look at <a href="https://prohomelab.com/en/posts/diun-docker-update-notifications/">Diun</a>.</p>
+<h4 id="advantages-of-quadlet">Advantages of Quadlet</h4>
+<ul>
+<li>native systemd integration - no workarounds or homegrown wrapper scripts;</li>
+<li>autostart and crash recovery through standard systemd mechanisms;</li>
+<li>dependency management between services (for example, "start after the network is up");</li>
+<li>unified centralized logging via <code>journalctl</code>;</li>
+<li>full support for rootless mode.</li>
+</ul>
+<h4 id="limitations-of-quadlet">Limitations of Quadlet</h4>
+<ul>
+<li>requires systemd - doesn't work on systems without it (some embedded distros, part of the Alpine ecosystem);</li>
+<li>designed for a single host - no clustering whatsoever;</li>
+<li>doesn't replace <a href="https://prohomelab.com/en/posts/docker-podman-kubernetes/">Kubernetes</a> if you genuinely need autoscaling, multi-node service discovery, and HA.</li>
+</ul>
+<hr>
+<h3 id="2-podlet">2. Podlet</h3>
+<h4 id="what-podlet-is">What Podlet is</h4>
+<p><strong>Podlet</strong> is a separate utility written in Rust, not part of Podman itself, but used closely alongside it. Podlet's job is simple and useful: save you from having to write Quadlet sections by hand when you already have a working <code>podman run</code>/<code>docker run</code> command or a <code>docker-compose.yml</code> file.</p>
+<p>Important: Podlet does <strong>not</strong> create containers and isn't a runtime - it only generates the text of a ready-made Quadlet file, which then needs to be saved to the right directory and picked up via <code>systemctl daemon-reload</code>.</p>
+<h4 id="generating-from-a-command">Generating from a command</h4>
+<p>The simplest scenario - take an existing run command and just replace <code>podman run</code>/<code>docker run</code> with <code>podlet podman run</code>:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podlet</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">podman</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">run</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-d</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-p</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">8080:80</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">-v</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx-data:/usr/share/nginx/html:Z</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--name</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx:latest</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="podlet podman run -d -p 8080:80 -v nginx-data:/usr/share/nginx/html:Z --name nginx nginx:latest"><div></div></button></div></figure></div>
+<p>The output is a ready-made <code>.container</code> file with all the required <code>[Container]</code>, <code>[Service]</code>, <code>[Install]</code> sections, which you just need to save to <code>~/.config/containers/systemd/</code> or <code>/etc/containers/systemd/</code>.</p>
+<h4 id="generating-from-docker-composeyml">Generating from docker-compose.yml</h4>
+<p>This is probably the most practically useful mode during a migration from Docker Compose:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podlet</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">docker-compose.yml</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="podlet compose docker-compose.yml"><div></div></button></div></figure></div>
+<p>By default, Podlet creates a separate <code>.container</code> file for each service. If you want related services to share a pod with a common network, you have to ask for it explicitly with the <code>--pod</code> flag - then Podlet generates a <code>.pod</code> file and links all the <code>.container</code> files to it. There's also a third option, <code>--kube</code>, which gives you a <code>.kube</code> file plus Kubernetes YAML, in case you're eyeing a cluster anyway:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podlet</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">compose</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--pod</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">docker-compose.yml</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="podlet compose --pod docker-compose.yml"><div></div></button></div></figure></div>
+<p>If you'd rather not install Podlet for a single migration, you can do the same in the browser with the <a href="https://prohomelab.com/en/tools/compose-quadlet/">Docker Compose to Podman Quadlet converter</a>. It splits services into <code>.container</code> files, networks and volumes into <code>.network</code> and <code>.volume</code>, carries over <code>depends_on</code> with healthcheck waits, and shows right away what from the compose file couldn't be carried over.</p>
+<h4 id="generating-from-an-already-running-object">Generating from an already-running object</h4>
+<p>If a container, pod, network, or volume is already created manually and running, Podlet can "lift" the Quadlet configuration off of it:</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">podlet</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">generate</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">container</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">nginx</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="podlet generate container nginx"><div></div></button></div></figure></div>
+<p>Handy if you first quickly spun something up with a terminal command to check whether it works, then decided to formalize the result declaratively.</p>
+<h4 id="why-podlet-is-useful-in-practice">Why Podlet is useful in practice</h4>
+<ul>
+<li>significantly simplifies migration from Docker and Docker Compose - no need to manually learn the syntax of all the Quadlet sections;</li>
+<li>reduces the number of mistakes made when writing unit files by hand (a forgotten <code>[Install]</code>, an incorrect <code>Volume=</code> section, and the like);</li>
+<li>speeds up the migration process itself - for a typical project, Podlet's output usually just needs a bit of tweaking rather than being written from scratch.</li>
+</ul>
+<hr>
+<h3 id="3-quadlet-and-podlet-together">3. Quadlet and Podlet together</h3>
+<p>The easiest way to remember the difference: <strong>Quadlet is the format that gets executed, and Podlet is the tool that writes it for you.</strong> They don't compete with or replace each other - they're different layers of the same process.</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Docker Compose / podman run</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">        </span></span><span style="--0:#24292e;--1:#e1e4e8">│</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">        </span></span><span style="--0:#24292e;--1:#e1e4e8">▼</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">     </span></span><span style="--0:#24292e;--1:#e1e4e8">Podlet   ← generates Quadlet files</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">        </span></span><span style="--0:#24292e;--1:#e1e4e8">│</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">        </span></span><span style="--0:#24292e;--1:#e1e4e8">▼</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">    </span></span><span style="--0:#24292e;--1:#e1e4e8">Quadlet   ← declarative format</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">        </span></span><span style="--0:#24292e;--1:#e1e4e8">│</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">        </span></span><span style="--0:#24292e;--1:#e1e4e8">▼</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">     </span></span><span style="--0:#24292e;--1:#e1e4e8">systemd  ← turns Quadlet into .service units and starts them</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">        </span></span><span style="--0:#24292e;--1:#e1e4e8">│</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">        </span></span><span style="--0:#24292e;--1:#e1e4e8">▼</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#24292e;--1:#e1e4e8">     </span></span><span style="--0:#24292e;--1:#e1e4e8">Podman   ← actually runs the containers/pods</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Docker Compose / podman run        │        ▼     Podlet   ← generates Quadlet files        │        ▼    Quadlet   ← declarative format        │        ▼     systemd  ← turns Quadlet into .service units and starts them        │        ▼     Podman   ← actually runs the containers/pods"><div></div></button></div></figure></div>
+<p>In practice, a typical workflow looks like this: take an existing <code>docker-compose.yml</code>, run it through <code>podlet compose</code> (with <code>--pod</code> if the services need a shared network), get a set of <code>.container</code>/<code>.pod</code> files, drop them into <code>~/.config/containers/systemd/</code>, run <code>systemctl --user daemon-reload</code> - and from that point on everything lives as ordinary systemd services. Just don't forget <code>loginctl enable-linger</code>, or after a reboot those "ordinary systemd services" will sit and wait for you to log in.</p>
+<hr>
+<h3 id="4-comparison-with-docker-compose">4. Comparison with Docker Compose</h3>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Docker Compose</th>
+<th>Quadlet (+ Podlet)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Requires a daemon</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Rootless</td>
+<td>Limited</td>
+<td>By default</td>
+</tr>
+<tr>
+<td>Autostart on system boot</td>
+<td>Via a restart policy (<code>restart: always</code>) that <code>dockerd</code> itself enforces once it starts</td>
+<td>Native, via systemd <code>[Install]</code></td>
+</tr>
+<tr>
+<td>systemd integration</td>
+<td>None</td>
+<td>Full</td>
+</tr>
+<tr>
+<td>Centralized logs</td>
+<td>Via <code>docker compose logs</code></td>
+<td>Via <code>journalctl</code>, alongside all the system's other services</td>
+</tr>
+<tr>
+<td>Configuration format</td>
+<td>YAML (<code>docker-compose.yml</code>)</td>
+<td>INI-like systemd units</td>
+</tr>
+<tr>
+<td>Single host</td>
+<td>Yes</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table>
+<p>It's worth understanding separately: Quadlet isn't a one-to-one replacement for Docker Compose, but rather a different approach to the same result - instead of one YAML file parsed by a separate tool (<code>docker compose</code>/<code>podman-compose</code>), you get a set of systemd units that the operating system itself recognizes. For those already used to managing services via <code>systemctl</code>, this feels more natural than keeping a parallel layer of compose-file orchestration in the system.</p>
+<hr>
+<h3 id="5-practical-scenarios">5. Practical scenarios</h3>
+<p><strong>Homelab.</strong> <a href="https://prohomelab.com/en/posts/nextcloud-aio/">Nextcloud</a>, media servers (Jellyfin, Plex), reverse proxies (<a href="https://prohomelab.com/en/posts/traefik-in-docker/">Traefik</a>, Caddy, nginx), monitoring (Prometheus, Grafana) - a typical set of self-hosted services that live perfectly well as Quadlet units and survive a host reboot without extra scripts.</p>
+<p><strong>VPS / dedicated server.</strong> Web applications, private APIs, CI/CD runners - anywhere a single reliable host is needed without the cost of maintaining a cluster.</p>
+<p><strong>Edge / IoT.</strong> Minimal resource usage, rootless mode by default, and simple maintenance are especially valuable on weak hardware.</p>
+<hr>
+<h3 id="6-when-quadlet-isnt-the-right-tool">6. When Quadlet isn't the right tool</h3>
+<p>If you need:</p>
+<ul>
+<li>
+<p>horizontal autoscaling under load;</p>
+</li>
+<li>
+<p>an HA cluster across multiple physical nodes;</p>
+</li>
+<li>
+<p>multi-region deployment with load distribution across data centers,</p>
+</li>
+<li>
+<p>then you've already outgrown single-host workloads, and you need full-fledged Kubernetes. Quadlet handles single-node infrastructure needs perfectly well, but deliberately doesn't try to compete with cluster-level orchestration.</p>
+</li>
+</ul>
+<hr>
+<h3 id="7-summary">7. Summary</h3>
+<ul>
+<li><strong>Quadlet</strong> - a declarative format that turns Podman containers, pods, networks, and volumes into ordinary systemd services.</li>
+<li><strong>Podlet</strong> - a tool that generates Quadlet files from <code>podman run</code>, <code>docker-compose.yml</code>, or already-running objects, saving time on writing the syntax by hand.</li>
+<li>Together they provide a secure, minimalist single-node platform with no daemon and no Kubernetes - more than enough for most self-hosted scenarios.</li>
+</ul>
+<p>Docker Compose - familiar. Podman - secure. Quadlet - declarative and systemd-native. Podlet - saves time during migration. Kubernetes - when a single host is no longer enough. The choice of a specific tool should be driven by the actual task, not by fashion. And for the pitfalls you'll run into along the way, I wrote a separate piece: <a href="https://prohomelab.com/en/posts/podman-disadvantages/">Podman - The Other Side of the Coin</a>.</p>
+<hr>
+<p>Useful links:</p>
+<ul>
+<li><a href="https://podman.io">Official Podman website</a></li>
+<li><a href="https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html">Quadlet documentation (man podman-systemd.unit)</a></li>
+<li><a href="https://github.com/containers/podlet">Podlet repository on GitHub</a></li>
+</ul>]]></content:encoded>
+    </item>
+  </channel>
+</rss>

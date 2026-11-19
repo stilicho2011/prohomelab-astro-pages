@@ -1,0 +1,1245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Proxmox | ProHomeLab</title>
+    <link>https://prohomelab.com/en/posts/proxmox/</link>
+    <description>Сайт про homelab, self-hosting и IT: инструкции по установке серверов, виртуализация, Docker, Proxmox, безопасность и автоматизация.</description>
+    <language>en</language>
+    <lastBuildDate>Thu, 09 Oct 2025 00:00:00 GMT</lastBuildDate>
+    <generator>ProHomeLab theme for Astro</generator>
+    <atom:link href="https://prohomelab.com/en/posts/proxmox/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>How to Merge local-lvm and local into a Single Storage in Proxmox</title>
+      <link>https://prohomelab.com/en/posts/merge-local-lvm-and-local/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/merge-local-lvm-and-local/</guid>
+      <pubDate>Thu, 09 Oct 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Storage</category>
+      <description>A step-by-step guide to merging the local-lvm and local storages in Proxmox into a single logical storage. Covers the commands and settings that help you use space more efficiently and simplify management of virtual machines and containers.</description>
+      <content:encoded><![CDATA[<h2 id="why-merge-local-lvm-and-local">Why merge local-lvm and local?</h2>
+<p>After installing <strong>Proxmox VE</strong>, two local storages are created by default:</p>
+<ul>
+<li><code>local</code> - the <code>/var/lib/vz</code> folder, intended for ISO images, templates, and backups.</li>
+</ul>
+<p><img alt="local storage" loading="lazy" decoding="async" width="2522" height="399" src="https://prohomelab.com/_astro/local.C769oLLl_ZSnB99.webp"></p>
+<ul>
+<li><code>local-lvm</code> - an LVM pool where the disks of virtual machines and containers are stored.</li>
+</ul>
+<p><img alt="local-lvm storage" loading="lazy" decoding="async" width="2543" height="508" src="https://prohomelab.com/_astro/local-lvm.DoJUGBDh_Z1octWH.webp"></p>
+<p>At first glance this is convenient, but this separation has downsides:</p>
+<ul>
+<li>The size of <code>local-lvm</code> is fixed, and it's hard to free up space for ISOs or backups.</li>
+<li>Files in <code>local-lvm</code> are not directly visible in the file system.</li>
+<li>Expanding or migrating the pool is problematic.</li>
+</ul>
+<p>That's why many administrators prefer to <strong>merge local-lvm and local into a single file-based storage</strong>, where everything is stored as regular files.</p>
+<hr>
+<h2 id="available-approaches">Available approaches</h2>
+<p>There are two approaches:</p>
+<ol>
+<li><strong>Remove the LVM pool and use all the space for ext4 (or ZFS)</strong>.</li>
+<li><strong>Migrate the disks from local-lvm to local, then remove the LVM pool.</strong></li>
+</ol>
+<p>We'll go with the first option, since it's simpler if you're installing Proxmox from scratch - it's safer, and you won't lose data.</p>
+<hr>
+<h2 id="step-1-remove-the-lvm-storage-from-the-storage-list-in-the-datacenter-section-of-our-proxmox">Step 1. Remove the LVM storage from the Storage list in the Datacenter section of our Proxmox</h2>
+<p>Go to the <strong>Datacenter</strong> menu, select <strong>Storage</strong>, select the <em>local-lvm storage</em> we don't need, and click the remove button.</p>
+<p><img alt="Removing local-lvm" loading="lazy" decoding="async" width="2495" height="382" src="https://prohomelab.com/_astro/storage.DjK2Ndyn_Z28wiw8.webp"></p>
+<p>As a result, we're left with only the <code>local</code> storage.
+However, the problem is that the "supposedly" freed disk space isn't actually freed yet.</p>
+<h2 id="step-2-freeing-up-space">Step 2. Freeing up space</h2>
+<p>Go into the shell of our node and start the magic session.</p>
+<p>First, let's actually remove the logical volume with the command</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">lvremove /dev/pve/data</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="lvremove /dev/pve/data"><div></div></button></div></figure></div>
+<p><img alt="Removing local-lvm" loading="lazy" decoding="async" width="1993" height="438" src="https://prohomelab.com/_astro/lvremove.B5um3fF7_Z1BvJjf.webp"></p>
+<p>and confirm the action.</p>
+<h2 id="step-3-increasing-the-size-of-the-logical-volume">Step 3. Increasing the size of the logical volume</h2>
+<p>Now let's use the following command to increase the size of the logical volume (LVM) so it takes up all the available unallocated space on the physical volume (PV).</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">lvresize -l +100%FREE /dev/pve/root</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="lvresize -l +100%FREE /dev/pve/root"><div></div></button></div></figure></div>
+<p><img alt="increasing lvm" loading="lazy" decoding="async" width="2494" height="509" src="https://prohomelab.com/_astro/lvresize.CTgGDy8C_Z1rqqpT.webp"></p>
+<p>What does the command above mean, you ask me, my curious little friend. Good question.</p>
+<p>What happens step by step</p>
+<ul>
+<li><code>lvresize</code> is a utility for resizing a Logical Volume in LVM.</li>
+<li><code>-l +100%FREE</code> is a flag that says:
+"Add all the remaining free space from the volume group (VG) to this logical volume."</li>
+</ul>
+<p>That is, if our pve group has, say, 50 GB of unused space left, this command will add all of it to /dev/pve/root.</p>
+<p>/dev/pve/root is the path to the logical volume where the main file system is installed (usually /).</p>
+<p>And finally, today's last command</p>
+<h2 id="step-4-expanding-our-file-system">Step 4. Expanding our file system</h2>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">resize2fs /dev/mapper/pve-root</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="resize2fs /dev/mapper/pve-root"><div></div></button></div></figure></div>
+<p>expands our ext4 file system inside the specified partition.</p>
+<p><img alt="expanding local" loading="lazy" decoding="async" width="2175" height="745" src="https://prohomelab.com/_astro/resize2fs.DpLizB55_2haGDz.webp"></p>
+<p>Now let's check what we've done.</p>
+<p><img alt="test" loading="lazy" decoding="async" width="2513" height="545" src="https://prohomelab.com/_astro/test1.C7IUYnYm_Z11HUzD.webp">
+<img alt="test2" loading="lazy" decoding="async" width="2542" height="616" src="https://prohomelab.com/_astro/test2.DSCVe87T_Z19ws21.webp"></p>
+<p>As you can see, now all disk space is used within a single <code>local storage</code>.</p>
+<p>But there's one more, final and mandatory, touch needed.</p>
+<h2 id="step-5-the-final-touch">Step 5. The final touch</h2>
+<p>We need to tell the system that the <code>local</code> storage should now be used for all data types, including the type that was previously only used by <code>local-lvm</code>.</p>
+<p><img alt="Storage" loading="lazy" decoding="async" width="2555" height="972" src="https://prohomelab.com/_astro/content.KDfxBQ0x_94gls.webp"></p>
+<h2 id="post-scriptum">Post scriptum</h2>
+<p>If you enjoyed this article or found this knowledge useful, consider supporting the channel on Boosty via the link in the contacts.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Storage for HA in a Proxmox Cluster</title>
+      <link>https://prohomelab.com/en/posts/proxmox-cluster-types/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/proxmox-cluster-types/</guid>
+      <pubDate>Mon, 29 Sep 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Cluster</category>
+      <description>An overview of the main storage types in Proxmox that support High Availability (HA). Covers local-lvm, Ceph, NFS, iSCSI, DRBD9/LINSTOR, and other options, their upsides and limits, plus recommendations for a reliable, scalable cluster.</description>
+      <content:encoded><![CDATA[<h2 id="storage-for-ha-in-proxmox-ve">Storage for HA in Proxmox VE</h2>
+<p>If you've already gone through my <a href="https://prohomelab.com/en/posts/proxmox-cluster/">article on building a Proxmox cluster</a> - QDevice, quorum, mixed hardware across nodes - you've probably run into the obvious next question: where exactly are your VM disks supposed to live for that whole automatic-restart setup to actually work, rather than just look good in the UI? It's not a hypothetical concern - I've seen plenty of people set up HA, click around to confirm "yep, works," and then lose data the moment the wrong node actually goes down, because the VM's disk was only ever sitting on that one node in the first place.</p>
+<p>In this article and video, I go through which storage types in Proxmox genuinely qualify for HA, which ones just resemble shared storage right up until the moment they let you down, and what to pick depending on how many nodes you're running.</p>
+<p>If this article helped you out, you can support the author by becoming a sponsor on <a href="https://boosty.to/stilicho2011">Boosty</a> (also linked in the contacts section).</p>
+<h3 id="table-of-contents">Table of Contents</h3>
+<ol>
+<li><a href="#1-the-role-of-storage-in-high-availability">The role of storage in High Availability</a></li>
+<li><a href="#2-single-node--ha-requirement">Single node + HA requirement</a></li>
+<li><a href="#3-two-nodes--quorum--witness">Two nodes + quorum / witness</a></li>
+<li><a href="#4-three-or-more-nodes-with-shared-storage">Three or more nodes with shared storage</a></li>
+<li><a href="#5-hyperconverged-storage-ceph-and-alternatives">Hyperconverged storage, Ceph and alternatives</a></li>
+<li><a href="#6-external-sannas-options">External SAN/NAS options</a></li>
+<li><a href="#7-what-doesnt-work-for-ha-at-all">What doesn't work for HA at all</a></li>
+<li><a href="#8-recommendations">Recommendations</a></li>
+<li><a href="#9-wrapping-up">Wrapping up</a></li>
+</ol>
+<hr>
+<h3 id="1-the-role-of-storage-in-high-availability">1. The role of storage in High Availability</h3>
+<p>In a Proxmox VE cluster, <strong>High Availability (HA)</strong> is supposed to automatically restart VMs and containers on another node when the original one goes down. Sounds simple, but the whole thing hinges on exactly one thing: what kind of storage the VM's disk actually lives on.</p>
+<p>When a node drops, a neighboring node needs to be able to:</p>
+<ul>
+<li>reach the failed VM/CT's disk immediately - no copying files over, no "hang on, let me sync this first";</li>
+<li>read the current, correct configuration;</li>
+<li>boot the VM without any risk of data getting out of sync - meaning no chance of starting it against a stale copy of the disk while a newer one exists somewhere else.</li>
+</ul>
+<p>If the storage is physically tied to the node that just died (a plain local disk, thin-LVM on a local SSD, whatever) - that's it, game over. You don't even need to bother configuring HA past that point, because it simply can't work: the neighboring node has no way to pull a disk out of a dead server.</p>
+<h4 id="what-storage-needs-to-be-capable-of-for-ha">What storage needs to be capable of for HA</h4>
+<ol>
+<li><strong>Shared access</strong> - the VM's disk is physically reachable from multiple nodes at once, not copied there "just in case."</li>
+<li><strong>Cluster-level consistency</strong> - locking, split-brain protection, and replication that's synchronous or close enough to it.</li>
+<li><strong>Failover with zero manual steps</strong> - Proxmox starts the VM on another node by itself, not "let me go mount that disk real quick."</li>
+<li><strong>A dedicated storage network</strong> - keep storage traffic separate from management/VM traffic where you can; 10GbE or better is worth aiming for, especially with Ceph.</li>
+<li><strong>Reliability at the data layer</strong> - RAID, Ceph replication, DRBD, a genuinely redundant NAS/SAN - something that survives a single disk failure too, not just a node failure.</li>
+<li><strong>Actual support in Proxmox's own HA stack</strong> - Ceph, iSCSI, NFS, ZFS replication. I'm leaving GlusterFS off that list on purpose - more on why below.</li>
+</ol>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>GlusterFS as a built-in Proxmox storage type is no longer supported as of Proxmox VE 9 - the Proxmox team's own stated reason is that GlusterFS itself isn't really moving forward upstream anymore. It still works on Proxmox VE 8 for now (8.x support runs for roughly a year past the 9.0 release), but I wouldn't build anything new on it. You can technically still mount a Gluster volume yourself and add it as directory storage, but at that point you've lost the native HA-stack integration and you're on your own.</p>
+</div>
+</div>
+<hr>
+<h3 id="2-single-node--ha-requirement">2. Single node + HA requirement</h3>
+<p>I still run into people genuinely confused about why HA won't work on a single box. Let's walk through the four setups people usually try first, and why none of them get you there:</p>
+<h4 id="21-local-storage-zfs-raid-or-hardware-raid">2.1. Local storage (ZFS RAID or hardware RAID)</h4>
+<p>The upsides are obvious: protection against a single disk failing, simplicity, solid performance. There's exactly one downside, and it's fatal for our purposes: <strong>failover is flat-out impossible</strong>, because the entire array physically lives inside one chassis. The server goes down, and the RAID array goes down right along with it.</p>
+<h4 id="22-zfs-replication-to-a-passive-node">2.2. ZFS replication to a "passive" node</h4>
+<p>Proxmox's ZFS replication copies disk snapshots to a neighboring node on a schedule (minutes at best, not seconds). That gets you a cold standby - in a real outage, you can manually spin the VM up on the second node, losing whatever changed since the last replication run. That's <strong>not HA</strong>: there's no automatic startup, recovery is a manual step, and you lose everything written after the last snapshot.</p>
+<h4 id="23-replication-to-an-external-nas">2.3. Replication to an external NAS</h4>
+<p>Fine for backups, but the NAS itself now becomes an <strong>SPOF</strong> (single point of failure) - you haven't removed the risk, you've just relocated it to a different box.</p>
+<h4 id="24-snapshots--vzdump">2.4. Snapshots + vzdump</h4>
+<p>This is backup, not HA. Recovery is possible, but it's neither automatic nor instant - by the time you've restored from backup, the service has already been down, which entirely defeats the point of High Availability.</p>
+<p><strong>Bottom line:</strong> HA is physically impossible on a single node, full stop. The floor is two nodes with genuinely shared access to storage - and even that comes with a catch, as we're about to see.</p>
+<hr>
+<h3 id="3-two-nodes--quorum--witness">3. Two nodes + quorum / witness</h3>
+<h4 id="31-the-two-node-problem---split-brain">3.1. The two-node problem - split-brain</h4>
+<p>With just two nodes, if the link between them drops, each one sees the situation as "I'm the only one still alive, the other one must be dead" - and both can try to bring up the same VM at once. That's classic <strong>split-brain</strong>, and cluster quorum is exactly what's supposed to prevent it. The catch is that two nodes can never form a real quorum on their own - it's 1 vote against 1 vote, and a majority never emerges from that.</p>
+<p>I covered the quorum mechanism itself - votes, thresholds, all of it - in the <a href="https://prohomelab.com/en/posts/proxmox-cluster/">article on building a Proxmox cluster</a>. Short version here: <strong>you need a third vote</strong>.</p>
+<h4 id="the-fix---qdevice">The fix - QDevice</h4>
+<p>A QDevice is an external "referee" - it doesn't store or run VMs, it just gets a say in the vote. There's a lot of flexibility in where you put it: a lightweight standalone VM, a mini PC, a Raspberry Pi, even the same Proxmox Backup Server box if you already have one. Once that third vote exists, the cluster can form a real majority again (2 out of 3), and HA starts behaving the way you'd expect.</p>
+<h4 id="32-storage-options-for-a-2-node-cluster">3.2. Storage options for a 2-node cluster</h4>
+<table>
+<thead>
+<tr>
+<th>Storage</th>
+<th>Fit for HA</th>
+<th>SPOF</th>
+<th>Needs QDevice</th>
+<th>Performance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ZFS Local + Replication</td>
+<td>Partial (data loss up to the replication interval)</td>
+<td>Node</td>
+<td>Yes</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>NFS / iSCSI / NAS</td>
+<td>Yes</td>
+<td>NAS/SAN</td>
+<td>Yes</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>Ceph</td>
+<td>Yes</td>
+<td>None (with 3+ monitors)</td>
+<td>Yes</td>
+<td>High</td>
+</tr>
+<tr>
+<td>DRBD9 (via LINSTOR)</td>
+<td>Yes</td>
+<td>None</td>
+<td>Yes</td>
+<td>Medium</td>
+</tr>
+</tbody>
+</table>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p><strong>DRBD9 isn't a built-in Proxmox plugin.</strong> It runs through a separate LINBIT product called <strong>LINSTOR</strong> (plus the <code>linstor-proxmox</code> plugin), which you install and configure entirely separately from Proxmox itself. LINBIT's public package repo is free to use for a homelab or testing, but comes with zero SLA or support guarantees - for production, LINBIT explicitly points you at their paid customer repositories instead. So "DRBD9" in the tables above isn't "comes with Proxmox" - it's "one more piece of infrastructure you'll be standing up and maintaining yourself."</p>
+<p>One thing worth flagging specifically for Ceph on two nodes: Ceph's own monitor quorum (<code>ceph-mon</code>) needs an odd number of votes, and two nodes don't give you that. In practice, people running this setup stand up a third Ceph monitor on some external box (the same QDevice host, say) - just for monitor voting, with no actual OSDs attached to it.</p>
+</div>
+</div>
+<hr>
+<h3 id="4-three-or-more-nodes-with-shared-storage">4. Three or more nodes with shared storage</h3>
+<h4 id="41-why-three-nodes-suddenly-makes-everything-easier">4.1. Why three nodes suddenly makes everything easier</h4>
+<p>With three nodes, quorum just works natively, no workarounds needed: a majority is 2 out of 3, split-brain from losing a single node is arithmetically impossible, and no QDevice is required anywhere. HA groups configure the normal way through the UI, no extra hoops.</p>
+<h4 id="42-shared-storage---file-based-and-block-based-access">4.2. Shared storage - file-based and block-based access</h4>
+<h5 id="nfs">NFS</h5>
+<p>File-based storage, works fine for both VM/CT disks and ISOs/templates. Takes about two minutes to set up:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Datacenter → Storage → Add → NFS</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Server: your NAS's IP</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Export: /volume1/proxmox</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Content: Disk image, ISO image, Backup</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Nodes: every node in the cluster</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Datacenter → Storage → Add → NFSServer: your NAS&#x27;s IPExport: /volume1/proxmoxContent: Disk image, ISO image, BackupNodes: every node in the cluster"><div></div></button></div></figure></div>
+<p>The catch: the NAS itself is an SPOF. If it goes down, every VM whose disk lives on that NFS share goes down with it, regardless of how many Proxmox nodes you're running.</p>
+<h5 id="iscsi">iSCSI</h5>
+<p>Block-based rather than file-based access, and it outperforms NFS. For HA, <strong>multipath</strong> is non-negotiable - multiple independent network paths to the target - otherwise one dead network link takes down disk access just as reliably as a dead node would.</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Datacenter → Storage → Add → iSCSI</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Portal: your SAN's IP</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Target: the IQN you need</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Nodes: every node in the cluster</span></div></div><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">Optional: LVM over iSCSI - if you want snapshots and thin provisioning</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="Datacenter → Storage → Add → iSCSIPortal: your SAN&#x27;s IPTarget: the IQN you needNodes: every node in the clusterOptional: LVM over iSCSI - if you want snapshots and thin provisioning"><div></div></button></div></figure></div>
+<p>Same risk as NFS: an SPOF on the SAN side, unless the SAN itself is redundant.</p>
+<h5 id="smbcifs">SMB/CIFS</h5>
+<p>Good only for ISO images and container templates. <strong>VM disks flatly don't work over SMB</strong> - Proxmox won't even let you add it as storage for disks in the first place.</p>
+<h4 id="43-a-quick-comparison-on-performance-and-risk">4.3. A quick comparison on performance and risk</h4>
+<table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>SPOF</th>
+<th>Performance</th>
+<th>Requirements</th>
+<th>Scalability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NFS</td>
+<td>NAS</td>
+<td>Medium</td>
+<td>Low</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>iSCSI</td>
+<td>SAN (if not redundant)</td>
+<td>High</td>
+<td>Medium</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>Ceph</td>
+<td>None</td>
+<td>High</td>
+<td>High (network, disks, nodes)</td>
+<td>Excellent</td>
+</tr>
+</tbody>
+</table>
+<p>Ceph stands out here for more than just good numbers on a table - it's the only option of the three that, set up correctly, has no single point of failure at all: data is spread across every node instead of sitting on one external box.</p>
+<hr>
+<h3 id="5-hyperconverged-storage-ceph-and-alternatives">5. Hyperconverged storage, Ceph and alternatives</h3>
+<p><strong>Hyperconverged</strong> here means storage and compute live on the same cluster nodes, with no separate NAS/SAN as a standalone device.</p>
+<p><strong>Ceph</strong> is the most mature option of this kind in the Proxmox ecosystem: RBD volumes for VM disks, CephFS for ISOs, templates, and backups. Data gets spread across nodes and can self-heal when a disk or a node fails. The price of entry: at least 3 nodes, a dedicated network for Ceph traffic, and ideally SSD/NVMe rather than spinning disks - Ceph on HDDs is a special kind of pain that anyone who's tried it can tell you about.</p>
+<div class="phl-callout" data-callout="tip">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Tip</span></div>
+<div class="phl-callout-content">
+<p>If you're reading this as the owner of a 2-3 node homelab and already thinking about spinning up Ceph "just to have it" - read my separate article, <a href="https://prohomelab.com/en/posts/proxmox-ceph-home/">Why I Don't Need Ceph Storage in Proxmox for a Home Server</a>, first. Ceph is a deliberate choice for infrastructure where HA genuinely matters, not a default "correct" answer for everyone.</p>
+</div>
+</div>
+<p>The spiritual alternative to Ceph (not a like-for-like replacement) is the same DRBD9/LINSTOR setup covered in the two-node section above - it just scales to 3+ nodes too.</p>
+<hr>
+<h3 id="6-external-sannas-options">6. External SAN/NAS options</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+<th>Fit for HA</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NAS (NFS)</td>
+<td>File-based storage</td>
+<td>Yes</td>
+<td>Works for both VM disks and ISOs</td>
+</tr>
+<tr>
+<td>NAS (SMB/CIFS)</td>
+<td>File-based storage</td>
+<td>ISOs/templates only</td>
+<td>VM disks won't work over SMB</td>
+</tr>
+<tr>
+<td>SAN (iSCSI/Fibre Channel)</td>
+<td>Block-based access</td>
+<td>Yes</td>
+<td>Multipath is mandatory</td>
+</tr>
+<tr>
+<td>Unified Storage (NFS + iSCSI)</td>
+<td>Combined</td>
+<td>Yes</td>
+<td>The NAS/SAN itself needs to be redundant on its own side</td>
+</tr>
+</tbody>
+</table>
+<p>The core point of this whole section, said a third time on purpose: <strong>your Proxmox cluster's HA will never be more reliable than the single box your VM disks actually live on</strong>, if that box has no redundancy of its own. A five-node Proxmox cluster backed by one non-redundant NAS is HA with one enormous SPOF sitting right behind it.</p>
+<hr>
+<h3 id="7-what-doesnt-work-for-ha-at-all">7. What doesn't work for HA at all</h3>
+<table>
+<thead>
+<tr>
+<th>Storage</th>
+<th>Fit for HA</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local LVM / Directory</td>
+<td>No</td>
+<td>Visible from a single node only</td>
+</tr>
+<tr>
+<td>CIFS/SMB</td>
+<td>No</td>
+<td>ISOs/templates only, not VM disks</td>
+</tr>
+<tr>
+<td>Local ZFS without replication</td>
+<td>No</td>
+<td>Needs at least replication, ideally real shared storage</td>
+</tr>
+<tr>
+<td>Rsync / manual replication</td>
+<td>No</td>
+<td>No automatic failover, everything is manual</td>
+</tr>
+</tbody>
+</table>
+<p>If your current storage is one of these and HA still shows as "enabled" in the Proxmox UI - it's only enabled on paper. There's no real failover behind it, and you'll find that out at the worst possible time.</p>
+<hr>
+<h3 id="8-recommendations">8. Recommendations</h3>
+<p>Boiling the whole article down to something actionable:</p>
+<ul>
+<li><strong>3 nodes minimum</strong> for real quorum without a QDevice - two nodes can work, but only with a clear understanding that a third vote has to come from somewhere regardless.</li>
+<li>Use <strong>shared or hyperconverged storage</strong> - no "local disks and hope for the best."</li>
+<li>A dedicated network for storage traffic, ideally 10GbE, especially with Ceph.</li>
+<li>Set up HA groups deliberately, not "flip the checkbox and forget about it."</li>
+<li>Regular backups through <a href="https://prohomelab.com/en/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server</a> - HA protects you from a node dying, not from a mistake inside the VM or from corrupted data.</li>
+<li><strong>Actually test failover by hand</strong> every so often - deliberately power off a node and watch what happens. An unpleasant surprise during a test beats one at 3am in production.</li>
+<li>Synchronous replication for anything genuinely critical, not "a snapshot once an hour."</li>
+<li>Document the architecture - six months from now, you won't remember why you set it up this particular way.</li>
+</ul>
+<hr>
+<h3 id="9-wrapping-up">9. Wrapping up</h3>
+<p>To sum it up: on a single node, HA simply doesn't exist. On two nodes, you need a QDevice (and, with Ceph, a separate third monitor on top of that). From three nodes on, quorum handles itself, and that's really where predictable HA begins. Which specific storage - Ceph, DRBD9/LINSTOR, NAS/SAN - comes down to your budget and your actual needs, not "everyone else uses it, so I should too" (GlusterFS is a pretty good cautionary tale about betting on a fading project - as of Proxmox VE 9, it's simply not there as a built-in option anymore).</p>
+<p>What's covered here is the foundation. From here, it's about testing failover on a live cluster, monitoring, and growing the setup's complexity gradually as your infrastructure actually needs it - not upfront.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Proxmox Cluster - Setup, QDevice, and Mixed Hardware in Nodes</title>
+      <link>https://prohomelab.com/en/posts/proxmox-cluster/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/proxmox-cluster/</guid>
+      <pubDate>Fri, 12 Sep 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Cluster</category>
+      <description>A detailed guide to building and configuring a cluster in Proxmox. Covers steps for joining multiple nodes, setting up highly available virtual machines and containers, plus basic recommendations for cluster management and monitoring.</description>
+      <content:encoded><![CDATA[<h2 id="what-is-a-cluster-in-proxmox">What is a cluster in Proxmox</h2>
+<p>A cluster in Proxmox VE is the combination of several physical nodes into a single management system.
+This allows you to centrally manage virtual machines and containers, perform migrations between hosts, configure <strong>HA (High Availability)</strong>, and distribute load.</p>
+<p>The main goal is to increase fault tolerance and ease of administration.</p>
+<hr>
+<h2 id="what-is-quorum">What is Quorum</h2>
+<p><strong>Quorum</strong> is a voting mechanism inside a Proxmox cluster that determines whether the cluster can operate.</p>
+<ul>
+<li>Each cluster node has <strong>one vote</strong>.</li>
+<li>For the cluster to function, more than <strong>half of the votes</strong> are needed.</li>
+<li>If there's no quorum, operations on virtual machines and containers are blocked to avoid <strong>split-brain</strong> (a situation where nodes start operating independently and conflict with each other).</li>
+</ul>
+<h3 id="examples">Examples</h3>
+<ul>
+<li><strong>2 nodes</strong> → 2/2 votes needed. If one goes down, there's no quorum.</li>
+<li><strong>3 nodes</strong> → 2/3 votes is enough.</li>
+<li><strong>4 nodes</strong> → 3/4 needed.</li>
+<li><strong>5 nodes</strong> → 3/5 is enough.</li>
+</ul>
+<p>You can try these cases in the <a href="https://prohomelab.com/en/tools/proxmox-quorum/">Proxmox quorum simulator</a>: take nodes down, add a QDevice or split the network and see which part of the cluster keeps quorum.</p>
+<h3 id="checking-quorum">Checking quorum</h3>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">pvecm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">status</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="pvecm status"><div></div></button></div></figure></div>
+<p>The output will show:</p>
+<ul>
+<li>
+<p><strong>Quorate</strong>: Yes/No - whether there's quorum,</p>
+</li>
+<li>
+<p><strong>Nodes</strong> - the number of nodes,</p>
+</li>
+<li>
+<p><strong>Expected votes</strong> - how many votes are needed,</p>
+</li>
+<li>
+<p><strong>Total votes</strong> - how many there are currently.</p>
+</li>
+</ul>
+<hr>
+<h2 id="a-two-node-cluster">A two-node cluster</h2>
+<p>The minimum possible configuration is a cluster of <strong>two nodes</strong>.
+However, keep in mind that for the voting (quorum) system to work correctly, it's better to use an odd number of participants.</p>
+<p>In a two-node cluster, situations can arise where, if the connection between nodes is lost, Proxmox can't determine who's "right."
+In that case, <strong>split-brain</strong> kicks in, which is risky for data.</p>
+<p>This setup is suitable for test benches or a lab, but is <strong>not recommended for production</strong>.</p>
+<hr>
+<h2 id="a-two-node-cluster--qdevice">A two-node cluster + QDevice</h2>
+<p>To stabilize the operation of a two-node cluster, a <strong>QDevice</strong> (Quorum Device) is used.
+This is a separate server or virtual machine that doesn't act as a hypervisor but participates in voting. Put more simply, it acts as an arbiter to prevent a <strong>split-brain</strong> situation from occurring.</p>
+<p>How it works:</p>
+<ul>
+<li>Node 1</li>
+<li>Node 2</li>
+<li>QDevice</li>
+</ul>
+<p>Now the total number of votes is three, and the system can correctly determine who's "alive."
+This option is already suitable for production environments if you only have two servers.</p>
+<hr>
+<h2 id="a-cluster-of-three-or-more-nodes">A cluster of three or more nodes</h2>
+<p>The classic and most stable scenario is a cluster of <strong>three nodes</strong>.</p>
+<p>Advantages:</p>
+<ul>
+<li>There's always an odd number of votes.</li>
+<li>The failure of one node doesn't break the cluster.</li>
+<li>You can use migration and HA.</li>
+</ul>
+<p>When scaling to 5, 7, or more nodes, you gain flexibility and scalability.</p>
+<p>The main thing to remember:</p>
+<ul>
+<li>for quorum to work, it's enough that more than half of the nodes are available;</li>
+<li>it's recommended to have at least three servers for a reliable cluster.</li>
+</ul>
+<hr>
+<h2 id="a-cluster-of-mixed-hardware">A cluster of mixed hardware</h2>
+<p>Proxmox doesn't require identical hardware for a cluster.
+You can combine:</p>
+<ul>
+<li>server machines with ECC memory,</li>
+<li>home mini-PCs (for example, Intel NUCs or cheap Chinese boxes),</li>
+<li>even old workstations.</li>
+</ul>
+<p>However, there are nuances:</p>
+<ol>
+<li><strong>VM migration</strong>: if the processors differ significantly (Intel ↔ AMD), you'll need to configure CPU compatibility, or migration won't be possible.</li>
+<li><strong>Performance</strong>: weaker nodes won't be able to handle the same load as server-grade ones. That is, if a lot of VMs suddenly migrate from a "powerful" node, a weak node will simply become unusable due to the load.</li>
+<li><strong>Network and disks</strong>: it's better to have a single fast channel (1/10/25 Gbit) and identical storage for optimal operation.</li>
+</ol>
+<p>Such a hybrid cluster is often used for a home lab environment.</p>
+<hr>
+<h2 id="conclusion">Conclusion</h2>
+<ul>
+<li><strong>2 nodes</strong> - only for testing or a home environment. I use this myself.</li>
+<li><strong>2 nodes + QDevice</strong> - a working option for a small cluster.</li>
+<li><strong>3+ nodes</strong> - the optimal solution for fault tolerance.</li>
+<li><strong>Mixed hardware</strong> can be used, but it's important to consider CPU and performance limitations.</li>
+</ul>
+<p>Proxmox makes the process of creating a cluster simple and accessible - even for small home setups.</p>
+<p>A cluster and quorum are only half the story for real fault tolerance. The other half is picking the right storage, since HA simply won't work if VM disks are physically tied to a single node. I go through which storage types actually qualify for HA in a separate article, <a href="https://prohomelab.com/en/posts/proxmox-cluster-types/">Storage for HA in a Proxmox Cluster</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Why I Don't Need Ceph Storage in Proxmox for My Home Server</title>
+      <link>https://prohomelab.com/en/posts/proxmox-ceph-home/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/proxmox-ceph-home/</guid>
+      <pubDate>Wed, 10 Sep 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Ceph</category>
+      <description>A breakdown of why Ceph can be overkill for home use. Covers the complexity of setup and maintenance, resource costs, and recommendations for simpler and more efficient alternatives for a home server and Proxmox.</description>
+      <content:encoded><![CDATA[<p>If you enjoyed this article, you can support the author by becoming a sponsor on Boosty (link in the contacts section).</p>
+<p>If you're into homelabbing and you're starting to build a home server based on Proxmox, sooner or later you've probably run into the question: <em>should I just set up Ceph for data storage right away?</em> The idea sounds appealing - a fault-tolerant cluster, automatic replication, that trendy distributed storage engine used in datacenters. At some point I felt the itch to try it myself too.</p>
+<p>But if you're honest with yourself about why you'd actually need it at home, in 9 out of 10 cases you won't find a good answer. I ended up with one server running Proxmox and a separate machine running Proxmox Backup Server, with a NAS over NFS for long-term storage - and that's more than enough. I never set up Ceph, and so far I don't regret it. Let's break down why, for a home scenario, it's usually unnecessary complexity - and not just because the technology itself isn't the easiest to learn.</p>
+<h2 id="what-ceph-is-and-why-youd-need-it-at-all">What Ceph Is and Why You'd Need It at All</h2>
+<p>Ceph is an open-source distributed storage system that pools disks from multiple servers into a single fault-tolerant storage cluster. Data is automatically replicated across nodes: if one server goes down, the data remains available on the others, and the cluster redistributes the load on its own without administrator intervention.</p>
+<p>That's exactly what makes Ceph the gold standard for datacenters and enterprise infrastructure, where downtime is essentially unacceptable and there are already dozens of servers anyway. But a homelab, with all due respect, usually has quite different needs.</p>
+<h2 id="why-ceph-is-overkill-for-a-home-proxmox-setup">Why Ceph Is Overkill for a Home Proxmox Setup</h2>
+<h3 id="1-the-minimum-requirements-arent-homelab-friendly">1. The Minimum Requirements Aren't Homelab-Friendly</h3>
+<p>The official recommendation for a working Ceph cluster is <strong>at least three nodes</strong>, and for true production-level fault tolerance, five. Each node ideally needs at least 4 disks for OSDs, a separate network for cluster traffic at <strong>10GbE or higher</strong> (2.5GbE is still livable with some caveats, but 1Gbps turns Ceph into a nightmare), plus SSD/NVMe for journaling if you want decent performance.</p>
+<p>At home, the typical picture is one server, maybe two. Building out three or four machines just to store a media library and a couple dozen containers is a questionable decision, especially once you factor in the cost of extra hardware, managed 10GbE switches, cables, and the noise of extra fans in your apartment.</p>
+<h3 id="2-setup-and-maintenance-complexity">2. Setup and Maintenance Complexity</h3>
+<p>Ceph isn't a disk you just mount. It's monitors (MON), managers (MGR), OSD daemons on every disk, a separate network for internal traffic (public and cluster networks), and its own data distribution logic (CRUSH map). Even if you manage to deploy all of this on home hardware, maintaining it becomes an ongoing job in itself: watching OSD health, updating components in time, figuring out why the cluster suddenly went into <code>HEALTH_WARN</code>.</p>
+<p>For an enthusiast who just wants Jellyfin and a couple of containers to run reliably in the evenings, that's noticeably more hassle than it's worth.</p>
+<h3 id="3-performance-at-small-scale">3. Performance at Small Scale</h3>
+<p>Ceph only shows its potential with a sufficient number of nodes, disks, and high network speeds - the whole architecture is built for horizontal scaling, not for one or two servers. At small scale it's often actually slower than a local ZFS pool: replication and network overhead eat up the speed advantage that local NVMe drives would otherwise give you.</p>
+<h3 id="4-power-consumption-and-noise">4. Power Consumption and Noise</h3>
+<p>Every additional node isn't just extra money for hardware - it's an ongoing electricity cost. Three or four servers running around the clock just to keep a Ceph cluster alive almost never pays off for home use, either in money or in the amount of noise in your apartment or garage.</p>
+<h2 id="alternatives-to-ceph-for-a-home-proxmox-setup">Alternatives to Ceph for a Home Proxmox Setup</h2>
+<table>
+<thead>
+<tr>
+<th>Solution</th>
+<th>Advantages</th>
+<th>Disadvantages</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ZFS</strong></td>
+<td>Easy to set up, snapshots, RAID-Z, self-healing (scrub)</td>
+<td>Requires more RAM</td>
+<td>A single server with reliable local storage</td>
+</tr>
+<tr>
+<td><strong>NAS (TrueNAS, Unraid, OMV)</strong></td>
+<td>Centralized storage, convenient web interface, NFS/iSCSI/SMB</td>
+<td>A separate device, extra hardware cost</td>
+<td>A dedicated data server + Proxmox for compute</td>
+</tr>
+<tr>
+<td><strong>Local disks</strong></td>
+<td>Simplicity, minimal cost</td>
+<td>No node-level fault tolerance</td>
+<td>Small test rigs</td>
+</tr>
+</tbody>
+</table>
+<p>I ended up with exactly this combination - "a local SSD for fast data + a separate NAS over the network for backups and archives" - and for a home scenario it covers 95% of my needs without a single line of Ceph configuration.</p>
+<h2 id="when-ceph-actually-makes-sense-at-home">When Ceph Actually Makes Sense at Home</h2>
+<p>To be fair, there are scenarios where Ceph is justified even at home:</p>
+<ul>
+<li>you already have three or more servers not only running Proxmox, but also just sitting around unused;</li>
+<li>you genuinely need to migrate VMs between nodes without shared storage based on NFS/iSCSI;</li>
+<li>you deliberately want to practice with Ceph because you work with it professionally and your homelab is your training ground.</li>
+</ul>
+<p>If none of these apply to you, you can safely put Ceph aside and skip the unnecessary complexity.</p>
+<h2 id="bottom-line">Bottom Line</h2>
+<p>Ceph is a great technology, but it really shines in large infrastructures that need genuine fault tolerance and horizontal scaling across dozens of disks. In a home Proxmox setup, it's almost always overkill. It's better to invest in good disks, a well-thought-out backup strategy (I, for one, use a separate Proxmox Backup Server for this - I wrote about it separately), and a UPS, rather than spend evenings deploying and then maintaining a Ceph cluster for the sake of one or two home servers.</p>
+<hr>
+<h2 id="faq">FAQ</h2>
+<h3 id="can-you-run-ceph-on-a-single-server">Can you run Ceph on a single server?</h3>
+<p>Technically, yes, but there's not much point. Ceph is designed as a clustered system, and on a single node it gives you no advantages over ZFS or local disks - just extra overhead.</p>
+<h3 id="whats-better-for-a-home-proxmox-setup---zfs-or-ceph">What's better for a home Proxmox setup - ZFS or Ceph?</h3>
+<p>For the vast majority of home scenarios, ZFS is simpler, more reliable in operation, and cheaper in terms of hardware. Ceph is only justified if you have at least three, and ideally five, servers.</p>
+<h3 id="how-do-you-store-proxmox-virtual-machines-at-home-without-ceph">How do you store Proxmox virtual machines at home without Ceph?</h3>
+<p>The most practical option is local disks with ZFS on the Proxmox server itself, or a separate NAS connected over NFS or iSCSI for data that doesn't need to live on the fastest possible storage.</p>
+<hr>
+<h2 id="related-reading">Related Reading</h2>
+<ul>
+<li><a href="https://prohomelab.com/en/posts/proxmox-cluster-types/">Storage for HA in a Proxmox Cluster</a></li>
+<li><a href="https://prohomelab.com/en/posts/proxmox-backup-server-4-2-installation-guide/">Proxmox Backup Server - Installation and Setup</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>How to Set Up a Firewall in Proxmox VE - Step-by-Step Guide</title>
+      <link>https://prohomelab.com/en/posts/proxmox-firewall/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/proxmox-firewall/</guid>
+      <pubDate>Sun, 07 Sep 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Firewall</category>
+      <description>A detailed guide to configuring Proxmox's built-in firewall to protect virtual machines and containers. Covers creating rules, configuring network zones, traffic management, and recommendations for securing your cluster.</description>
+      <content:encoded><![CDATA[<h2 id="configuring-the-firewall-in-proxmox">Configuring the Firewall in Proxmox</h2>
+<p>Proxmox VE is a powerful virtualization platform that combines the capabilities of KVM and LXC, along with tools for clustering and storage management. One of the key security tools in Proxmox is the <strong>built-in firewall</strong>.</p>
+<p>In this article we'll cover:</p>
+<ul>
+<li>what a firewall is and why you need it in Proxmox,</li>
+<li>its pros and cons,</li>
+<li>how to configure basic rules to protect the node and virtual machines.</li>
+</ul>
+<hr>
+<h3 id="what-is-the-firewall-in-proxmox">What Is the Firewall in Proxmox</h3>
+<p>A firewall is a network traffic filtering system that lets you control incoming and outgoing connections. Proxmox uses <strong>iptables/nftables</strong> as the backend, and rules are managed through the web interface or CLI.</p>
+<p>The Proxmox firewall can operate at three levels:</p>
+<ol>
+<li><strong>Datacenter</strong> - global rules for the entire cluster.</li>
+<li><strong>Node</strong> - rules applied to a specific server.</li>
+<li><strong>VM/CT (virtual machine or container)</strong> - individual rules for each virtual machine.</li>
+</ol>
+<hr>
+<p>If the firewall is not enabled at the <strong>Datacenter</strong> level, then it won't work at the other levels (node or VM/LXC) either. So there's no need to uncheck the corresponding checkbox in the settings of newly created virtual machines.</p>
+<h3 id="why-you-need-a-firewall-in-proxmox">Why You Need a Firewall in Proxmox</h3>
+<p>Honestly, for a home setup I don't really see the point of using Proxmox's built-in firewall, because at home you're most likely configuring rules at the global level (at the router level). At home - unless you happen to live in a datacenter - there's no real need to configure a firewall at the Proxmox level. But since we've already gone down the <a href="https://prohomelab.com/en/posts/proxmox-sdn-guide/"><strong>SDN</strong> rabbit hole in <strong>Proxmox</strong></a>, let's take a look at what the Proxmox firewall can do - including how its rules help segment traffic between those SDN zones.</p>
+<p>Using the built-in firewall lets you:</p>
+<ul>
+<li>restrict access to the Proxmox management interface,</li>
+<li>protect virtual machines and containers from unwanted traffic,</li>
+<li>segment the network and control interaction between services,</li>
+<li>reduce the risk of attacks (DDoS, brute-force, port scanning, etc.).</li>
+</ul>
+<hr>
+<h3 id="pros-and-cons-of-using-the-firewall-in-proxmox">Pros and Cons of Using the Firewall in Proxmox</h3>
+<h4 id="pros">Pros</h4>
+<ul>
+<li>Centralized rule management through the web interface.</li>
+<li>Ability to set rules at the cluster, node, and VM level.</li>
+<li>Support for rule groups (Firewall Groups), which simplifies scaling.</li>
+<li>Integration with Proxmox - no need to configure separate firewall rules inside each VM.</li>
+</ul>
+<h4 id="cons">Cons</h4>
+<ul>
+<li>Requires understanding of iptables/nftables logic.</li>
+<li>Limited monitoring capabilities compared to external systems.</li>
+<li>Misconfigured rules can lock you out of Proxmox itself.</li>
+<li>Doesn't replace full-featured solutions like pfSense or OPNsense (but complements them well when needed).</li>
+</ul>
+<hr>
+<h3 id="configuring-the-firewall-in-proxmox-1">Configuring the Firewall in Proxmox</h3>
+<p>As mentioned above, the firewall at the <strong>Datacenter</strong> level is disabled by default.</p>
+<p><img alt="Enabling the Firewall at the Datacenter level" loading="lazy" decoding="async" width="1533" height="355" src="https://prohomelab.com/_astro/firewall-1.C_-OU_U5_Z1dKcW9.webp"></p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>Never enable the firewall at the Datacenter level until you've configured the first <strong>three</strong> rules described below. By default, the firewall has no rules configured, which means everything is denied. Enabling the firewall without pre-configured rules will lock you out of the Proxmox web interface. Which means, my friend, a long journey with a keyboard and monitor to the physical device awaits you.</p>
+</div>
+</div>
+<h4 id="enabling-the-firewall-in-datacenter-and-configuring-the-three-core-rules">Enabling the Firewall in Datacenter and Configuring the Three Core Rules</h4>
+<ol>
+<li>Go to <strong>Datacenter → Firewall → Options</strong> and click <strong>Add</strong>.</li>
+</ol>
+<h5 id="rule-1-allow-access-to-the-proxmox-web-interface">Rule 1. Allow Access to the Proxmox Web Interface</h5>
+<ol>
+<li>In the <strong>Rules</strong> section, add a rule:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>IN</code></li>
+<li>Interface: <code>vmbr0</code></li>
+<li>Protocol: <code>tcp</code></li>
+<li>Destination Port: <code>8006</code></li>
+<li>Comment: <code>Allow WebGUI from home</code></li>
+</ul>
+</li>
+</ol>
+<p>Click <strong>add</strong></p>
+<p><img alt="Rule for accessing the WebGUI (port 8006)" loading="lazy" decoding="async" width="1449" height="516" src="https://prohomelab.com/_astro/firewall-2.BulEEHTe_CPdNp.webp"></p>
+<p>In the <strong>Firewall</strong> section, go to the <strong>Options</strong> submenu and enable <code>firewall</code></p>
+<p><img alt="Enabling the firewall" loading="lazy" decoding="async" width="1474" height="805" src="https://prohomelab.com/_astro/firewall-3.XPjfjHl0_ZVVaqt.webp"></p>
+<p>Now we need to check that we haven't lost access to our Proxmox web interface. Just refresh the page, and if access is still there, we're good to go.</p>
+<hr>
+<p>Now we need to add two more rules: we need to allow <strong>DHCP</strong> requests and requests over <strong>http</strong> or <strong>dns</strong>, since right now the only thing that's allowed is access to the web interface.</p>
+<h5 id="rule-2-allow-dhcp-requests">Rule 2. Allow DHCP Requests</h5>
+<ol>
+<li>In the <strong>Rules</strong> section, add a rule:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>IN</code></li>
+<li>Macro: <code>DHCPfwd</code></li>
+<li>Comment: <code>Allow DHCP requests</code></li>
+</ul>
+</li>
+</ol>
+<p>Click <strong>add</strong></p>
+<p><img alt="Allow DHCP requests" loading="lazy" decoding="async" width="1474" height="805" src="https://prohomelab.com/_astro/firewall-4.DhLPNp8q_e3IU4.webp"></p>
+<h5 id="rule-3-allow-dns-requests">Rule 3. Allow DNS Requests</h5>
+<ol>
+<li>In the <strong>Rules</strong> section, add a rule:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>IN</code></li>
+<li>Macro: <code>DNS</code></li>
+<li>Comment: <code>Allow DNS requests</code></li>
+</ul>
+</li>
+</ol>
+<p>Click <strong>add</strong></p>
+<p><img alt="Allow DNS requests" loading="lazy" decoding="async" width="1474" height="805" src="https://prohomelab.com/_astro/firewall-5.BO6U8WTK_24LIfv.webp"></p>
+<hr>
+<p>At this point we've configured three basic rules for the <strong>firewall</strong> at the <strong>Datacenter</strong> level. If you want to make full use of the Proxmox firewall, these are the essential, non-negotiable rules.</p>
+<p>Since the firewall processes rules top to bottom in order, the rule for the web interface should come first, then the DHCP rule, and then the DNS rule. That's how I see it, anyway.</p>
+<p><img alt="Rule order in the firewall" loading="lazy" decoding="async" width="1762" height="309" src="https://prohomelab.com/_astro/firewall-6.BA6wedQk_ne36p.webp"></p>
+<p>At the same time, since these rules are set at the Datacenter level, they apply even if you have a cluster of two or three Proxmox nodes.</p>
+<hr>
+<h4 id="creating-aliases-and-security-groups-in-proxmox">Creating Aliases and Security Groups in Proxmox</h4>
+<p>We've configured rules at the Datacenter level and enabled the firewall there.</p>
+<p>However, if we go down to the node level and open the firewall section, we'll see that even though we haven't configured any rules there yet, the firewall is already active.</p>
+<p><img alt="Firewall at the node level" loading="lazy" decoding="async" width="749" height="519" src="https://prohomelab.com/_astro/firewall-7.Ckqx183K_ZTl4bs.webp"></p>
+<p>There's one very important point here. If you have a cluster, the firewall, as you'd expect, is automatically enabled on all cluster nodes. And since we haven't configured any rules yet, traffic between nodes is denied by default. That might be exactly what you want, but suppose you have a Ceph storage - it will immediately break without proper firewall rule configuration.
+Let's fix that. First, let's create a couple of <strong>aliases</strong> to make it easier to work with rules.</p>
+<ol>
+<li>Go to <strong>Datacenter → Firewall → Alias</strong> and click <strong>Add</strong>.</li>
+</ol>
+<h5 id="creating-an-alias-for-the-local-network">Creating an <code>alias for the local network</code></h5>
+<p><img alt="creating an alias" loading="lazy" decoding="async" width="1349" height="796" src="https://prohomelab.com/_astro/firewall-8.52NGhvIR_WVYnv.webp"></p>
+<ol>
+<li>In the <strong>alias</strong> section, enter the following:
+<ul>
+<li>Name: <code>local-network</code></li>
+<li>IP/CIDR: <code>192.168.1.0/24</code></li>
+<li>Comment: <code>optional</code></li>
+</ul>
+</li>
+</ol>
+<p>The name is self-explanatory; as for the network - I specified my entire local network. Your range may be different, and your requirements may differ too. Adjust them to your needs. For example, you might want to allow traffic only between nodes and nothing else. But since I'm showing simple, basic things here, that's the approach I'm taking.</p>
+<p>Creating an <code>Alias for the virtual network</code></p>
+<p><img alt="creating an alias" loading="lazy" decoding="async" width="1349" height="796" src="https://prohomelab.com/_astro/firewall-9.CYKFie9F_1SvONk.webp"></p>
+<ol>
+<li>In the <strong>alias</strong> section, enter the following:
+<ul>
+<li>Name: <code>virt-network</code></li>
+<li>IP/CIDR: <code>10.11.11.0/24</code></li>
+<li>Comment: <code>optional</code></li>
+</ul>
+</li>
+</ol>
+<p>In this case I'm specifying the VNET network range. In the <a href="https://prohomelab.com/en/posts/proxmox-sdn-guide/">previous article</a> we assigned it an address in the 10.11.11.0/24 range.</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>The video shows 11.11.11.0/24 at this point - that one slipped past me. It's a public range, not a private one, and you shouldn't use it on an internal network; more on that in the <a href="https://prohomelab.com/en/posts/proxmox-sdn-guide/">SDN article</a>. The text of this article uses the private 10.11.11.0/24 instead.</p>
+</div>
+</div>
+<p>Creating an <code>alias for the gateway</code> of our physical local network</p>
+<ol>
+<li>In the <strong>alias</strong> section, enter the following:
+<ul>
+<li>Name: <code>gateway</code></li>
+<li>IP/CIDR: <code>192.168.1.1</code></li>
+<li>Comment: <code>optional</code></li>
+</ul>
+</li>
+</ol>
+<hr>
+<p>Now that we've created three <code>alias</code>es to make things easier going forward, let's create <strong>Security Groups</strong>.</p>
+<ol>
+<li>Go to <strong>Datacenter → Firewall → Security Groups</strong> and click <strong>Create</strong>.</li>
+</ol>
+<h5 id="creating-security-groups">Creating <code>Security Groups</code></h5>
+<p>Creating a group for the local network</p>
+<p><img alt="creating a group for the local network" loading="lazy" decoding="async" width="1208" height="868" src="https://prohomelab.com/_astro/firewall-10.BBQBpcac_gwQNc.webp"></p>
+<p>Now let's open our group's window and create a rule.</p>
+<ol>
+<li>Go to <strong>Datacenter → Firewall → Security Groups - Rules</strong> and click <strong>Add</strong>.</li>
+</ol>
+<p>Let's create a rule for our Security Group that includes our local network.</p>
+<h5 id="rule-1-allow-incoming-traffic-from-our-local-network">Rule 1. Allow Incoming Traffic from Our Local Network</h5>
+<ol>
+<li>In the <strong>Rules</strong> section, add a rule:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>IN</code></li>
+<li>Source: <code>local-network</code></li>
+<li>Comment: <code>optional</code></li>
+</ul>
+</li>
+</ol>
+<p>Click <strong>Enable</strong>, then <strong>Add</strong></p>
+<p><img alt="creating a rule for the local network" loading="lazy" decoding="async" width="2283" height="913" src="https://prohomelab.com/_astro/firewall-11.R8wmtntK_2amo4T.webp"></p>
+<h5 id="rule-2-allow-outgoing-traffic-to-our-local-network">Rule 2. Allow Outgoing Traffic to Our Local Network</h5>
+<ol>
+<li>In the <strong>Rules</strong> section, add a rule:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>OUT</code></li>
+<li>Destination: <code>local-network</code></li>
+<li>Comment: <code>optional</code></li>
+</ul>
+</li>
+</ol>
+<p>Click <strong>Enable</strong>, then <strong>Add</strong></p>
+<p><img alt="creating a rule for the local network" loading="lazy" decoding="async" width="2283" height="913" src="https://prohomelab.com/_astro/firewall-12.DORlIL3M_Z1ljXA7.webp"></p>
+<p>In other words, we've now allowed any traffic between our local network devices and the node in both directions.</p>
+<h4 id="configuring-core-rules-at-the-proxmox-node-level">Configuring Core Rules at the Proxmox Node Level</h4>
+<ol>
+<li>Go to <strong>Datacenter → Your node name → Firewall → Insert Security Groups</strong> and click <strong>Add</strong>.</li>
+</ol>
+<p>In the dropdown, select our group, check <strong>Enable</strong>, and click <strong>Add</strong>.</p>
+<p><img alt="creating a rule for the local group" loading="lazy" decoding="async" width="2283" height="913" src="https://prohomelab.com/_astro/firewall-13.DSgCWX0V_ZmqDjg.webp"></p>
+<p>Accordingly, if you have several nodes, repeat this on each node.</p>
+<p>Now we have a reasonably open <code>firewall</code>.</p>
+<p>If you need more fine-grained settings, you have full freedom - go for it.</p>
+<h4 id="configuring-core-rules-at-the-vm-or-lxc-level-in-proxmox">Configuring Core Rules at the VM or LXC Level in Proxmox</h4>
+<p>Let's move on to configuring the firewall at the level of individual VMs or containers in Proxmox.</p>
+<ol>
+<li>Go to <strong>Datacenter → Your node name → Firewall → Insert Security Groups</strong> and click <strong>Add</strong>.</li>
+</ol>
+<p>Create a <strong>Security Group</strong> as before, but this time for the virtual network. I named it <strong>virt-network</strong>.</p>
+<p>Select the newly created group, go to the <strong>Rules</strong> section, and create the first rule.</p>
+<p>For example, let's say we want to deny access from our virtual machines or containers to our local network.</p>
+<ol>
+<li>In the <strong>Rules</strong> section, add a rule:
+<ul>
+<li>Action: <code>DROP</code></li>
+<li>Direction: <code>OUT</code></li>
+<li>Destination: <code>local-network</code></li>
+<li>Comment: <code>optional</code></li>
+</ul>
+</li>
+</ol>
+<p><img alt="creating a rule for the virtual group" loading="lazy" decoding="async" width="2283" height="913" src="https://prohomelab.com/_astro/firewall-14.Cx4ICpDf_jpvGP.webp"></p>
+<p>But by denying our VMs or containers access to the local network, we've also denied them access to the outside world, since our gateway is in the same address range that we just blocked.
+So we need to create one more rule.</p>
+<ol>
+<li>In the <strong>Rules</strong> section, add a rule:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>OUT</code></li>
+<li>Destination: <code>gateway</code></li>
+<li>Comment: <code>optional</code></li>
+</ul>
+</li>
+</ol>
+<p><img alt="creating a rule for access to the outside world" loading="lazy" decoding="async" width="2283" height="913" src="https://prohomelab.com/_astro/firewall-15.BhxhwwXn_19xBio.webp"></p>
+<p>Pay attention to the rule order. The allow rule must be above the deny rule.</p>
+<p><img alt="rule order" loading="lazy" decoding="async" width="1470" height="903" src="https://prohomelab.com/_astro/firewall-16.BKK6A3Bp_Z1sHmej.webp"></p>
+<p>And optionally, just for clarity, let's add one more supplementary rule - to really drive the point home.</p>
+<ol>
+<li>In the <strong>Rules</strong> section, add a rule:
+<ul>
+<li>Action: <code>ACCEPT</code></li>
+<li>Direction: <code>in</code></li>
+<li>Source: <code>local-network</code></li>
+<li>Comment: <code>optional</code></li>
+</ul>
+</li>
+</ol>
+<p><img alt="creating a rule for access from the outside world" loading="lazy" decoding="async" width="1470" height="903" src="https://prohomelab.com/_astro/firewall-17.DogkuE4Z_1W2V5u.webp"></p>
+<p>That is, we've allowed incoming traffic from the local network into our virtual network.
+Yes, there's not much practical point in denying everything and then immediately allowing everything again. But as I said above, this is purely for illustration and to help you understand how the firewall works.</p>
+<p>In the end we now have three rules.</p>
+<p><img alt="Three firewall rules" loading="lazy" decoding="async" width="1981" height="909" src="https://prohomelab.com/_astro/firewall-18.CAu1QgqG_uEefu.webp"></p>
+<p>We allow incoming traffic from the local network.
+We allow traffic to the outside world, because we allowed outgoing traffic to our gateway's address.
+We denied outgoing traffic from our virtual network to our local network. So no virtual machines or containers have access to our devices on our physical local network.</p>
+<p>But right now these rules aren't actually working.</p>
+<p>What do I mean by that?</p>
+<p>Let's go to the command line - in my case, of an Ubuntu-based container - and ping the machine I'm currently writing this article on.</p>
+<p><img alt="pinging the local machine" loading="lazy" decoding="async" width="1981" height="909" src="https://prohomelab.com/_astro/firewall-19.BpzFU-1t_Zsj6xH.webp"></p>
+<p>As you can see, the ping goes through. That's because we haven't enabled the firewall at the container level.
+So in our container's menu, let's go to <strong>Firewall → Options</strong> and enable the firewall.</p>
+<p><img alt="Enabling the firewall in the container" loading="lazy" decoding="async" width="2074" height="905" src="https://prohomelab.com/_astro/firewall-20.DKMenaTJ_1aUUng.webp"></p>
+<p>Let's go back up to the <strong>firewall</strong> menu of our container and enable our security group for the virtual network.</p>
+<p><img alt="Enabling our security group" loading="lazy" decoding="async" width="2074" height="905" src="https://prohomelab.com/_astro/firewall-21.D3rDG5Ds_1YiWKq.webp"></p>
+<p>Now, when we try to ping our machine again, the response will be silence, because the machine on the local network isn't part of the group for the virtual network.</p>
+<p><img alt="pinging the local machine" loading="lazy" decoding="async" width="2074" height="905" src="https://prohomelab.com/_astro/firewall-22.BxvQypPc_1bcORW.webp"></p>
+<p>But if, say, we try to reach the outside world and ping something like ya.ru, the signal will go through.</p>
+<p><img alt="pinging the outside world" loading="lazy" decoding="async" width="2074" height="905" src="https://prohomelab.com/_astro/firewall-23.DfC_9GD5_19djac.webp"></p>
+<p>But as we all know, DNS is always to blame for something, and to avoid a situation where we can ping some IP on the outside world but can't ping a domain name, let's create one more rule for the <strong>Security Group</strong> at the <strong>Datacenter</strong> level that allows DNS access.</p>
+<p><img alt="allowing DNS access" loading="lazy" decoding="async" width="2295" height="926" src="https://prohomelab.com/_astro/firewall-24.DWAuLOww_ujNhj.webp"></p>
+<p>That's where I'd like to wrap up the initial firewall setup in Proxmox.
+But before I finish, I want to reiterate some best practices for configuring firewall rules.</p>
+<h3 id="best-practices-for-configuring-firewall-rules-for-beginners">Best Practices for Configuring Firewall Rules for Beginners</h3>
+<ul>
+<li>Always start with <strong>ALLOW rules</strong>, then move on to blocking (<code>DROP</code>).</li>
+<li>Use <strong>Firewall Groups</strong> for easier management (e.g., <code>ssh-access</code>, <code>web-access</code>).</li>
+<li>Test rules step by step so you don't accidentally lock yourself out.</li>
+<li>For production environments, use the Proxmox firewall <strong>together with an external firewall (pfSense, OPNsense, iptables on the router)</strong>.</li>
+</ul>
+<hr>
+<h3 id="conclusion">Conclusion</h3>
+<p>The firewall in Proxmox is a powerful tool for improving the security of your cluster and virtual machines. It lets you centrally manage access, filter traffic, and minimize the risk of attacks. Despite some limitations, the built-in firewall is a great fit for most homelab scenarios and small production setups.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Proxmox SDN Guide - VXLAN, VLAN, and Virtual Networks Setup</title>
+      <link>https://prohomelab.com/en/posts/proxmox-sdn-guide/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/proxmox-sdn-guide/</guid>
+      <pubDate>Sun, 31 Aug 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Firewall</category>
+      <description>A detailed guide to configuring SDN in Proxmox for centralized management of virtual networks. Covers creating virtual network segments, configuring VXLAN, integrating with the firewall, and recommendations for managing network resources.</description>
+      <content:encoded><![CDATA[<p>In <strong>Proxmox VE</strong>, <strong>SDN (Software Defined Networking)</strong> is the subsystem for managing virtual networks, on board since version <strong>7</strong>. It takes a lot of the pain out of wrangling network infrastructure inside a cluster, and lets you spin up flexible, isolated, scalable networks for your VMs and containers.</p>
+<hr>
+<h2 id="the-basics-of-proxmox-sdn">The Basics of Proxmox SDN</h2>
+<h3 id="1-why-bother-with-it">1. Why Bother With It</h3>
+<ul>
+<li>Makes standing up private networks inside a Proxmox cluster much easier.</li>
+<li>Isolates traffic between different users or projects.</li>
+<li>Scales cleanly across multiple cluster nodes.</li>
+<li>Automates routing, NAT, DHCP, and DNS configuration for you.</li>
+</ul>
+<h3 id="2-the-moving-parts">2. The Moving Parts</h3>
+<ul>
+<li><strong>Zones</strong> - logical network segments (say, one per project or client).</li>
+<li><strong>VNets</strong> - live inside zones, define the L2/L3 topology.</li>
+<li><strong>Controllers</strong> - manage the actual network settings (via EVPN, VXLAN, BGP, etc.).</li>
+<li><strong>IPAM/DNS</strong> - the built-in system handling IPs and names.</li>
+</ul>
+<h3 id="3-zone-types-on-offer">3. Zone Types on Offer</h3>
+<ul>
+<li><strong>Simple (VLAN-aware bridge)</strong> - your standard bridge + VLAN setup.</li>
+<li><strong>VXLAN</strong> - an overlay network, tunneled over IP.</li>
+<li><strong>EVPN</strong> - the heavier-duty option for hooking into a proper datacenter network via BGP.</li>
+<li><strong>QoS zones</strong> - lets you cap bandwidth.</li>
+</ul>
+<h3 id="4-a-quick-example">4. A Quick Example</h3>
+<ol>
+<li>Say you've got a 3-node Proxmox cluster.</li>
+<li>You create a <strong>VXLAN</strong> SDN zone so VMs on different hosts land on the same L2 network.</li>
+<li>Proxmox quietly builds tunnels between the nodes, and your VMs/containers see each other as if they were sitting on the same LAN.</li>
+</ol>
+<hr>
+<h2 id="the-competition">The Competition</h2>
+<p>Proxmox SDN lets you pull off cloud-style setups reminiscent of <strong>OpenStack/VMware NSX</strong> - just in a much friendlier package.</p>
+<h2 id="about-this-article">About This Article</h2>
+<p>This article's a companion piece to the video up top. I'm going to walk through a basic SDN setup - enough to actually understand how SDN behaves inside Proxmox.</p>
+<h3 id="before-you-start">Before You Start</h3>
+<p>SDN has shipped in Proxmox by default since 8.1. Running something older? You'll need to grab the required packages from your node's shell first:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt update</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt install libpve-network-perl</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt updateapt install libpve-network-perl"><div></div></button></div></figure></div>
+<p>Once that's installed, make sure this line is sitting at the end of <code>/etc/network/interfaces</code> on every node (assuming you're running a cluster) - that's what actually pulls in and activates the SDN config:</p>
+<div class="expressive-code"><figure class="frame"><figcaption class="header"></figcaption><pre data-language="text"><code><div class="ec-line"><div class="code"><span style="--0:#24292e;--1:#e1e4e8">source /etc/network/interfaces.d/*</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="source /etc/network/interfaces.d/*"><div></div></button></div></figure></div>
+<p>PVE's built-in IP address management currently leans on dnsmasq for handing out DHCP leases.
+To make use of that, install dnsmasq on every node.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt update</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt install dnsmasq</span></div></div><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># disable default instance</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">systemctl disable --now dnsmasq</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#616972;--1:#99A0A6">#turn off the dhcp server so it doesn't fight with your router</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt updateapt install dnsmasq# disable default instancesystemctl disable --now dnsmasq #turn off the dhcp server so it doesn&#x27;t fight with your router"><div></div></button></div></figure></div>
+<h2 id="setting-up-sdn-for-the-first-time">Setting Up SDN for the First Time</h2>
+<p>In the <strong>Datacenter</strong> menu, click the <strong>SDN</strong> tab. You'll see whatever networks currently exist - how many there are depends on how many nodes you've got. In my case, just the one local network.</p>
+<p><img alt="List of networks" loading="lazy" decoding="async" width="841" height="199" src="https://prohomelab.com/_astro/initial-network-list.DvkfeBZN_uCdO.webp"></p>
+<p>Time to create our first network (okay, technically second). Head into <strong>Zones</strong>, click <strong>add</strong>, and you'll see a handful of zone types to pick from.</p>
+<p><img alt="Choosing a network type" loading="lazy" decoding="async" width="268" height="294" src="https://prohomelab.com/_astro/network-variants.IXSGzG-h_1l45co.webp"></p>
+<p>Since we're keeping this basic, we'll go with <strong>simple</strong>.</p>
+<p>I'm using <code>youtube</code> as the ID. I'll leave MTU at its default - though heads up, some regions do run into trouble with the default 1500 MTU, so 1460 is worth trying if that happens to you. Same menu, I'll set DHCP to auto-configure. Click <strong>add</strong>.
+<img alt="Configuring a simple network" loading="lazy" decoding="async" width="863" height="642" src="https://prohomelab.com/_astro/simple-network.Bhw5jiQn_ZntxGl.webp"></p>
+<p>The final screen shows our zone's settings.
+Next, over to VNET, and click create.</p>
+<p><img alt="Configuring VNET" loading="lazy" decoding="async" width="953" height="482" src="https://prohomelab.com/_astro/Vnet-create.CmNwyvaf_ZVGb5b.webp"></p>
+<p>Pick whatever name and alias you like, then select the zone you just created. Leave everything else default - as mentioned, this is a bare-bones setup, no VLANs or anything fancier.</p>
+<p>That's our first virtual network sorted. Once it exists, a new subnet menu shows up. In the vnet menu, pick your new network and jump into the <code>subnet</code> tab.
+Click create - we're about to build our subnet, isolated from the rest of the home network.</p>
+<p><img alt="Creating a subnet" loading="lazy" decoding="async" width="701" height="481" src="https://prohomelab.com/_astro/create-subnet.CoT1WibP_Z1hmbj.webp"></p>
+<p>Let's set the subnet's address. I've got a thing for odd numbers, so I'll go with 10.11.11.0/24. Gateway address: 10.11.11.1. Check the snat box - this lets everything on the subnet share one external IP so it can reach the outside world. Leave DNS alone.</p>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>The video for this article uses 11.11.11.0/24 for the subnet - that one slipped past me. 11.0.0.0/8 isn't a private range at all, it's public address space belonging to the US Department of Defense. Use it on your internal network and any real addresses in that range on the internet become unreachable from your machines, on top of breaking the addressing rules. Stick to the private ranges for internal networks - 10.0.0.0/8, 172.16.0.0/12, or 192.168.0.0/16 - which is why the text of this article uses 10.11.11.0/24.</p>
+</div>
+</div>
+<div class="phl-callout" data-callout="warning">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Warning</span></div>
+<div class="phl-callout-content">
+<p>Best practice is to keep your networks inside proper private address ranges to dodge unpleasant surprises down the road - stick to something like 10.10.10.0/24. But since this subnet is meant to stay isolated from the outside unless we explicitly say otherwise, what we've got here will do just fine.</p>
+</div>
+</div>
+<p>Now let's set the DHCP range. Nothing fancy, 100 to 199 will do. Click create.</p>
+<p><img alt="Creating a DHCP range" loading="lazy" decoding="async" width="725" height="458" src="https://prohomelab.com/_astro/dhcp-ranges.Dkqgn6PY_ZGRwUA.webp"></p>
+<p>Zone, vnet, subnet - all done. To actually apply this, go to the <strong>SDN</strong> menu and hit <strong>apply</strong>. Check your node's network list now and you'll see the new network sitting right next to <strong>localnetwork</strong>.
+And that's it - the foundation for our little SDN setup is in place.</p>
+<p>To actually see this working, let's spin up a bare-bones <code>Ubuntu</code> LXC container purely for testing. Set it up as usual, with one small but genuinely important exception.
+When you're picking the bridge for the container, under <code>bridge</code>:</p>
+<p><img alt="Choosing a bridge" loading="lazy" decoding="async" width="1009" height="601" src="https://prohomelab.com/_astro/bridge-variants.CSYJjv_n_1wjKhY.webp"></p>
+<p>skip vmbr0 - the one you're probably used to - and pick our newly created network instead. Everything else stays default.
+You can jump back to <strong>Datacenter</strong> right now and check <strong>IPAM</strong> to see the network info for your new container.</p>
+<p><img alt="The container&#39;s IP address" loading="lazy" decoding="async" width="1332" height="405" src="https://prohomelab.com/_astro/vmid-ipam.vQQ6XSrI_Z1DEJ6Y.webp"></p>
+<p>In this case, it landed 10.11.11.100.
+Once the container's up and running, worth checking whether it can actually reach the internet. You could <code>ping &#x3C;whatever></code>, but it's simpler to just run apt update - if it comes back clean, that alone tells you the container's working and has outbound access.
+Now let's confirm the reverse - that the container is NOT reachable from outside.
+From any machine on your local network (not the Proxmox shell itself), try <code>ping 10.11.11.100</code> - and you'll get silence. That's exactly the point: as I mentioned earlier, this container lives on an SDN network that's isolated from the outside world. Worth noting though - ping it from your node's own shell, and it'll actually answer, since the network lives inside that node and we haven't set up any firewall rules yet, so nothing's stopping the node itself from reaching it.
+Firewall configuration inside Proxmox, though - that's a story for <a href="https://prohomelab.com/en/posts/proxmox-firewall/">another article</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Upgrading from Proxmox VE 8 to Proxmox VE 9 - A Step-by-Step Guide</title>
+      <link>https://prohomelab.com/en/posts/upgrade-proxmox8-to-proxmox9/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/upgrade-proxmox8-to-proxmox9/</guid>
+      <pubDate>Wed, 06 Aug 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Cluster</category>
+      <description>A step-by-step guide to safely migrating from Proxmox 8 to version 9. Covers server preparation, backups, package upgrades, and compatibility checks for virtual machines and containers to minimize downtime.</description>
+      <content:encoded><![CDATA[<h2 id="introduction">Introduction</h2>
+<p><strong>Proxmox VE 9.0</strong> was released on <strong>August 5, 2025</strong>, gaining a solid foundation built on <strong>Debian 13 "Trixie"</strong> and <strong>Linux kernel 6.14.8-2</strong>.
+In this article, we'll go through the process of upgrading Proxmox 8 to 9 (Proxmox 8 to 9 upgrade) step by step - from checking compatibility to the final <code>apt dist-upgrade</code> command.
+This version marks a significant step forward in virtualization, storage, and network infrastructure capabilities.</p>
+<hr>
+<h2 id="1-updated-kernel-and-base-system">1. Updated kernel and base system</h2>
+<ul>
+<li>Moving to <strong>Debian 13 "Trixie"</strong> provides up-to-date packages, improved security, and compatibility with modern hardware: PCIe 5.0, NVMe, new chipsets.</li>
+<li><strong>Linux kernel 6.14.8-2</strong> is optimized for modern CPUs and network interfaces.</li>
+<li>Updated versions of <strong>QEMU 10.0.2</strong> and <strong>LXC 6.0.4</strong> are available, improving VM migration, isolation, and cgroup v2 support. The old cgroup v1 is no longer supported.</li>
+</ul>
+<hr>
+<h2 id="2-storage-and-snapshots">2. Storage and snapshots</h2>
+<ul>
+<li><strong>Support for LVM snapshots on thick-provisioned shared storage</strong> (iSCSI, Fibre Channel), which allows creating snapshots with minimal disk overhead and rollback without external tools.</li>
+<li><strong>ZFS 2.3.3</strong> is enabled with support for <strong>RAID-Z expansion</strong> - you can add disks to a RAID-Z array without downtime.</li>
+<li>Ceph storage is now deployed by default on <strong>Ceph Squid 19.2.3</strong>, with LZ4 compression enabled by default and improved performance for multi-user scenarios. By the way, for a home cluster, Ceph is often overkill - I covered this in more detail <a href="https://prohomelab.com/en/posts/proxmox-ceph-home/">in a separate article</a>.</li>
+</ul>
+<hr>
+<h2 id="3-network-infrastructure-and-sdn">3. Network infrastructure and SDN</h2>
+<ul>
+<li><strong>SDN Fabrics</strong> let you build routable overlay networks between nodes (OpenFabric, OSPF) without external switches - with support for spine-leaf and full-mesh topologies for Proxmox and Ceph clusters.</li>
+<li>The new <strong>proxmox-network-interface-pinning</strong> tool allows binding MAC addresses to stable names like <code>nic0</code>, <code>nic1</code>, etc., and automatically adjusts the configuration when NICs are renamed after updates.</li>
+</ul>
+<hr>
+<h2 id="4-ha-placement-policies-and-mobile-ui">4. HA, placement policies, and mobile UI</h2>
+<ul>
+<li>New <strong>HA affinity rules</strong> let you define resource (VM/CT) placement across nodes or groups to minimize latency or increase fault tolerance. If your cluster isn't set up yet - <a href="https://prohomelab.com/en/posts/proxmox-cluster/">see the Proxmox clustering guide</a>.</li>
+<li>A new <strong>mobile interface</strong>, built on Rust (the Yew framework), provides convenient management from a smartphone browser: VM management, HA tasks, monitoring, etc.</li>
+</ul>
+<hr>
+<h2 id="5-interface-usability-and-vulnerability-removal">5. Interface, usability, and vulnerability removal</h2>
+<ul>
+<li><strong>Dark mode by default</strong> - the interface now starts in the dark theme; the light theme is available if explicitly chosen by the user.</li>
+<li>Improved display of errors, notifications, and logs; fixed issues with the UI, the OIDC window, and ISO template loading - especially in the web interface and backup job notifications.</li>
+<li><strong>GlusterFS support removed</strong>: if you use GlusterFS, you need to migrate to Ceph, ZFS, or NFS before upgrading.</li>
+</ul>
+<hr>
+<h2 id="6-compatibility-and-migration">6. Compatibility and migration</h2>
+<ul>
+<li>Containers on <strong>cgroup v1</strong> (CentOS 7, Ubuntu 16.04) are not supported - it's recommended to migrate to a modern OS beforehand.</li>
+<li><strong>NVIDIA GRID/vGPU</strong> users require the <strong>GRID 18.3+</strong> driver (version 570.158.02 or newer), compatible with kernel ≥ 6.0. Without it, vGPU support will be broken.</li>
+</ul>
+<hr>
+<h2 id="7-commands-from-the-video">7. Commands from the video</h2>
+<p><strong>Running the pve8to9 checklist script</strong></p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">pve8to9 --full</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="pve8to9 --full"><div></div></button></div></figure></div>
+<p>If no problems are found, proceed to the upgrade.</p>
+<p><strong>Updating APT repositories</strong></p>
+<p>First, let's update the current configuration to the latest package versions on the current release.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt update</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt dist-upgrade</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">pveversion</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt updateapt dist-upgradepveversion"><div></div></button></div></figure></div>
+<p><strong>Updating the Debian base repositories to the Trixie version</strong></p>
+<p>Update the lists for both the enterprise and regular repository.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sed -i 's/bookworm/trixie/g' /etc/apt/sources.list</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">sed -i 's/bookworm/trixie/g' /etc/apt/sources.list.d/pve-enterprise.list</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="sed -i &#x27;s/bookworm/trixie/g&#x27; /etc/apt/sources.listsed -i &#x27;s/bookworm/trixie/g&#x27; /etc/apt/sources.list.d/pve-enterprise.list"><div></div></button></div></figure></div>
+<p><strong>Adding Proxmox VE 9 package repositories</strong></p>
+<p>First, update the enterprise repository data.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">cat > /etc/apt/sources.list.d/pve-enterprise.sources &#x3C;&#x3C; EOF</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Types</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">deb</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">URIs</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">https://enterprise.proxmox.com/debian/pve</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Suites</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">trixie</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Components</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">pve-enterprise</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Signed-By</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/usr/share/keyrings/proxmox-archive-keyring.gpg</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">EOF</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cat > /etc/apt/sources.list.d/pve-enterprise.sources << EOFTypes: debURIs: https://enterprise.proxmox.com/debian/pveSuites: trixieComponents: pve-enterpriseSigned-By: /usr/share/keyrings/proxmox-archive-keyring.gpgEOF"><div></div></button></div></figure></div>
+<p>Now the same thing, but for normal people.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">cat > /etc/apt/sources.list.d/proxmox.sources &#x3C;&#x3C; EOF</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Types</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">deb</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">URIs</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">http://download.proxmox.com/debian/pve</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Suites</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">trixie</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Components</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">pve-no-subscription</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Signed-By</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/usr/share/keyrings/proxmox-archive-keyring.gpg</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">EOF</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cat > /etc/apt/sources.list.d/proxmox.sources << EOFTypes: debURIs: http://download.proxmox.com/debian/pveSuites: trixieComponents: pve-no-subscriptionSigned-By: /usr/share/keyrings/proxmox-archive-keyring.gpgEOF"><div></div></button></div></figure></div>
+<p><strong>Updating the Ceph package repository</strong></p>
+<p>First, update the enterprise repository.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">cat > /etc/apt/sources.list.d/ceph.sources &#x3C;&#x3C; EOF</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Types</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">deb</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">URIs</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">https://enterprise.proxmox.com/debian/ceph-squid</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Suites</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">trixie</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Components</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">enterprise</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Signed-By</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/usr/share/keyrings/proxmox-archive-keyring.gpg</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">EOF</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cat > /etc/apt/sources.list.d/ceph.sources << EOFTypes: debURIs: https://enterprise.proxmox.com/debian/ceph-squidSuites: trixieComponents: enterpriseSigned-By: /usr/share/keyrings/proxmox-archive-keyring.gpgEOF"><div></div></button></div></figure></div>
+<p>Now for us mere mortals.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">cat > /etc/apt/sources.list.d/ceph.sources &#x3C;&#x3C; EOF</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Types</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">deb</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">URIs</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">http://download.proxmox.com/debian/ceph-squid</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Suites</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">trixie</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Components</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">no-subscription</span></div></div><div class="ec-line"><div class="code"><span style="--0:#1E7734;--1:#85E89D">Signed-By</span><span style="--0:#24292E;--1:#E1E4E8">: </span><span style="--0:#032F62;--1:#9ECBFF">/usr/share/keyrings/proxmox-archive-keyring.gpg</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">EOF</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="cat > /etc/apt/sources.list.d/ceph.sources << EOFTypes: debURIs: http://download.proxmox.com/debian/ceph-squidSuites: trixieComponents: no-subscriptionSigned-By: /usr/share/keyrings/proxmox-archive-keyring.gpgEOF"><div></div></button></div></figure></div>
+<p><strong>Updating the repository data</strong></p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt update</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt update"><div></div></button></div></figure></div>
+<p><strong>Upgrading the Proxmox kernel</strong></p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">apt dist-upgrade</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="apt dist-upgrade"><div></div></button></div></figure></div>
+<h2 id="conclusion">Conclusion</h2>
+<p>Proxmox VE 9.0 is an important step forward: a new stable base on Debian 13, powerful storage capabilities (ZFS, LVM, Ceph), flexible SDN settings, HA placement control, and a modern mobile UI. However, before upgrading, pay attention to container requirements, network configuration, and vGPU compatibility.</p>
+<p>Once the upgrade is done, it's worth double-checking that certificate issuance and renewal through the built-in ACME client still works as expected - swapping out the base system can occasionally trip this up. I walk through how it's set up and how to verify it in my article on <a href="https://prohomelab.com/en/posts/ssl-termination-in-proxmox/">SSL certificates in Proxmox via ACME</a>.</p>
+<hr>
+<h2 id="also-on-this-topic">Also on this topic</h2>
+<ul>
+<li><a href="https://prohomelab.com/en/posts/proxmox-cluster/">Proxmox cluster - setup, QDevice, and mixed hardware in nodes</a></li>
+<li><a href="https://prohomelab.com/en/posts/merge-local-lvm-and-local/">Merging local-lvm and local in Proxmox</a></li>
+<li><a href="https://prohomelab.com/en/posts/cloud-init-install-in-proxmox/">Installing via Cloud-Init in Proxmox</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>Installing and Configuring a Cloud-Init Image in Proxmox</title>
+      <link>https://prohomelab.com/en/posts/cloud-init-install-in-proxmox/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/cloud-init-install-in-proxmox/</guid>
+      <pubDate>Sun, 20 Jul 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Cloudinit</category>
+      <description>A detailed guide to setting up CloudInit for automatic server configuration. Covers key files, parameters, and examples for quickly deploying Linux systems with minimal effort.</description>
+      <content:encoded><![CDATA[<p>If you liked this article, you can support the author by becoming a sponsor on Boosty (link in the contacts section).</p>
+<h2 id="what-is-cloud-init-and-why-do-you-need-it">What is Cloud-Init and why do you need it?</h2>
+<p><strong>Cloud-Init</strong> is a tool for automating the initial setup of virtual machines. It allows you to automatically configure:</p>
+<ul>
+<li>the hostname,</li>
+<li>network interfaces,</li>
+<li>users and passwords,</li>
+<li>SSH keys,</li>
+<li>scripts that run on first boot.</li>
+</ul>
+<p>Combined with <strong>Proxmox VE</strong>, Cloud-Init helps quickly deploy identical VMs with minimal manual effort. It's especially useful in <strong>homelab</strong> environments, where deployment speed and reproducibility matter.</p>
+<hr>
+<h2 id="tasks-solved-with-cloud-init-images">Tasks solved with Cloud-Init images</h2>
+<ol>
+<li><strong>Automation</strong>. Removes the need to manually configure each new VM.</li>
+<li><strong>Standardization</strong>. All machines are deployed from a single standard template.</li>
+<li><strong>Security</strong>. You can set SSH keys right away and disable the root password.</li>
+<li><strong>Scalability</strong>. Ideal for deploying dozens of VMs in a cluster. Of course, that's unlikely to be needed at home, but if you need it at work, you can practice on test subjects first.</li>
+<li><strong>CI/CD compatibility</strong>. Images can be used for automated testing and infrastructure delivery. But, as I said above, for home use it's more of a testing ground.</li>
+</ol>
+<hr>
+<p>In Proxmox VE 8, Cloud-Init is integrated at the GUI and CLI level, which greatly simplifies the process.</p>
+<h2 id="how-to-install-a-cloud-init-image-in-proxmox">How to install a Cloud-Init image in Proxmox</h2>
+<p>In the video, I show how to do all of this using the graphical interface. Personally, I think it's much more convenient, but below I provide the instructions as described in the Proxmox documentation on their website. The instructions on the site are functional, but somewhat outdated. They use an Ubuntu image from way back in 2016 as an example.</p>
+<h3 id="step-1-download-the-official-cloud-init-image">Step 1. Download the official Cloud-Init image</h3>
+<p>Go to <a href="https://cloud-images.ubuntu.com/">cloud-images.ubuntu.com</a> or a similar resource. For example:</p>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">wget https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="wget https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"><div></div></button></div></figure></div>
+<h3 id="step-2-import-the-image-into-proxmox">Step 2. Import the image into Proxmox</h3>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># create a new VM with VirtIO SCSI controller</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm create 9000 --memory 2048 --net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# create a new VM with VirtIO SCSI controllerqm create 9000 --memory 2048 --net0 virtio,bridge=vmbr0 --scsihw virtio-scsi-pci"><div></div></button></div></figure></div>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#616972;--1:#99A0A6"># import the downloaded disk to the local-lvm storage, attaching it as a SCSI drive</span></div></div><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm set 9000 --scsi0 local-lvm:0,import-from=/path/to/noble-server-cloudimg-amd64.img</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="# import the downloaded disk to the local-lvm storage, attaching it as a SCSI driveqm set 9000 --scsi0 local-lvm:0,import-from=/path/to/noble-server-cloudimg-amd64.img"><div></div></button></div></figure></div>
+<h3 id="step-3-add-the-cloud-init-image-as-a-cd-rom-drive">Step 3. Add the Cloud-Init image as a CD-ROM drive</h3>
+<p>The next step is to configure the CD-ROM drive that will be used to install Cloud-Init on the virtual machine.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm set 9000 --ide2 local-lvm:cloudinit</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm set 9000 --ide2 local-lvm:cloudinit"><div></div></button></div></figure></div>
+<p>To be able to boot directly from the Cloud-Init image, set the boot order to order=scsi0, so the BIOS only boots from this disk. This speeds up boot time because the VM's BIOS skips checking for a bootable CD-ROM.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm set 9000 --boot order=scsi0</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm set 9000 --boot order=scsi0"><div></div></button></div></figure></div>
+<p>Many Cloud-Init images require configuring a serial console and using it as the display. If this configuration doesn't suit a particular image, revert to the default display.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm set 9000 --serial0 socket --vga serial0</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm set 9000 --serial0 socket --vga serial0"><div></div></button></div></figure></div>
+<p>And as the final step, convert our virtual machine into a template.</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm template 9000</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm template 9000"><div></div></button></div></figure></div>
+<p>That's it, the template is ready. From here you can freely create full clones from this template and work with them.</p>
+<h2 id="network-features-in-proxmox-ve-8">Network features in Proxmox VE 8</h2>
+<p>Proxmox VE 8 uses systemd-networkd, so it's important to set the network parameters correctly:</p>
+<p>If you leave DHCP enabled, Cloud-Init will automatically obtain an IP.</p>
+<p>For a static IP, fill in the IP Address, Gateway, and DNS fields on the Cloud-Init tab.</p>
+<h2 id="commands-used-in-the-video">Commands used in the video</h2>
+<p>Download the image</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">wget https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="wget https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"><div></div></button></div></figure></div>
+<p>Rename the image</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">mv noble-server-cloudimg-amd64.img noble-server-cloudimg-amd64.qcow2</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="mv noble-server-cloudimg-amd64.img noble-server-cloudimg-amd64.qcow2"><div></div></button></div></figure></div>
+<p>Set up the serial console on the virtual machine we need</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm set 700 --serial0 socket --vga serial0</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm set 700 --serial0 socket --vga serial0"><div></div></button></div></figure></div>
+<p>Set the working size of the VM's cloud-init disk</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qemu-img resize noble-server-cloudimg-amd64.qcow2 32G</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qemu-img resize noble-server-cloudimg-amd64.qcow2 32G"><div></div></button></div></figure></div>
+<p>Import the cloud-init image into the virtual machine</p>
+<div class="expressive-code"><figure class="frame has-title"><figcaption class="header"><span class="title">yaml</span></figcaption><pre data-language="yaml"><code><div class="ec-line"><div class="code"><span style="--0:#032F62;--1:#9ECBFF">qm disk import 700 noble-server-cloudimg-amd64.qcow2 local</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm disk import 700 noble-server-cloudimg-amd64.qcow2 local"><div></div></button></div></figure></div>
+<h2 id="conclusion">Conclusion</h2>
+<p>Installing a Cloud-Init image in Proxmox VE significantly simplifies infrastructure deployment. Proper image preparation and Cloud-Init configuration allow you to fully automate the VM configuration process, which is especially relevant for DevOps and corporate environments, but of course it can also be used in a homelab.</p>
+<p>The logical next step, once you've customized a VM like this to your liking (packages, users, network settings), is to save it as a template so you don't have to repeat the whole setup from scratch next time. I cover how to do that in my article on <a href="https://prohomelab.com/en/posts/tempaltes-in-proxmox/">templates and linked clones in Proxmox</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Setting Up Templates and Linked Clones in Proxmox VE</title>
+      <link>https://prohomelab.com/en/posts/tempaltes-in-proxmox/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/tempaltes-in-proxmox/</guid>
+      <pubDate>Sat, 19 Jul 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Cluster</category>
+      <description>A step-by-step guide to creating and configuring templates in Proxmox for quickly deploying virtual machines and containers. Covers creating templates, saving configurations, and recommendations for managing and updating images.</description>
+      <content:encoded><![CDATA[<p>If you enjoyed this article, you can support the author by becoming a sponsor on Boosty (link in the contacts section).</p>
+<p>Proxmox VE is a powerful open-source virtualization platform that supports creating templates and using <strong>linked clones</strong> - lightweight clones based on a single base image. This significantly speeds up deploying new virtual machines and saves disk space.
+That said, it's not suitable for use in a truly production infrastructure.</p>
+<p>In this article you'll learn how to:</p>
+<ul>
+<li>Create a template from a virtual machine.</li>
+<li>Set up linked clones.</li>
+<li>Automate deployment of new VMs based on templates.</li>
+</ul>
+<h2 id="why-use-templates-and-linked-clones">Why Use Templates and Linked Clones?</h2>
+<p>If you frequently create identical virtual machines (this also works for LXC containers) running Ubuntu, Debian, or other operating systems, using templates and linked clones will help you:</p>
+<ul>
+<li>Save <strong>disk space and time</strong>. Mostly time, honestly.</li>
+<li>Standardize deployment.</li>
+<li>Simplify CI/CD or DevOps infrastructure - if you actually need that.</li>
+</ul>
+<h2 id="step-1-preparing-the-virtual-machine">Step 1. Preparing the Virtual Machine</h2>
+<ol>
+<li>Create a regular VM through the Proxmox web interface (or <code>the command line, if you're a misanthrope</code>).</li>
+<li>Install the OS you need (for example, Ubuntu Server).</li>
+<li>Install the base set of packages, configure networking, etc.</li>
+<li><strong>Be sure</strong> to install qemu-guest-agent.</li>
+</ol>
+<h2 id="step-2-converting-the-vm-into-a-template">Step 2. Converting the VM into a Template</h2>
+<ol>
+<li>Shut down the virtual machine:</li>
+</ol>
+<div class="expressive-code"><link rel="stylesheet" href="https://prohomelab.com/_astro/ec.otfqh.css"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">qm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">shutdown</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">100</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm shutdown 100"><div></div></button></div></figure></div>
+<ol>
+<li>Convert it into a template:</li>
+</ol>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">qm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">template</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">100</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm template 100"><div></div></button></div></figure></div>
+<p>Now VM 100 can no longer be started <strong>directly</strong> - it's a template.</p>
+<h2 id="step-3-creating-a-linked-clone">Step 3. Creating a Linked Clone</h2>
+<p>A linked clone is a VM that uses a copy only for the changes it makes, while the base system lives in the template. This lets you:</p>
+<ul>
+<li>Create VMs instantly.</li>
+<li>Save disk space.</li>
+</ul>
+<p>Creating a linked clone via the CLI (in the video I show how to do it through the GUI):</p>
+<div class="expressive-code"><figure class="frame is-terminal"><figcaption class="header"><span class="title"></span><span class="sr-only">Terminal window</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#6F42C1;--1:#B392F0">qm</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">clone</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">100</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">200</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--name</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#032F62;--1:#9ECBFF">ubuntu-clone</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">--full</span><span style="--0:#24292E;--1:#E1E4E8"> </span><span style="--0:#005CC5;--1:#79B8FF">0</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="qm clone 100 200 --name ubuntu-clone --full 0"><div></div></button></div></figure></div>
+<p>Where 100 is the ID of the template VM, and 200 is the ID of the newly created VM. <code>ubuntu-clone</code> is the name of the new VM. <code>--full 0</code> means it's a linked clone.</p>
+<p>After this, you can change the properties of the newly created VM.</p>
+<p><strong>When shouldn't you use linked clones?</strong></p>
+<p>If the template is deleted, all linked clones will stop working.
+You can't move a linked clone to a different storage without converting it into a full clone.
+Migration between nodes requires shared storage (for example, <a href="https://prohomelab.com/en/posts/proxmox-ceph-home/">Ceph</a> or NFS).</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Templates and linked clones in Proxmox are a great way to automate and speed up VM deployment. This is especially useful in test environments, DevOps scenarios, and when working with cloud images.</p>
+<h3 id="links">Links</h3>
+<ul>
+<li><a href="https://pve.proxmox.com/wiki/Installation">Proxmox VE: Installation and Basic Configuration</a></li>
+<li><a href="https://pve.proxmox.com/wiki/Cloud-Init_Support">Automation with cloud-init in Proxmox</a></li>
+<li><a href="https://pve.proxmox.com/wiki/Linux_Container">LXC Containers in Proxmox VE: A Beginner's Guide</a></li>
+</ul>
+<p>Subscribe to <a href="https://www.youtube.com/@stilicho2011">stilicho2011</a> on YouTube for more videos on Proxmox and system administration!</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Setting Up SSL Certificates in Proxmox with the Built-in ACME</title>
+      <link>https://prohomelab.com/en/posts/ssl-termination-in-proxmox/</link>
+      <guid isPermaLink="true">https://prohomelab.com/en/posts/ssl-termination-in-proxmox/</guid>
+      <pubDate>Mon, 14 Jul 2025 00:00:00 GMT</pubDate>
+      <dc:creator>Stilicho2011</dc:creator>
+      <category>Proxmox</category>
+      <category>Proxmox</category>
+      <category>Automation</category>
+      <description>A detailed guide to setting up SSL in Proxmox for secure access to the web interface and API. Covers certificate generation and installation, HTTPS setup, and recommendations for maintaining cluster security.</description>
+      <content:encoded><![CDATA[<p>Proxmox VE has built-in support for an <strong>ACME client</strong>, which allows you to automatically obtain and renew SSL certificates from <a href="https://letsencrypt.org/">Let's Encrypt</a>. This significantly simplifies securing the Proxmox web interface and API.</p>
+<p>If you liked this article, you can support the author by becoming a sponsor on Boosty (link in the contacts section).</p>
+<h2 id="-requirements">📋 Requirements</h2>
+<ul>
+<li>A <strong>public domain</strong> pointed at the IP address of your Proxmox server.</li>
+<li><strong>Access to DNS records</strong> (DNS challenge).</li>
+<li><strong>Proxmox VE</strong> version <strong>6.2 or higher</strong>.</li>
+</ul>
+<h2 id="-why-use-acme">🔐 Why use ACME</h2>
+<ul>
+<li>Automatic certificate renewal.</li>
+<li>Free of charge.</li>
+<li>Eliminates browser warnings about an insecure connection.</li>
+<li>Increases the security of access to the Proxmox web interface.</li>
+</ul>
+<hr>
+<div class="phl-callout" data-callout="note">
+<div class="phl-callout-title"><span class="phl-callout-icon" aria-hidden="true"></span><span class="phl-callout-title-text">Note</span></div>
+<div class="phl-callout-content">
+<p>It's enough to have a public domain hosted on accessible DNS servers. You don't need any public IPs. We just need a certificate for local domain name resolution.</p>
+</div>
+</div>
+<h2 id="introduction">Introduction</h2>
+<p>Since version 6.2, Proxmox VE includes built-in support for <strong>ACME</strong> - automatic issuance of SSL certificates from Let's Encrypt. One of the most reliable and universal ways to verify a domain is the <strong>DNS Challenge</strong>, especially if you don't want to or can't open ports 80/443 to the internet.</p>
+<p>In this article, we'll walk step by step through setting up the ACME client in Proxmox to obtain an SSL certificate using a <strong>DNS API provider</strong>.</p>
+<hr>
+<h2 id="requirements">Requirements</h2>
+<ul>
+<li>A <strong>public domain</strong> pointed at the IP address of your Proxmox server.</li>
+<li><strong>Access to DNS records</strong> (DNS challenge).</li>
+<li><strong>Proxmox VE</strong> version <strong>6.2 or higher</strong>.</li>
+<li>A <strong>DNS provider</strong> that supports an API (for example, Cloudflare, DuckDNS, DigitalOcean, etc.)</li>
+<li>Access to <strong>Proxmox</strong> via SSH or through the web interface</li>
+</ul>
+<hr>
+<h2 id="step-1-enabling-acme-in-proxmox">Step 1. Enabling ACME in Proxmox</h2>
+<h3 id="creating-an-account">Creating an account</h3>
+<p>Open the Proxmox web interface and go to <strong>Datacenter</strong> → <strong>ACME</strong> → <strong>Accounts</strong></p>
+<p>In the <strong>Accounts</strong> section, create an account by filling in all the required fields.</p>
+<h3 id="registering-a-plugin">Registering a plugin</h3>
+<p>In the <strong>Datacenter</strong> → <strong>ACME</strong> → <strong>DNS Plugin</strong> section, click Add and select the DNS host you need, for example Cloudflare.
+In the dropdown menu, enter the necessary data you received from your DNS host.</p>
+<h2 id="step-2-issuing-the-certificate">Step 2. Issuing the certificate</h2>
+<p>Go to:</p>
+<p><strong>Datacenter</strong> → <strong>node_name</strong> → <strong>System</strong> → <strong>Certificates</strong></p>
+<p>Click <strong>ACME</strong> → <strong>Add</strong></p>
+<p>Parameters:</p>
+<p><strong>Domains</strong>: proxmox.example.com</p>
+<p><strong>ACME Account</strong>: the name of the account you created in step 1
+<strong>Plugin</strong>: the name you gave your plugin
+Click <strong>Create</strong></p>
+<p>Proxmox will automatically start verification and, upon successful completion, will install the certificate.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Using the DNS Challenge to issue an SSL certificate is a secure and flexible way to protect the Proxmox interface, especially if it's not accessible from outside. Integrating ACME into Proxmox makes this process simple and fully automatic.</p>
+<p>If you use public DNS providers with API support, setup will take no more than 5 minutes.</p>
+<h2 id="useful-links">Useful links</h2>
+<ul>
+<li><a href="https://pve.proxmox.com/wiki/Certificate_Management">Proxmox ACME documentation</a></li>
+<li><a href="https://github.com/acmesh-official/acme.sh/wiki/dnsapi">List of supported DNS plugins</a></li>
+<li><a href="https://letsencrypt.org/">Let's Encrypt</a></li>
+</ul>]]></content:encoded>
+    </item>
+  </channel>
+</rss>
